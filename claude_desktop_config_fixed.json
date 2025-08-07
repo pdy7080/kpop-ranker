@@ -1,0 +1,120 @@
+{
+  "mcpServers": {
+    "filesystem-frontend": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "D:/AI07/kpopranker_server/kpop-frontend-v2"
+      ]
+    },
+    "filesystem-backend": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "D:/AI07/kpopranker_server/api.kpopranker.chargeapp.net"
+      ]
+    },
+    "powershell-exec-mcp-server": {
+      "command": "cmd",
+      "args": [
+        "/c",
+        "npx",
+        "-y",
+        "@smithery/cli@latest",
+        "run",
+        "@DynamicEndpoints/powershell-exec-mcp-server",
+        "--key",
+        "441f9167-5e59-4120-a25f-8c4a38e96481",
+        "--profile",
+        "tory-snail-DIqvmc"
+      ]
+    },
+    "firecrawl-mcp": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "firecrawl-mcp"
+      ],
+      "env": {
+        "FIRECRAWL_API_KEY": "fc-7470e8829cdd46ceb0cef6de5cfe202b"
+      }
+    },
+    "terminal-controller-mcp": {
+      "command": "cmd",
+      "args": [
+        "/c",
+        "npx",
+        "-y",
+        "@smithery/cli@latest",
+        "run",
+        "@GongRzhe/terminal-controller-mcp",
+        "--key",
+        "441f9167-5e59-4120-a25f-8c4a38e96481",
+        "--profile",
+        "tory-snail-DIqvmc"
+      ]
+    },
+    "text-editor": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "mcp-server-text-editor"
+      ]
+    },
+    "Context7": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@upstash/context7-mcp"
+      ]
+    },
+    "playwright-stealth": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@pvinis/playwright-stealth-mcp-server"
+      ]
+    },
+    "mcp-sequentialthinking-tools": {
+      "command": "cmd",
+      "args": [
+        "/c",
+        "npx",
+        "-y",
+        "@smithery/cli@latest",
+        "run",
+        "@xinzhongyouhai/mcp-sequentialthinking-tools",
+        "--key",
+        "441f9167-5e59-4120-a25f-8c4a38e96481",
+        "--profile",
+        "tory-snail-DIqvmc"
+      ]
+    },
+    "playwright-mcp": {
+      "command": "cmd",
+      "args": [
+        "/c",
+        "npx",
+        "-y",
+        "@smithery/cli@latest",
+        "run",
+        "@microsoft/playwright-mcp",
+        "--key",
+        "441f9167-5e59-4120-a25f-8c4a38e96481",
+        "--profile",
+        "tory-snail-DIqvmc"
+      ]
+    },
+    "googleSearch": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "g-search-mcp"
+      ]
+    }
+  },
+  "isDxtAutoUpdatesEnabled": true,
+  "isUsingBuiltInNodeForMcp": true
+}

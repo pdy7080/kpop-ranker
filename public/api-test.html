@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🚨 KPOP Ranker API 테스트</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            margin: 20px; 
+            background: #f0f0f0; 
+            line-height: 1.6;
+        }
+        .container { 
+            max-width: 1200px; 
+            margin: 0 auto; 
+            background: white; 
+            padding: 20px; 
+            border-radius: 10px; 
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .test-section { 
+            margin: 20px 0; 
+            padding: 15px; 
+            border: 1px solid #ddd; 
+            border-radius: 5px; 
+        }
+        .success { 
+            color: green; 
+            background: #f0f8f0; 
+        }
+        .error { 
+            color: red; 
+            background: #f8f0f0; 
+        }
+        .info { 
+            color: blue; 
+            background: #f0f0f8; 
+        }
+        button { 
+            padding: 10px 20px; 
+            margin: 5px; 
+            background: #007bff; 
+            color: white; 
+            border: none; 
+            border-radius: 5px; 
+            cursor: pointer; 
+        }
+        button:hover { 
+            background: #0056b3; 
+        }
+        .result { 
+            margin: 10px 0; 
+            padding: 10px; 
+            border-radius: 5px; 
+            white-space: pre-wrap; 
+            font-family: monospace; 
+            font-size: 12px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .image-test { 
+            display: inline-block; 
+            margin: 10px; 
+            text-align: center; 
+        }
+        .image-test img { 
+            max-width: 100px; 
+            max-height: 100px; 
+            border: 1px solid #ddd; 
+        }
+        .diagnosis { 
+            font-size: 14px; 
+            background: #fff3cd; 
+            border: 1px solid #ffeaa7; 
+            padding: 15px; 
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚨 KPOP Ranker API 진단 도구</h1>
+        <p><strong>목적:</strong> 아티스트 상세 페이지 앨범 이미지 문제를 정확히 진단합니다.</p>
+        
+        <div class="test-section">
+            <h2>🔍 Step 1: 백엔드 기본 상태 확인</h2>
+            <button onclick="testBackendBasic()">백엔드 상태 테스트</button>
+            <div id="backend-result" class="result"></div>
+        </div>
+        
+        <div class="test-section">
+            <h2>🎵 Step 2: 아티스트 완전 정보 API 테스트</h2>
+            <button onclick="testArtistAPI('BLACKPINK')">BLACKPINK 테스트</button>
+            <button onclick="testArtistAPI('HUNTR/X')">HUNTR/X 테스트</button>
+            <button onclick="testArtistAPI('NewJeans')">NewJeans 테스트</button>
+            <div id="artist-result" class="result"></div>
+        </div>
+        
+        <div class="test-section">
+            <h2>🖼️ Step 3: 앨범 이미지 API 테스트</h2>
+            <button onclick="testImageAPI()">이미지 API 테스트</button>
+            <div id="image-result" class="result"></div>
+            <div id="image-display"></div>
+        </div>
+        
+        <div class="test-section">
+            <h2>🔄 Step 4: 프론트엔드 프록시 테스트</h2>
+            <button onclick="testFrontendProxy()">프론트엔드 프록시 테스트</button>
+            <div id="proxy-result" class="result"></div>
+        </div>
+        
+        <div class="test-section">
+            <h2>📋 Step 5: 종합 진단 결과</h2>
+            <button onclick="generateDiagnosis()">종합 진단 생성</button>
+            <div id="diagnosis-result" class="result diagnosis"></div>
+        </div>
+    </div>
+
+    <script>
+        const BACKEND_URL = 'http://localhost:5000';
+        const FRONTEND_URL = 'http://localhost:3007';
+        
+        let testResults = {
+            backend: null,
+            artist: {},
+            image: {},
+            proxy: null
+        };
+        
+        function log(elementId, message, type = 'info') {
+            const element = document.getElementById(elementId);
+            const timestamp = new Date().toLocaleTimeString();
+            element.className = `result ${type}`;
+            element.textContent += `[${timestamp}] ${message}\n`;
+        }
+        
+        function clearLog(elementId) {
+            document.getElementById(elementId).textContent = '';
+            document.getElementById(elementId).className = 'result';
+        }
+        
+        async function testBackendBasic() {
+            clearLog('backend-result');
+            log('backend-result', '🔍 백엔드 기본 상태 테스트 시작...');
+            
+            try {
+                const response = await fetch(`${BACKEND_URL}/`);
+                log('backend-result', `상태 코드: ${response.status}`, response.ok ? 'success' : 'error');
+                
+                if (response.ok) {
+                    const text = await response.text();
+                    log('backend-result', `응답 내용: ${text.substring(0, 200)}...`);
+                    log('backend-result', '✅ 백엔드 서버 정상 작동', 'success');
+                    testResults.backend = true;
+                } else {
+                    log('backend-result', '❌ 백엔드 서버 응답 오류', 'error');
+                    testResults.backend = false;
+                }
+            } catch (error) {
+                log('backend-result', `❌ 백엔드 연결 실패: ${error.message}`, 'error');
+                testResults.backend = false;
+            }
+        }
+        
+        async function testArtistAPI(artist) {
+            clearLog('artist-result');
+            log('artist-result', `🎵 ${artist} 아티스트 API 테스트 시작...`);
+            
+            try {
+                const url = `${BACKEND_URL}/api/artist/${encodeURIComponent(artist)}/complete`;
+                log('artist-result', `요청 URL: ${url}`);
+                
+                const response = await fetch(url);
+                log('artist-result', `상태 코드: ${response.status}`, response.ok ? 'success' : 'error');
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    const tracks = data.tracks || [];
+                    
+                    log('artist-result', `아티스트: ${data.artist || '없음'}`);
+                    log('artist-result', `곡 수: ${tracks.length}`);
+                    
+                    if (tracks.length > 0) {
+                        const firstTrack = tracks[0];
+                        log('artist-result', `첫 번째 곡: ${firstTrack.name || '없음'}`);
+                        log('artist-result', `앨범 이미지: ${firstTrack.album_image || '없음'}`);
+                        
+                        // 이미지 있는 곡 개수 확인
+                        const tracksWithImages = tracks.filter(t => t.album_image && t.album_image !== '없음');
+                        log('artist-result', `이미지 있는 곡: ${tracksWithImages.length}/${tracks.length}`);
+                        
+                        testResults.artist[artist] = {
+                            success: true,
+                            trackCount: tracks.length,
+                            imageCount: tracksWithImages.length,
+                            firstTrackImage: firstTrack.album_image
+                        };
+                        
+                        log('artist-result', '✅ 아티스트 API 정상', 'success');
+                    } else {
+                        log('artist-result', '⚠️ 트랙 정보 없음', 'error');
+                        testResults.artist[artist] = { success: false, reason: 'no tracks' };
+                    }
+                } else {
+                    log('artist-result', `❌ API 호출 실패: HTTP ${response.status}`, 'error');
+                    const errorText = await response.text();
+                    log('artist-result', `오류 내용: ${errorText.substring(0, 200)}`);
+                    testResults.artist[artist] = { success: false, reason: `HTTP ${response.status}` };
+                }
+            } catch (error) {
+                log('artist-result', `❌ 요청 오류: ${error.message}`, 'error');
+                testResults.artist[artist] = { success: false, reason: error.message };
+            }
+        }
+        
+        async function testImageAPI() {
+            clearLog('image-result');
+            clearLog('image-display');
+            log('image-result', '🖼️ 앨범 이미지 API 테스트 시작...');
+            
+            const imageTests = [
+                ['BLACKPINK', 'Pink Venom'],
+                ['BLACKPINK', 'JUMP'],
+                ['HUNTR/X', 'Golden']
+            ];
+            
+            const imageDisplay = document.getElementById('image-display');
+            
+            for (const [artist, track] of imageTests) {
+                try {
+                    const url = `${BACKEND_URL}/api/album-image/${encodeURIComponent(artist)}/${encodeURIComponent(track)}`;
+                    log('image-result', `테스트: ${artist} - ${track}`);
+                    log('image-result', `URL: ${url}`);
+                    
+                    const response = await fetch(url);
+                    log('image-result', `상태: ${response.status}`);
+                    
+                    if (response.ok || response.status === 304) {
+                        const contentType = response.headers.get('Content-Type') || '알 수 없음';
+                        const blob = await response.blob();
+                        
+                        log('image-result', `✅ 성공 - 타입: ${contentType}, 크기: ${blob.size} bytes`, 'success');
+                        
+                        // 이미지 표시
+                        const imgContainer = document.createElement('div');
+                        imgContainer.className = 'image-test';
+                        
+                        const img = document.createElement('img');
+                        img.src = URL.createObjectURL(blob);
+                        img.alt = `${artist} - ${track}`;
+                        img.onload = () => URL.revokeObjectURL(img.src);
+                        
+                        const label = document.createElement('div');
+                        label.textContent = `${artist} - ${track}`;
+                        
+                        imgContainer.appendChild(img);
+                        imgContainer.appendChild(label);
+                        imageDisplay.appendChild(imgContainer);
+                        
+                        testResults.image[`${artist}-${track}`] = { success: true, size: blob.size };
+                    } else {
+                        log('image-result', `❌ 실패: HTTP ${response.status}`, 'error');
+                        testResults.image[`${artist}-${track}`] = { success: false, status: response.status };
+                    }
+                } catch (error) {
+                    log('image-result', `❌ 오류: ${error.message}`, 'error');
+                    testResults.image[`${artist}-${track}`] = { success: false, error: error.message };
+                }
+            }
+        }
+        
+        async function testFrontendProxy() {
+            clearLog('proxy-result');
+            log('proxy-result', '🔄 프론트엔드 프록시 테스트 시작...');
+            
+            try {
+                // 프론트엔드를 통한 백엔드 API 호출
+                const proxyUrl = `${FRONTEND_URL}/api/artist/BLACKPINK/complete`;
+                log('proxy-result', `프록시 URL: ${proxyUrl}`);
+                
+                const response = await fetch(proxyUrl);
+                log('proxy-result', `프록시 상태: ${response.status}`);
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    log('proxy-result', `✅ 프론트엔드 프록시 정상 작동`, 'success');
+                    log('proxy-result', `아티스트: ${data.artist || '없음'}`);
+                    log('proxy-result', `곡 수: ${(data.tracks || []).length}`);
+                    testResults.proxy = true;
+                } else {
+                    log('proxy-result', `❌ 프록시 실패: HTTP ${response.status}`, 'error');
+                    log('proxy-result', '→ 이것이 문제의 원인일 수 있습니다!', 'error');
+                    testResults.proxy = false;
+                }
+            } catch (error) {
+                log('proxy-result', `❌ 프록시 연결 오류: ${error.message}`, 'error');
+                log('proxy-result', '→ Next.js 프록시 설정 문제 가능성', 'error');
+                testResults.proxy = false;
+            }
+        }
+        
+        function generateDiagnosis() {
+            clearLog('diagnosis-result');
+            
+            const diagnosis = document.getElementById('diagnosis-result');
+            diagnosis.className = 'result diagnosis';
+            
+            let report = '🏥 KPOP Ranker 종합 진단 보고서\\n';
+            report += '='.repeat(50) + '\\n\\n';
+            
+            // 백엔드 상태
+            if (testResults.backend === true) {
+                report += '✅ 백엔드 서버: 정상 작동\\n';
+            } else if (testResults.backend === false) {
+                report += '❌ 백엔드 서버: 문제 있음\\n';
+            } else {
+                report += '⚠️ 백엔드 서버: 테스트 안함\\n';
+            }
+            
+            // 아티스트 API 상태
+            const artistTests = Object.keys(testResults.artist);
+            if (artistTests.length > 0) {
+                const successCount = artistTests.filter(a => testResults.artist[a].success).length;
+                report += `✅ 아티스트 API: ${successCount}/${artistTests.length} 성공\\n`;
+                
+                for (const artist of artistTests) {
+                    const result = testResults.artist[artist];
+                    if (result.success) {
+                        report += `   ${artist}: ${result.imageCount}/${result.trackCount} 곡에 이미지\\n`;
+                    } else {
+                        report += `   ${artist}: 실패 (${result.reason})\\n`;
+                    }
+                }
+            } else {
+                report += '⚠️ 아티스트 API: 테스트 안함\\n';
+            }
+            
+            // 이미지 API 상태
+            const imageTests = Object.keys(testResults.image);
+            if (imageTests.length > 0) {
+                const successCount = imageTests.filter(i => testResults.image[i].success).length;
+                report += `✅ 이미지 API: ${successCount}/${imageTests.length} 성공\\n`;
+            } else {
+                report += '⚠️ 이미지 API: 테스트 안함\\n';
+            }
+            
+            // 프록시 상태
+            if (testResults.proxy === true) {
+                report += '✅ 프론트엔드 프록시: 정상 작동\\n';
+            } else if (testResults.proxy === false) {
+                report += '❌ 프론트엔드 프록시: 문제 있음\\n';
+            } else {
+                report += '⚠️ 프론트엔드 프록시: 테스트 안함\\n';
+            }
+            
+            report += '\\n' + '='.repeat(50) + '\\n';
+            
+            // 문제 진단
+            if (testResults.backend === false) {
+                report += '🚨 주요 문제: 백엔드 서버가 작동하지 않습니다\\n';
+                report += '💡 해결 방법: 백엔드 서버를 재시작하세요\\n';
+                report += '   python main.py\\n';
+            } else if (testResults.proxy === false) {
+                report += '🚨 주요 문제: 프론트엔드 프록시가 작동하지 않습니다\\n';
+                report += '💡 해결 방법: 다음 중 하나를 시도하세요\\n';
+                report += '   1. 프론트엔드 서버 재시작\\n';
+                report += '   2. apiConfig.ts에서 직접 백엔드 호출로 변경\\n';
+                report += '   3. CORS 설정 확인\\n';
+            } else if (Object.values(testResults.artist).some(r => r.success && r.imageCount === 0)) {
+                report += '🚨 주요 문제: 앨범 이미지가 없습니다\\n';
+                report += '💡 해결 방법: 이미지 파일 생성 및 경로 확인\\n';
+            } else if (Object.values(testResults.image).some(r => !r.success)) {
+                report += '🚨 주요 문제: 이미지 API가 작동하지 않습니다\\n';
+                report += '💡 해결 방법: 이미지 파일 경로 확인\\n';
+            } else {
+                report += '🎉 모든 시스템이 정상 작동합니다!\\n';
+                report += '💡 브라우저 캐시를 지우거나 강제 새로고침 (Ctrl+F5)을 시도하세요\\n';
+            }
+            
+            diagnosis.textContent = report;
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="300" height="300" viewBox="0 0 300 300" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="300" height="300" fill="#f3f4f6"/>
+  <rect x="25" y="25" width="250" height="250" rx="10" fill="#e5e7eb" stroke="#d1d5db" stroke-width="1"/>
+  
+  <!-- Music Note Icon -->
+  <g transform="translate(130, 110)">
+    <circle cx="15" cy="40" r="8" fill="#9ca3af"/>
+    <circle cx="40" cy="30" r="8" fill="#9ca3af"/>
+    <rect x="21" y="22" width="2" height="25" fill="#9ca3af"/>
+    <rect x="46" y="12" width="2" height="25" fill="#9ca3af"/>
+    <path d="M23 12 L48 7 L48 12 L23 17 Z" fill="#9ca3af"/>
+  </g>
+  
+  <!-- Album Text -->
+  <text x="150" y="190" text-anchor="middle" fill="#6b7280" font-family="Arial, sans-serif" font-size="14" font-weight="500">Album Cover</text>
+  <text x="150" y="210" text-anchor="middle" fill="#9ca3af" font-family="Arial, sans-serif" font-size="10">Not Available</text>
+</svg>
