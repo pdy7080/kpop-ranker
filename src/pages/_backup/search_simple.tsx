@@ -3,7 +3,7 @@ import Head from 'next/head';
 import { useRouter } from 'next/router';
 import Layout from '@/components/Layout';
 import SmartSearchBox from '@/components/SmartSearchBox';
-import SearchResultCard from '@/components/SearchResultCard';
+import AlbumImage from '@/components/AlbumImage';
 import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
 import { FaMusic } from 'react-icons/fa';
@@ -31,7 +31,7 @@ export default function SearchPage() {
       searchQuery = q as string;
     }
     
-    if (!searchQuery && !artist && !track) {
+    if (!searchQuery) {
       setNoResults(true);
       return;
     }
@@ -42,23 +42,12 @@ export default function SearchPage() {
     try {
       // 🔥 백엔드가 모든 것을 처리 - 우리는 그냥 보내기만!
       const params = new URLSearchParams();
-      if (artist) params.append('artist', artist as string);
       if (track) params.append('track', track as string);
-      if (!artist && !track && q) params.append('q', q as string);
+      if (artist) params.append('artist', artist as string);
+      if (q) params.append('q', q as string);
       
-      console.log('🔍 검색 API 호출:', `/api/search?${params.toString()}`);
-      
-      // API_CONFIG 사용하여 백엔드 직접 호출
-      const API_CONFIG = {
-        BASE_URL: process.env.NODE_ENV === 'production' 
-          ? 'https://api.kpopranker.chargeapp.net'
-          : process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'
-      };
-      
-      const response = await fetch(`${API_CONFIG.BASE_URL}/api/search?${params.toString()}`);
+      const response = await fetch(`/api/search?${params.toString()}`);
       const data = await response.json();
-      
-      console.log('🔍 검색 응답:', data);
 
       if (data.results && data.results.length > 0) {
         setSearchResults(data.results);
@@ -135,12 +124,48 @@ export default function SearchPage() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.1 }}
                 >
-                  <SearchResultCard 
-                    chart={chartData.chart}
-                    tracks={chartData.tracks || []}
-                    onArtistClick={(artist) => router.push(`/artist/${encodeURIComponent(artist)}`)}
-                    onTrackClick={(artist, track) => router.push(`/track/${encodeURIComponent(artist)}/${encodeURIComponent(track)}`)}
-                  />
+                  <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+                    <div className="bg-gradient-to-r from-purple-600 to-pink-600 px-6 py-3">
+                      <h3 className="text-white font-semibold text-lg">{chartData.chart}</h3>
+                    </div>
+                    
+                    <div className="p-6">
+                      <div className="space-y-4">
+                        {chartData.tracks && chartData.tracks.map((track: any, trackIndex: number) => (
+                          <div key={trackIndex} className="flex items-center gap-4 p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                            {/* 앨범 이미지 - 백엔드가 100% 보장 */}
+                            <div className="flex-shrink-0">
+                              <AlbumImage
+                                src={track.album_image}
+                                alt={`${track.artist} - ${track.track}`}
+                                size="sm"
+                                artist={track.artist}
+                                track={track.track}
+                              />
+                            </div>
+                            
+                            {/* 트랙 정보 */}
+                            <div className="flex-grow">
+                              <div className="font-medium text-gray-900">{track.track}</div>
+                              <div className="text-sm text-gray-600">{track.artist}</div>
+                              {track.views && (
+                                <div className="text-xs text-gray-500 mt-1">{track.views}</div>
+                              )}
+                            </div>
+                            
+                            {/* 순위 */}
+                            {track.rank && (
+                              <div className="flex-shrink-0">
+                                <div className="bg-purple-100 text-purple-700 px-3 py-1 rounded-full text-sm font-semibold">
+                                  #{track.rank}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
                 </motion.div>
               ))}
             </div>

@@ -338,6 +338,7 @@ export default function ArtistDetailPage() {
       setError(null);
       
       try {
+        // 🎯 핵심: /complete 경로가 포함된 정확한 API URL
         const response = await fetch(`${apiUrls.artistComplete}/${encodeURIComponent(artist as string)}/complete`);
         
         if (!response.ok) {

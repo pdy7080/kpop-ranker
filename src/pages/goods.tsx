@@ -38,6 +38,7 @@ const GOODS_CATEGORIES: GoodsCategory[] = [
 ];
 
 export default function GoodsPage() {
+  const [mounted, setMounted] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [goodsItems, setGoodsItems] = useState<GoodsItem[]>([]);
@@ -46,8 +47,14 @@ export default function GoodsPage() {
   const [favorites, setFavorites] = useState<Set<number>>(new Set());
 
   useEffect(() => {
-    fetchTrendingGoods();
+    setMounted(true);
   }, []);
+
+  useEffect(() => {
+    if (mounted) {
+      fetchTrendingGoods();
+    }
+  }, [mounted]);
 
   const fetchTrendingGoods = async () => {
     try {

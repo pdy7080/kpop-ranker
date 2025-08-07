@@ -1,18 +1,22 @@
 @echo off
-echo ========================================
-echo KPOP Ranker - Development Server
-echo ========================================
+echo ============================================
+echo  KPOP Ranker - Frontend Development Server
+echo ============================================
+echo.
+echo Starting development server on port 3007...
+echo API Server: http://localhost:5000
+echo Frontend: http://localhost:3007
+echo.
+echo Press Ctrl+C to stop the server
+echo ============================================
 echo.
 
-cd /d C:\project\ai07_배포\frontend
+:: 환경 변수 설정
+set NODE_ENV=development
+set NEXT_PUBLIC_API_URL=http://localhost:5000
+set PORT=3007
 
-echo Starting development server...
-echo This will run without building.
-echo.
-echo Server will start on http://localhost:3007
-echo Press Ctrl+C to stop
-echo.
-
-call npm run dev
+:: 개발 서버 실행
+npm run dev
 
 pause

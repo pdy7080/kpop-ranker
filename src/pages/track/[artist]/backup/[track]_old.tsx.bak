@@ -106,7 +106,6 @@ const chartConfigs: Record<string, {
 };
 
 export default function TrackDetailPage() {
-  const [mounted, setMounted] = useState(false);
   const router = useRouter();
   const { artist, track } = router.query;
   const [trackData, setTrackData] = useState<TrackData | null>(null);
@@ -144,25 +143,30 @@ export default function TrackDetailPage() {
 
   // 포트폴리오 추가/제거
   const togglePortfolio = async () => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      toast.error('로그인이 필요합니다');
+      router.push('/auth/login');
+      return;
+    }
+
     setLoadingPortfolio(true);
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
       
       if (isInPortfolio) {
-        // 제거 로직 (필요시 구현)
         toast.success('포트폴리오에서 제거되었습니다');
         setIsInPortfolio(false);
       } else {
-        // 추가 로직
         const response = await fetch(`${apiUrl}/api/portfolio`, {
           method: 'POST',
           headers: {
+            'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'
           },
-          credentials: 'include', // 세션 쿠키 포함
           body: JSON.stringify({
-            artist: trackData?.artist || artist,
-            track: trackData?.track || track
+            artist: trackData?.artist,
+            track: trackData?.track
           })
         });
 
@@ -170,8 +174,7 @@ export default function TrackDetailPage() {
           toast.success('포트폴리오에 추가되었습니다');
           setIsInPortfolio(true);
         } else {
-          const errorData = await response.json();
-          throw new Error(errorData.error || '포트폴리오 추가 실패');
+          throw new Error('포트폴리오 추가 실패');
         }
       }
     } catch (error) {
@@ -274,12 +277,8 @@ export default function TrackDetailPage() {
     setLoadingHistory(true);
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
-      // artist와 track이 있는지 확인
-      const artistName = trackData?.artist || artist as string;
-      const trackName = trackData?.track || track as string;
-      
       const response = await fetch(
-        `${apiUrl}/api/chart/history/${encodeURIComponent(chartName)}/${encodeURIComponent(artistName)}/${encodeURIComponent(trackName)}`
+        `${apiUrl}/api/chart/history/${encodeURIComponent(chartName)}/${encodeURIComponent(artist as string)}/${encodeURIComponent(track as string)}`
       );
 
       if (response.ok) {
@@ -290,44 +289,44 @@ export default function TrackDetailPage() {
         }
       }
 
-      // 실제 데이터가 없을 경우 빈 배열 설정 (시뮬레이션 데이터 사용하지 않음)
-      setChartHistory([]);
-      // toast.info 대신 console.log 사용 (toast.info는 지원되지 않음)
-      console.log(`${chartName} 차트의 순위 변화 데이터가 아직 없습니다.`);
+      // 실제 데이터가 없으면 시뮬레이션 데이터 사용
+      const mockHistory: ChartHistory[] = [];
+      const today = new Date();
+      for (let i = 7; i >= 0; i--) {
+        const date = new Date(today);
+        date.setDate(date.getDate() - i);
+        mockHistory.push({
+          date: date.toISOString().split('T')[0],
+          rank: Math.floor(Math.random() * 20) + 5,
+          views: `${Math.floor(Math.random() * 1000000)}회`
+        });
+      }
+      setChartHistory(mockHistory);
     } catch (error) {
       console.error('차트 히스토리 로드 오류:', error);
-      // 에러 시 빈 배열 설정
-      setChartHistory([]);
-      // 404 에러는 데이터가 없는 것이므로 에러 토스트 표시하지 않음
-      console.log('차트 히스토리 데이터 없음:', error);
+      // 에러 시 시뮬레이션 데이터
+      const mockHistory: ChartHistory[] = [];
+      const today = new Date();
+      for (let i = 7; i >= 0; i--) {
+        const date = new Date(today);
+        date.setDate(date.getDate() - i);
+        mockHistory.push({
+          date: date.toISOString().split('T')[0],
+          rank: Math.floor(Math.random() * 20) + 5
+        });
+      }
+      setChartHistory(mockHistory);
     } finally {
       setLoadingHistory(false);
     }
   };
 
   useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  useEffect(() => {
-    if (mounted && artist && track) {
+    if (artist && track) {
       fetchTrackData();
       checkPortfolioStatus();
     }
-  }, [mounted, artist, track]);
-
-  if (!mounted) {
-    return (
-      <Layout>
-        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50">
-          <div className="text-center">
-            <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
-            <p className="mt-4 text-gray-600">로딩 중...</p>
-          </div>
-        </div>
-      </Layout>
-    );
-  }
+  }, [artist, track]);
 
   if (isLoading) {
     return (
@@ -462,11 +461,11 @@ export default function TrackDetailPage() {
                     <AlbumImage
                       src={albumImage}
                       alt={`${trackData.artist} - ${trackData.track}`}
-                      size="xlarge"
+                      size="2xl"
                       artist={trackData.artist_normalized || trackData.artist}
                       artistNormalized={trackData.artist_normalized}
                       track={trackData.track}
-                      className="relative z-10 rounded-2xl shadow-2xl w-48 h-48 sm:w-56 sm:h-56 lg:w-64 lg:h-64"
+                      className="relative z-10 rounded-2xl shadow-2xl"
                     />
                   </div>
                 </motion.div>
@@ -730,17 +729,7 @@ export default function TrackDetailPage() {
                   </div>
                   
                   <div className="h-80 mb-6 bg-gradient-to-br from-purple-50 to-pink-50 p-4 rounded-xl">
-                    {chartHistory.length > 0 ? (
-                      <Line data={chartHistoryData} options={chartOptions} />
-                    ) : (
-                      <div className="h-full flex items-center justify-center text-gray-500">
-                        <div className="text-center">
-                          <FaChartLine className="text-6xl mb-4 text-gray-300 mx-auto" />
-                          <p className="text-lg font-medium">순위 변화 데이터가 없습니다</p>
-                          <p className="text-sm mt-2">추후 데이터가 누적되면 표시됩니다</p>
-                        </div>
-                      </div>
-                    )}
+                    <Line data={chartHistoryData} options={chartOptions} />
                   </div>
                   
                   <button

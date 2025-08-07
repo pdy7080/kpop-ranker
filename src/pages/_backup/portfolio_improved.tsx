@@ -5,8 +5,8 @@ import Layout from '@/components/Layout';
 import { motion } from 'framer-motion';
 import { 
   FaBriefcase, FaChartLine, FaPlus, FaSignInAlt, 
-  FaTrash, FaMusic, FaPlay, FaExternalLinkAlt,
-  FaCrown, FaHeart
+  FaTrash, FaMusic, FaPlay, FaEye, FaExternalLinkAlt,
+  FaCrown, FaHeart, FaTimes
 } from 'react-icons/fa';
 import toast from 'react-hot-toast';
 import Link from 'next/link';
@@ -46,7 +46,7 @@ interface PortfolioItem {
   perfect_system: boolean;
 }
 
-export default function PortfolioPage() {
+export default function ImprovedPortfolioPage() {
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
   
@@ -74,7 +74,7 @@ export default function PortfolioPage() {
         const data = await response.json();
         setPortfolioItems(data.items || []);
         
-        console.log('🔥 포트폴리오 연결 성공:', {
+        console.log('🔥 개선된 포트폴리오 시스템 연결:', {
           count: data.count,
           perfect_system: data.perfect_system,
           real_time_rankings: data.real_time_rankings
@@ -84,8 +84,7 @@ export default function PortfolioPage() {
       }
     } catch (error) {
       console.error('포트폴리오 데이터 로드 실패:', error);
-      // 🔥 에러 안내창 제거 - 조용한 처리
-      console.warn('포트폴리오 데이터를 불러오는데 실패했습니다');
+      toast.error('포트폴리오 데이터를 불러오는데 실패했습니다');
     } finally {
       setIsLoading(false);
     }
@@ -103,20 +102,17 @@ export default function PortfolioPage() {
       
       if (response.ok) {
         setPortfolioItems(items => items.filter(item => item.id !== itemId));
-        // 🔥 조용한 처리 - 안내창 제거
-        console.log('✅ 포트폴리오에서 제거 완료');
+        toast.success('💎 포트폴리오에서 제거되었습니다');
       } else {
         throw new Error('제거 실패');
       }
     } catch (error) {
       console.error('포트폴리오 아이템 제거 실패:', error);
-      // 🔥 조용한 에러 처리 - 불필요한 안내창 제거
-      console.warn('제거에 실패했습니다');
+      toast.error('제거에 실패했습니다');
     }
   };
 
-  // 🔥 완전히 조용한 로그인 (모든 안내창 제거)
-  const handleQuietLogin = async () => {
+  const handleDemoLogin = async () => {
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
       const response = await fetch(`${apiUrl}/api/auth/demo-login`, {
@@ -133,41 +129,32 @@ export default function PortfolioPage() {
       if (response.ok) {
         const data = await response.json();
         setIsLoggedIn(true);
-        // 🔥 완전히 조용한 로그인 - 모든 안내창 제거
-        console.log('✅ 조용한 로그인 성공:', data.user?.name || 'Demo User');
+        // 🔥 로그인 성공 알림창 제거 (조용한 로그인)
+        console.log('조용한 로그인 성공:', data);
       }
     } catch (error) {
       console.error('로그인 실패:', error);
-      // 🔥 실패도 조용하게 처리 - 불필요한 안내창 제거
-      console.warn('조용한 로그인 실패 - 계속 진행');
+      // 🔥 로그인 실패 알림창도 제거 (조용한 처리)
+      console.log('조용한 로그인 실패');
     }
   };
 
-  // 🎯 곡 클릭 시 곡 상세 페이지로 이동 (올바른 track 페이지로)
+  // 🎯 곡 클릭 시 곡 상세 페이지로 이동
   const handleTrackClick = (artist: string, track: string) => {
-    // 🎯 FIX: 새로운 곡 상세 페이지로 이동
-    router.push(`/track/${encodeURIComponent(artist)}/${encodeURIComponent(track)}`);
+    const searchQuery = `${artist} ${track}`;
+    router.push(`/search?q=${encodeURIComponent(searchQuery)}`);
   };
 
-  // 🎯 완전히 안전한 앨범 이미지 컴포넌트 (절대 깨지지 않음)
-  const SafeAlbumImage = ({ item }: { item: PortfolioItem }) => {
+  // 🎯 개선된 앨범 이미지 컴포넌트
+  const AlbumImage = ({ item }: { item: PortfolioItem }) => {
     const [imageError, setImageError] = useState(false);
-    const [currentImageUrl, setCurrentImageUrl] = useState('');
-
-    useEffect(() => {
-      // 이미지 URL 우선순위 설정
-      if (item.album_image && item.album_image.startsWith('http')) {
-        setCurrentImageUrl(item.album_image);
-      } else {
-        setCurrentImageUrl(`/api/album-image-v2/${encodeURIComponent(item.artist)}/${encodeURIComponent(item.track)}`);
-      }
-    }, [item]);
+    const [imageUrl, setImageUrl] = useState(item.album_image || `/api/album-image-v2/${item.artist}/${item.track}`);
 
     const handleImageError = () => {
       if (!imageError) {
         setImageError(true);
-        // 🔥 2차 폴백: 아티스트명만으로 시도
-        setCurrentImageUrl(`/api/album-image-v2/${encodeURIComponent(item.artist)}`);
+        // 🔥 폴백 이미지 URL 시도
+        setImageUrl(`/api/album-image-v2/${item.artist}`);
       }
     };
 
@@ -175,13 +162,12 @@ export default function PortfolioPage() {
       <div className="relative w-16 h-16 rounded-xl overflow-hidden bg-gradient-to-br from-purple-400 to-pink-400 flex-shrink-0">
         {!imageError ? (
           <Image
-            src={currentImageUrl}
+            src={imageUrl}
             alt={`${item.artist} - ${item.track}`}
             width={64}
             height={64}
             className="object-cover w-full h-full"
             onError={handleImageError}
-            unoptimized={true} // 🔥 최적화 비활성화로 안정성 향상
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center text-white font-bold text-lg">
@@ -249,7 +235,7 @@ export default function PortfolioPage() {
       <Layout>
         <div className="text-center py-20">
           <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500"></div>
-          <p className="mt-4 text-gray-500">포트폴리오를 불러오는 중...</p>
+          <p className="mt-4 text-gray-500">개선된 포트폴리오를 불러오는 중...</p>
         </div>
       </Layout>
     );
@@ -258,8 +244,8 @@ export default function PortfolioPage() {
   return (
     <>
       <Head>
-        <title>💎 내 포트폴리오 - KPOP Ranker</title>
-        <meta name="description" content="곡별 독립적인 차트 정보와 앨범 이미지가 포함된 K-POP 포트폴리오" />
+        <title>💎 개선된 포트폴리오 - KPOP Ranker</title>
+        <meta name="description" content="곡별 독립적인 차트 정보와 앨범 이미지가 포함된 개선된 K-POP 포트폴리오" />
       </Head>
 
       <Layout>
@@ -274,7 +260,7 @@ export default function PortfolioPage() {
               <div>
                 <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2 flex items-center">
                   <FaBriefcase className="w-8 h-8 mr-3 text-primary-500" />
-                  💎 내 포트폴리오
+                  💎 개선된 포트폴리오
                 </h1>
                 <p className="text-gray-600 dark:text-gray-400">
                   각 곡별로 독립적인 차트 순위와 앨범 이미지를 확인하세요
@@ -295,7 +281,7 @@ export default function PortfolioPage() {
               <div className="flex items-center space-x-3">
                 {!isLoggedIn && (
                   <button
-                    onClick={handleQuietLogin}
+                    onClick={handleDemoLogin}
                     className="bg-green-600 text-white px-4 py-2 rounded-xl hover:bg-green-700 transition-colors flex items-center"
                   >
                     <FaSignInAlt className="w-4 h-4 mr-2" />
@@ -313,7 +299,7 @@ export default function PortfolioPage() {
             </div>
           </motion.div>
 
-          {/* 🎯 의미있는 통계만 표시 */}
+          {/* 🎯 개선된 간단한 통계 (의미있는 데이터만) */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -369,7 +355,7 @@ export default function PortfolioPage() {
             </div>
           </motion.div>
 
-          {/* 🎯 포트폴리오 목록 */}
+          {/* 🎯 개선된 포트폴리오 목록 */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -404,8 +390,8 @@ export default function PortfolioPage() {
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-4 flex-1">
-                        {/* 🎯 완전히 안전한 앨범 이미지 */}
-                        <SafeAlbumImage item={item} />
+                        {/* 🎯 개선된 앨범 이미지 */}
+                        <AlbumImage item={item} />
                         
                         <div className="flex-1">
                           <div className="flex items-center justify-between mb-2">
@@ -422,7 +408,7 @@ export default function PortfolioPage() {
                               </p>
                             </div>
                             
-                            {/* 🎯 곡별 최고 순위 */}
+                            {/* 🎯 곡별 최고 순위 (의미있는 데이터) */}
                             <div className="text-right">
                               {item.best_rank ? (
                                 <div className="flex items-center">

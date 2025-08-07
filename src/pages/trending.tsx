@@ -21,18 +21,11 @@ interface TrendingItem {
  */
 export default function TrendingPage() {
   const router = useRouter();
-  const [mounted, setMounted] = useState(false);
   const [trendingData, setTrendingData] = useState<TrendingItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
   // 클라이언트 사이드에서 데이터 가져오기
   useEffect(() => {
-    if (!mounted) return;
-    
     const fetchTrendingData = async () => {
       try {
         setIsLoading(true);
@@ -69,11 +62,9 @@ export default function TrendingPage() {
     };
 
     fetchTrendingData();
-  }, [mounted]);
+  }, []);
 
   const handleItemClick = (artist: string, track?: string) => {
-    if (!mounted) return;
-    
     if (track) {
       // ✅ 곡 상세 페이지로 직접 이동
       router.push(`/track/${encodeURIComponent(artist)}/${encodeURIComponent(track)}`);
@@ -97,19 +88,6 @@ export default function TrendingPage() {
     }
     return `${apiUrl}/api/album-image-v2/${encodeURIComponent(artist)}`;
   };
-
-  if (!mounted) {
-    return (
-      <Layout>
-        <div className="flex items-center justify-center min-h-[400px]">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500 mx-auto mb-4"></div>
-            <p className="text-gray-600 dark:text-gray-400">로딩 중...</p>
-          </div>
-        </div>
-      </Layout>
-    );
-  }
 
   return (
     <>

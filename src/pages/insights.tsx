@@ -38,6 +38,7 @@ interface Recommendation {
 }
 
 export default function InsightsPage() {
+  const [mounted, setMounted] = useState(false);
   const [dailyInsights, setDailyInsights] = useState<DailyInsight | null>(null);
   const [marketPulse, setMarketPulse] = useState<MarketPulse | null>(null);
   const [recommendations, setRecommendations] = useState<Recommendation | null>(null);
@@ -45,8 +46,14 @@ export default function InsightsPage() {
   const [activeTab, setActiveTab] = useState<'daily' | 'market' | 'recommendations'>('daily');
 
   useEffect(() => {
-    fetchInsights();
+    setMounted(true);
   }, []);
+
+  useEffect(() => {
+    if (mounted) {
+      fetchInsights();
+    }
+  }, [mounted]);
 
   const fetchInsights = async () => {
     setIsLoading(true);
@@ -90,7 +97,7 @@ export default function InsightsPage() {
     }
   };
 
-  if (isLoading) {
+  if (!mounted || isLoading) {
     return (
       <Layout>
         <div className="text-center py-20">
