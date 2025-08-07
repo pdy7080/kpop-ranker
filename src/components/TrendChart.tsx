@@ -53,7 +53,7 @@ const TrendChart: React.FC<TrendChartProps> = ({
   const fetchHistory = async () => {
     setIsLoading(true);
     try {
-      const response = await chartApi.getHistory(chartName, artistName, trackName, period);
+      const response = await chartApi.getChartHistory(chartName, artistName, trackName);
       if (response && response.history) {
         // 이미 특정 차트의 히스토리만 받아옴
         setHistoryData(response.history || []);
