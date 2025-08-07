@@ -1,15 +1,17 @@
 {
-  "framework": "nextjs",
-  "buildCommand": "npm run build || true",
-  "devCommand": "npm run dev",
-  "installCommand": "npm install",
-  "outputDirectory": ".next",
   "functions": {
+    "src/pages/*.tsx": {
+      "runtime": "nodejs18.x"
+    },
     "src/pages/api/*.ts": {
-      "maxDuration": 30
+      "runtime": "nodejs18.x"
+    },
+    "src/pages/**/*.tsx": {
+      "runtime": "nodejs18.x"
     }
   },
-  "github": {
-    "silent": true
-  }
+  "buildCommand": "npm run build",
+  "outputDirectory": ".next",
+  "framework": "nextjs",
+  "installCommand": "npm install --legacy-peer-deps"
 }

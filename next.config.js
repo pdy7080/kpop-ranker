@@ -3,20 +3,14 @@ const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
   
-  // TypeScript 빌드 오류 무시 (Vercel 배포용)
+  // TypeScript 빌드 오류 무시
   typescript: {
     ignoreBuildErrors: true,
   },
   
-  // ESLint 오류도 무시
+  // ESLint 오류 무시
   eslint: {
     ignoreDuringBuilds: true,
-  },
-  
-  // SSR/SSG 비활성화 - 모든 페이지를 동적으로
-  experimental: {
-    runtime: 'nodejs',
-    serverComponents: false,
   },
   
   images: {
@@ -29,51 +23,33 @@ const nextConfig = {
     unoptimized: true
   },
   
-  // 빌드에서 제외할 페이지 패턴
-  pageExtensions: ['tsx', 'ts', 'jsx', 'js'],
-  
-  webpack: (config, { isServer }) => {
-    // _backup 폴더 무시
-    config.module.rules.push({
-      test: /\/_backup\//,
-      loader: 'ignore-loader'
-    });
-    
-    // 서버 사이드에서 next/router 문제 해결
-    if (!isServer) {
-      config.resolve.fallback = {
-        ...config.resolve.fallback,
-        fs: false,
-      };
-    }
-    
-    return config;
+  // API 라우트 설정
+  async rewrites() {
+    return [
+      {
+        source: '/api/:path*',
+        destination: 'https://api.kpopranker.chargeapp.net/api/:path*',
+      },
+    ];
   },
   
-  // 환경 변수
-  env: {
-    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'https://api.kpopranker.chargeapp.net'
-  },
-  
-  // 정적 페이지 생성 건너뛰기
-  generateBuildId: async () => {
-    return 'build-' + Date.now();
-  },
-  
-  // 모든 페이지를 서버 사이드 렌더링으로
+  // CORS 헤더 설정
   async headers() {
     return [
       {
-        source: '/:path*',
+        source: '/api/:path*',
         headers: [
-          {
-            key: 'Cache-Control',
-            value: 'no-cache, no-store, must-revalidate',
-          },
+          { key: 'Access-Control-Allow-Origin', value: '*' },
+          { key: 'Access-Control-Allow-Methods', value: 'GET,POST,PUT,DELETE,OPTIONS' },
+          { key: 'Access-Control-Allow-Headers', value: 'Content-Type, Authorization' },
         ],
       },
     ];
   },
+  
+  env: {
+    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'https://api.kpopranker.chargeapp.net'
+  }
 }
 
 module.exports = nextConfig
