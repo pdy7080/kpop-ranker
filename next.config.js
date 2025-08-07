@@ -1,42 +1,29 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  reactStrictMode: false,
-  
-  // SSR 모드로 변경 (정적 빌드 비활성화)
-  // output: 'export',  // 주석 처리하여 SSR 모드로 전환
-  trailingSlash: true,
-  images: { 
-    unoptimized: true 
+  reactStrictMode: true,
+  swcMinify: true,
+  images: {
+    domains: [
+      'localhost',
+      'api.kpopranker.chargeapp.net',
+      'cdn.pixabay.com',
+      'via.placeholder.com'
+    ],
+    unoptimized: true
   },
-  
-  // 타입 체크 무시
-  typescript: {
-    ignoreBuildErrors: true
-  },
-  
-  // ESLint 무시
-  eslint: {
-    ignoreDuringBuilds: true
-  },
-  
-  // exportPathMap 제거 (SSR 모드에서는 불필요)
-  // exportPathMap은 static export에서만 사용됨
-  
-  // 페이지 확장자 설정 (_backup 폴더 제외)
-  pageExtensions: ['page.tsx', 'page.ts', 'page.jsx', 'page.js', 'tsx', 'ts', 'jsx', 'js'],
-  
-  // 특정 폴더 제외
-  excludeFiles: ['**/_backup/**', '**/*.backup.*', '**/*.old.*'],
-  
-  // 특정 파일 패턴 제외
+  // 빌드에서 제외할 페이지 패턴
+  pageExtensions: ['tsx', 'ts', 'jsx', 'js'],
   webpack: (config, { isServer }) => {
-    // 백업 파일들 빌드에서 제외
+    // _backup 폴더 무시
     config.module.rules.push({
-      test: /.*(_backup_|_broken_|_old|\.backup|\.old).*\.(tsx?|jsx?)$/,
-      use: 'null-loader'
+      test: /\/_backup\//,
+      loader: 'ignore-loader'
     });
-    
     return config;
+  },
+  // 환경 변수
+  env: {
+    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'https://api.kpopranker.chargeapp.net'
   }
 }
 
