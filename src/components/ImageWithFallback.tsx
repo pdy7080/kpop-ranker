@@ -30,6 +30,35 @@ const HUNTR_REAL_IMAGES = {
 } as const;
 
 /**
+ * 🎯 한글 아티스트 직접 매핑 - URL 인코딩 문제 해결!
+ */
+const KOREAN_ARTIST_MAP = {
+  '임영웅': 'LimYoungWoong',
+  '이무진': 'LeeMujin', 
+  '아이유': 'IU',
+  '뉴진스': 'NewJeans',
+  'NewJeans': 'NewJeans',
+  '블랙핑크': 'BLACKPINK',
+  'BLACKPINK': 'BLACKPINK',
+  '에스파': 'aespa',
+  'aespa': 'aespa'
+} as const;
+
+/**
+ * 🎯 한글 트랙 직접 매핑 - 중요한 곡들
+ */
+const KOREAN_TRACK_MAP = {
+  '사랑은 늘 도망가': 'sarangeun_neul_domangga',
+  '에피소드': 'episode',
+  '천국보다 아름다운': 'cheonguk_boda_areumdaun',
+  '우리들의 블루스': 'urideurui_blues',
+  '다시 만날 수 있을까': 'dasi_mannal_su_isseulkka',
+  '이제 나만 믿어요': 'ije_naman_mideoyo',
+  '모래 알갱이': 'morae_algaengi',
+  '청춘만화': 'cheongchun_manhwa'
+} as const;
+
+/**
  * 🔧 트랙명 정제 함수 - 복잡한 트랙명 처리
  */
 function sanitizeTrackName(trackName: string): string {
@@ -100,14 +129,62 @@ function getHuntrRealImageUrl(artistName: string, trackName: string = '', baseUr
 }
 
 /**
- * 🔧 앨범 이미지 문제 완전 해결 버전 + 복잡한 트랙명 처리
+ * 🔧 한글 URL 인코딩 문제 해결 함수 - 핵심 수정!
+ */
+function generateSafeUrl(artist: string, track: string = '', baseUrl: string): string {
+  console.log('🚀 URL 생성 시작:', { artist, track });
+  
+  // 1. 한글 아티스트 매핑 우선 적용
+  let safeArtist = KOREAN_ARTIST_MAP[artist as keyof typeof KOREAN_ARTIST_MAP] || artist;
+  let safeTrack = track;
+  
+  // 2. 한글 트랙 매핑 적용
+  if (track && KOREAN_TRACK_MAP[track as keyof typeof KOREAN_TRACK_MAP]) {
+    safeTrack = KOREAN_TRACK_MAP[track as keyof typeof KOREAN_TRACK_MAP];
+  }
+  
+  console.log('🎯 매핑 적용 후:', { 
+    originalArtist: artist, 
+    safeArtist,
+    originalTrack: track,
+    safeTrack 
+  });
+  
+  // 3. 영어로 변환된 경우는 그대로, 한글인 경우만 encodeURIComponent
+  const needsEncoding = (text: string) => /[가-힣]/.test(text);
+  
+  const finalArtist = needsEncoding(safeArtist) ? encodeURIComponent(safeArtist) : safeArtist;
+  const finalTrack = needsEncoding(safeTrack) ? encodeURIComponent(safeTrack) : safeTrack;
+  
+  // 4. URL 생성
+  let finalUrl;
+  if (safeTrack) {
+    finalUrl = `${baseUrl}/api/album-image-v2/${finalArtist}/${finalTrack}`;
+  } else {
+    finalUrl = `${baseUrl}/api/album-image-v2/${finalArtist}`;
+  }
+  
+  console.log('✅ 최종 URL 생성:', {
+    finalArtist,
+    finalTrack,
+    finalUrl,
+    artistNeedsEncoding: needsEncoding(safeArtist),
+    trackNeedsEncoding: needsEncoding(safeTrack)
+  });
+  
+  return finalUrl;
+}
+
+/**
+ * 🔧 앨범 이미지 문제 완전 해결 버전 + 한글 URL 인코딩 문제 해결!
  * 
  * 해결사항:
- * 1. v2 API 직접 사용으로 안정성 확보
- * 2. 한글 아티스트명 완벽 지원 (정규화된 이름 우선 사용)  
- * 3. 🎯 HUNTR 실제 앨범 이미지 직접 요청 (Golden.jpg 등)
- * 4. 🔧 복잡한 트랙명 자동 정제 (특수문자, 긴 이름 처리)
- * 5. 무조건 성공하는 SVG 폴백
+ * 1. 🎯 한글 아티스트 → 영어 직접 매핑으로 URL 문제 해결
+ * 2. 🎯 중요한 한글 트랙명도 영어로 매핑
+ * 3. v2 API 직접 사용으로 안정성 확보
+ * 4. HUNTR 실제 앨범 이미지 직접 요청 (Golden.jpg 등)
+ * 5. 복잡한 트랙명 자동 정제 (특수문자, 긴 이름 처리)
+ * 6. 무조건 성공하는 SVG 폴백
  */
 const ImageWithFallback: React.FC<ImageWithFallbackProps> = ({
   src,
@@ -126,7 +203,7 @@ const ImageWithFallback: React.FC<ImageWithFallbackProps> = ({
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
 
-  // v2 API URL 생성 (무조건 성공) - 복잡한 트랙명 처리 추가
+  // v2 API URL 생성 (무조건 성공) - 한글 URL 문제 해결!
   const generateImageUrl = (): string => {
     const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
     
@@ -148,23 +225,8 @@ const ImageWithFallback: React.FC<ImageWithFallbackProps> = ({
       console.log('🔧 복잡한 트랙명 정제 적용:', { original: trackName, processed: processedTrackName });
     }
     
-    // 🔄 일반 처리 로직
-    let normalizedArtist = useArtist;
-    
-    // HUNTR 변형들을 모두 HUNTR로 통일 (폴백용)
-    if (normalizedArtist && normalizedArtist.includes('HUNTR')) {
-      normalizedArtist = 'HUNTR';
-      console.log('🎯 HUNTR 정규화:', { original: artistName, normalized: normalizedArtist });
-    }
-    
-    // URL 생성 - 정제된 트랙명 사용
-    if (normalizedArtist && processedTrackName) {
-      return `${baseUrl}/api/album-image-v2/${encodeURIComponent(normalizedArtist)}/${encodeURIComponent(processedTrackName)}`;
-    } else if (normalizedArtist) {
-      return `${baseUrl}/api/album-image-v2/${encodeURIComponent(normalizedArtist)}`;
-    } else {
-      return `${baseUrl}/api/album-image-v2/KPOP`;
-    }
+    // 🎯 핵심 수정: 안전한 URL 생성 (한글 매핑 우선)
+    return generateSafeUrl(useArtist, processedTrackName, baseUrl);
   };
 
   // 초기 URL 설정
@@ -200,7 +262,7 @@ const ImageWithFallback: React.FC<ImageWithFallbackProps> = ({
     if (trackName && (trackName.includes('(') || trackName.includes('Prod.') || trackName.length > 20)) {
       console.log('🔄 복잡한 트랙명 감지, 아티스트만으로 폴백:', useArtist);
       const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
-      const artistOnlyUrl = `${baseUrl}/api/album-image-v2/${encodeURIComponent(useArtist)}`;
+      const artistOnlyUrl = generateSafeUrl(useArtist, '', baseUrl);
       setCurrentSrc(artistOnlyUrl);
       setHasError(false);
       return;

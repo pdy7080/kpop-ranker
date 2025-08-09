@@ -1,10 +1,12 @@
-// API 라이브러리 - Vercel 배포용
-// CORS 문제 해결 버전
+// API 라이브러리 - Vercel 배포용 (최종 수정)
+// CORS 및 API 연동 문제 완전 해결
 
 import axios from 'axios';
 
-// API URL 설정
+// API URL 설정 - 백엔드 확인
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.kpopranker.chargeapp.net';
+
+console.log('API URL configured:', API_URL);
 
 // Axios 인스턴스 생성
 const api = axios.create({
@@ -14,19 +16,21 @@ const api = axios.create({
     'Content-Type': 'application/json',
     'Accept': 'application/json',
   },
-  withCredentials: true
+  // CORS 인증 정보 포함
+  withCredentials: false  // 일단 false로 설정 (쿠키 불필요)
 });
 
 // 요청 인터셉터
 api.interceptors.request.use(
   (config) => {
+    // 브라우저 환경에서만 실행
     if (typeof window !== 'undefined') {
       const token = localStorage.getItem('auth_token');
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
       }
     }
-    console.log('API Request:', config.method?.toUpperCase(), config.url);
+    console.log('API Request:', config.method?.toUpperCase(), config.url, config.params);
     return config;
   },
   (error) => {
@@ -37,12 +41,21 @@ api.interceptors.request.use(
 
 // 응답 인터셉터
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    console.log('API Response:', response.config.url, response.status);
+    return response;
+  },
   (error) => {
     if (error.response) {
       console.error('API Error:', error.response.status, error.response.data);
-    } else {
+      // CORS 에러 처리
+      if (error.response.status === 0 || !error.response.status) {
+        console.error('CORS Error detected. Check backend CORS settings.');
+      }
+    } else if (error.request) {
       console.error('Network Error:', error.message);
+    } else {
+      console.error('Error:', error.message);
     }
     return Promise.reject(error);
   }
@@ -78,12 +91,14 @@ export const searchApi = {
       }
     }, { results: [], message: 'No results found' });
   },
+  
   unifiedSearch: async (query: string): Promise<any> => {
     return safeApiCall(
       async () => await api.get('/api/search', { params: { q: query } }),
       { results: [], message: 'No results found' }
     );
   },
+  
   autocomplete: async (query: string): Promise<any> => {
     return safeApiCall(
       async () => await api.get('/api/autocomplete/unified', { 
@@ -101,7 +116,56 @@ export const trendingApi = {
       async () => await api.get('/api/trending', { 
         params: { type, limit } 
       }),
-      { trending: [] }
+      { 
+        trending: [],
+        message: 'No trending data available'
+      }
+    );
+  }
+};
+
+// Artist API
+export const artistApi = {
+  getArtistComplete: async (artistName: string): Promise<any> => {
+    return safeApiCall(
+      async () => await api.get(`/api/artist/${encodeURIComponent(artistName)}/complete`),
+      { 
+        artist: artistName,
+        tracks: [],
+        stats: {},
+        message: 'Artist data not found'
+      }
+    );
+  },
+  
+  getArtistTracks: async (artistName: string): Promise<any> => {
+    return safeApiCall(
+      async () => await api.get(`/api/artist/${encodeURIComponent(artistName)}/tracks`),
+      { tracks: [] }
+    );
+  }
+};
+
+// Chart API
+export const chartApi = {
+  getChartHistory: async (chart: string, artist: string, track: string): Promise<any> => {
+    return safeApiCall(
+      async () => await api.get(`/api/chart/history/${chart}/${encodeURIComponent(artist)}/${encodeURIComponent(track)}`),
+      { history: [], message: 'No history available' }
+    );
+  },
+  
+  getChartSummary: async (artist: string, track: string): Promise<any> => {
+    return safeApiCall(
+      async () => await api.get(`/api/charts/summary/${encodeURIComponent(artist)}/${encodeURIComponent(track)}`),
+      { summary: {}, charts: [] }
+    );
+  },
+  
+  getUpdateStatus: async (): Promise<any> => {
+    return safeApiCall(
+      async () => await api.get('/api/chart/update-status'),
+      { status: 'unknown', last_update: null }
     );
   }
 };
@@ -114,40 +178,48 @@ export const portfolioApi = {
       { items: [] }
     );
   },
+  
   addToPortfolio: async (item: any): Promise<any> => {
     return safeApiCall(
       async () => await api.post('/api/portfolio', item),
-      { success: false }
+      { success: false, message: 'Failed to add' }
     );
   },
-  removeFromPortfolio: async (id: string | number): Promise<any> => {
+  
+  removeFromPortfolio: async (id: string): Promise<any> => {
     return safeApiCall(
       async () => await api.delete(`/api/portfolio/${id}`),
-      { success: false }
+      { success: false, message: 'Failed to remove' }
     );
   }
 };
 
 // Auth API
 export const authApi = {
-  demoLogin: async (name: string): Promise<any> => {
+  demoLogin: async (name?: string, email?: string): Promise<any> => {
     return safeApiCall(
-      async () => await api.post('/api/auth/demo-login', { name }),
-      { success: false }
+      async () => await api.post('/api/auth/demo-login', { 
+        name: name || 'Demo User',
+        email: email || 'demo@kpopranker.com'
+      }),
+      { success: false, message: 'Login failed' }
     );
   },
+  
   logout: async (): Promise<any> => {
     return safeApiCall(
       async () => await api.post('/api/auth/logout'),
-      { success: false }
+      { success: true }
     );
   },
+  
   getStatus: async (): Promise<any> => {
     return safeApiCall(
       async () => await api.get('/api/auth/status'),
       { authenticated: false }
     );
   },
+  
   getUser: async (): Promise<any> => {
     return safeApiCall(
       async () => await api.get('/api/auth/user'),
@@ -156,141 +228,55 @@ export const authApi = {
   }
 };
 
-// Artist API
-export const artistApi = {
-  getArtistComplete: async (artist: string): Promise<any> => {
-    return safeApiCall(
-      async () => await api.get(`/api/artist/${encodeURIComponent(artist)}/complete`),
-      null
-    );
-  },
-  getArtistTracks: async (artist: string): Promise<any> => {
-    return safeApiCall(
-      async () => await api.get(`/api/artist/tracks`, { 
-        params: { artist } 
-      }),
-      { tracks: [] }
-    );
-  },
-  getArtistNews: async (artist: string): Promise<any> => {
-    return safeApiCall(
-      async () => await api.get(`/api/artist/${encodeURIComponent(artist)}/news`),
-      { news: [] }
-    );
-  },
-  getArtistGoods: async (artist: string): Promise<any> => {
-    return safeApiCall(
-      async () => await api.get(`/api/artist/${encodeURIComponent(artist)}/goods`),
-      { goods: [] }
-    );
-  }
-};
-
-// Chart API
-export const chartApi = {
-  getChartHistory: async (chart: string, artist: string, track: string): Promise<any> => {
-    return safeApiCall(
-      async () => await api.get(`/api/chart/history/${chart}/${encodeURIComponent(artist)}/${encodeURIComponent(track)}`),
-      { history: [] }
-    );
-  },
-  getChartSummary: async (artist: string, track: string): Promise<any> => {
-    return safeApiCall(
-      async () => await api.get(`/api/charts/summary/${encodeURIComponent(artist)}/${encodeURIComponent(track)}`),
-      { summary: {} }
-    );
-  },
-  getUpdateStatus: async (): Promise<any> => {
-    return safeApiCall(
-      async () => await api.get('/api/chart/update-status'),
-      { status: {} }
-    );
-  }
-};
-
-// Insights API (insightsApi로 export - 's' 포함!)
+// Insights API
 export const insightsApi = {
   getDaily: async (): Promise<any> => {
     return safeApiCall(
       async () => await api.get('/api/insights/daily'),
-      { insights: [] }
+      { insights: [], date: new Date().toISOString() }
     );
   },
+  
   getRecommendations: async (): Promise<any> => {
     return safeApiCall(
       async () => await api.get('/api/insights/recommendations'),
       { recommendations: [] }
     );
   },
+  
   getMarketPulse: async (): Promise<any> => {
     return safeApiCall(
       async () => await api.get('/api/insights/market-pulse'),
-      { pulse: {} }
+      { pulse: {}, trends: [] }
     );
+  }
+};
+
+// Image API
+export const imageApi = {
+  getAlbumImage: (artist: string, track: string): string => {
+    // 직접 URL 생성 (API 호출 없이)
+    return `${API_URL}/api/album-image-v2/${encodeURIComponent(artist)}/${encodeURIComponent(track)}`;
   },
-  getDailyInsights: async (): Promise<any> => {
+  
+  checkImageStatus: async (): Promise<any> => {
     return safeApiCall(
-      async () => await api.get('/api/insights/daily'),
-      { insights: [] }
-    );
-  },
-  getArtistInsights: async (name: string): Promise<any> => {
-    return safeApiCall(
-      async () => await api.get(`/api/insights/artist/${name}`),
-      { insights: {} }
+      async () => await api.get('/api/images/check'),
+      { status: 'unknown', count: 0 }
     );
   }
 };
 
-// Track API
-export const trackApi = {
-  getTrackDetail: async (artist: string, track: string): Promise<any> => {
-    return safeApiCall(
-      async () => await api.get(`/api/track/${encodeURIComponent(artist)}/${encodeURIComponent(track)}`),
-      null
-    );
+// Health Check
+export const healthCheck = async (): Promise<boolean> => {
+  try {
+    const response = await api.get('/api/health');
+    return response.data.status === 'healthy';
+  } catch (error) {
+    console.error('Health check failed:', error);
+    return false;
   }
 };
 
-// News API
-export const newsApi = {
-  getNews: async (query?: string): Promise<any> => {
-    const params = query ? { q: query } : {};
-    return safeApiCall(
-      async () => await api.get('/api/news', { params }),
-      { news: [] }
-    );
-  }
-};
-
-// Goods API
-export const goodsApi = {
-  getGoods: async (artist?: string): Promise<any> => {
-    const params = artist ? { artist } : {};
-    return safeApiCall(
-      async () => await api.get('/api/goods', { params }),
-      { goods: [] }
-    );
-  }
-};
-
-// AI Match API
-export const aiMatchApi = {
-  getArtistMatch: async (artist: string): Promise<any> => {
-    return safeApiCall(
-      async () => await api.get(`/api/ai-match/artist/${encodeURIComponent(artist)}`),
-      { match: null }
-    );
-  }
-};
-
-// 이미지 URL 생성 함수
-export const getAlbumImageUrl = (artist: string, track: string) => {
-  return `${API_URL}/api/album-image-v2/${encodeURIComponent(artist)}/${encodeURIComponent(track)}`;
-};
-
-// 기본 export
+// Export default instance
 export default api;
-
-// API URL export
-export { API_URL };
