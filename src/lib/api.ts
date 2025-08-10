@@ -71,6 +71,11 @@ export function getImageUrl(artist: string, track: string): string {
 
 // SmartSearchBox 등에서 사용
 export const searchApi = {
+  // 🔽 이 줄 추가
+  autocomplete(q: string) {
+    return apiCall(`${API_ENDPOINTS.autocomplete}?q=${encodeURIComponent(q ?? '')}`);
+  },
+
   search(q: string) {
     return apiCall(`${API_ENDPOINTS.search}?q=${encodeURIComponent(q ?? '')}`);
   },
@@ -82,7 +87,7 @@ export const searchApi = {
   },
   getArtistTracks(artist: string) {
     return apiCall(API_ENDPOINTS.artistTracks(artist));
-  },
+  }
 };
 
 export const chartApi = {
