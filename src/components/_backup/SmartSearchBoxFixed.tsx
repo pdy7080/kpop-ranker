@@ -20,7 +20,7 @@ interface SmartSearchBoxProps {
   size?: 'normal' | 'large';
 }
 
-const SmartSearchBox: React.FC<SmartSearchBoxProps> = ({ 
+const SmartSearchBoxFixed: React.FC<SmartSearchBoxProps> = ({ 
   onSearch = null, 
   placeholder = "아티스트와 곡명을 아무렇게나 입력하세요 (예: 뉴진스 하입보이, 방탄 버터)",
   className = "",
@@ -47,6 +47,7 @@ const SmartSearchBox: React.FC<SmartSearchBoxProps> = ({
     { text: "아이브 러다", artist: "IVE", track: "Love Dive" },
   ];
 
+  // 🔥 메인 페이지와 동일한 스마트 라우팅 로직 적용 + 곡명 검색 개선
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const trimmedQuery = query?.trim() || '';
@@ -55,175 +56,132 @@ const SmartSearchBox: React.FC<SmartSearchBoxProps> = ({
       return;
     }
     
-    setIsLoading(true);
-    
-    try {
-      // 한글 아티스트명 매핑 체크
-      const koreanToEnglish: Record<string, string> = {
-        '르세라핌': 'LE SSERAFIM',
-        '뉴진스': 'NewJeans',
-        '에스파': 'aespa',
-        '블랙핑크': 'BLACKPINK',
-        '아이브': 'IVE',
-        '세븐틴': 'SEVENTEEN',
-        '아이유': 'IU',
-        '트와이스': 'TWICE',
-        '있지': 'ITZY',
-        '스테이씨': 'STAYC',
-        '엔하이픈': 'ENHYPEN',
-        '스트레이키즈': 'Stray Kids',
-        '에이티즈': 'ATEEZ',
-        '트레저': 'TREASURE',
-        '피프티피프티': 'FIFTY FIFTY',
-        '데이식스': 'DAY6',
-        '키스오브라이프': 'KISS OF LIFE',
-        '투모로우바이투게더': 'TXT',
-        '방탄소년단': 'BTS',
-        '엔시티': 'NCT',
-        '엔시티드림': 'NCT DREAM',
-        '엔믹스': 'NMIXX',
-        '케플러': 'Kep1er',
-        '라이즈': 'RIIZE',
-        '제로베이스원': 'ZEROBASEONE',
-        '보이넥스트도어': 'BOYNEXTDOOR'
-      };
-      
-      // 한글 아티스트명이면 바로 아티스트 페이지로
-      if (koreanToEnglish[trimmedQuery]) {
-        const englishName = koreanToEnglish[trimmedQuery];
-        console.log(`한글 아티스트 감지: ${trimmedQuery} -> ${englishName}`);
-        
-        if (onSearch) {
-          onSearch(englishName, '');
-        } else {
-          await router.push(`/artist/${encodeURIComponent(englishName)}`);
-        }
-        setQuery('');
-        setIsLoading(false);
-        return;
-      }
-      
-      // DB에서 검색하여 타입 확인
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
-      
-      // 1. 자동완성 API로 타입 확인
-      const checkUrl = `${apiUrl}/api/autocomplete/unified?q=${encodeURIComponent(trimmedQuery)}&limit=5`;
-      const response = await fetch(checkUrl);
-      
-      if (response.ok) {
-        const data = await response.json();
-        if (data.suggestions && data.suggestions.length > 0) {
-          // 정확히 일치하는 것 찾기
-          for (const suggestion of data.suggestions) {
-            // 아티스트 타입이고 이름이 일치하면
-            if (suggestion.type === 'artist' && 
-                (suggestion.artist?.toLowerCase() === trimmedQuery.toLowerCase() ||
-                 suggestion.display?.toLowerCase() === trimmedQuery.toLowerCase())) {
-              // 🎯 artist_normalized 우선 사용
-              const artistForRoute = suggestion.artist_normalized || suggestion.artist || trimmedQuery;
-              // onSearch가 있으면 호출, 없으면 라우팅
-              if (onSearch) {
-                onSearch(artistForRoute, '');
-              } else {
-                await router.push(`/artist/${encodeURIComponent(artistForRoute)}`);
-              }
-              setQuery('');
-              setIsLoading(false);
-              return;
-            }
-            // 트랙 타입이고 곡명이 일치하면
-            if (suggestion.type === 'track' && 
-                (suggestion.track?.toLowerCase() === trimmedQuery.toLowerCase() ||
-                 suggestion.display?.toLowerCase().includes(trimmedQuery.toLowerCase()))) {
-              // 🎯 artist_normalized 우선 사용
-              const artistForRoute = suggestion.artist_normalized || suggestion.artist;
-              // onSearch가 있으면 호출, 없으면 라우팅
-              if (onSearch) {
-                onSearch(artistForRoute, suggestion.track);
-              } else {
-                await router.push(`/track/${encodeURIComponent(artistForRoute)}/${encodeURIComponent(suggestion.track)}`);
-              }
-              setQuery('');
-              setIsLoading(false);
-              return;
-            }
-          }
-        }
-      }
-      
-      // 2. 자동완성에 없으면 일반 검색 API로 확인
-      const searchUrl = `${apiUrl}/api/search?q=${encodeURIComponent(trimmedQuery)}`;
-      const searchResponse = await fetch(searchUrl);
-      
-      if (searchResponse.ok) {
-        const searchData = await searchResponse.json();
-        
-        // 검색 결과가 있는지 확인
-        if (searchData.results && searchData.results.length > 0) {
-          const firstResult = searchData.results[0];
-          if (firstResult.tracks && firstResult.tracks.length > 0) {
-            const firstTrack = firstResult.tracks[0];
-            
-            // 아티스트명과 일치하면 아티스트 페이지로
-            if (firstTrack.artist?.toLowerCase() === trimmedQuery.toLowerCase()) {
-              // 🎯 artist_normalized 우선 사용
-              const artistForRoute = firstTrack.artist_normalized || firstTrack.artist;
-              if (onSearch) {
-                onSearch(artistForRoute, '');
-              } else {
-                await router.push(`/artist/${encodeURIComponent(artistForRoute)}`);
-              }
-              setQuery('');
-              setIsLoading(false);
-              return;
-            }
-            
-            // 곡명과 일치하면 트랙 페이지로
-            if (firstTrack.track?.toLowerCase() === trimmedQuery.toLowerCase()) {
-              // 🎯 artist_normalized 우선 사용
-              const artistForRoute = firstTrack.artist_normalized || firstTrack.artist;
-              if (onSearch) {
-                onSearch(artistForRoute, firstTrack.track);
-              } else {
-                await router.push(`/track/${encodeURIComponent(artistForRoute)}/${encodeURIComponent(firstTrack.track)}`);
-              }
-              setQuery('');
-              setIsLoading(false);
-              return;
-            }
-            
-            // 일치하는 것이 없으면 검색 결과 페이지로
-            if (onSearch) {
-              onSearch(trimmedQuery, '');
-            } else {
-              await router.push(`/search?q=${encodeURIComponent(trimmedQuery)}`);
-            }
-          }
-        } else {
-          // 검색 결과가 없으면 알림
-          toast.error('검색 결과가 없습니다. 다시 검색해주세요.');
-        }
+    // 🎯 메인 페이지와 동일한 스마트 라우팅 로직 적용
+    // onSearch가 있으면 onSearch 사용 (기존 동작 유지)
+    if (onSearch) {
+      const parts = trimmedQuery.split(/\s+/).filter(Boolean);
+      if (parts.length === 1) {
+        onSearch(parts[0], '');
       } else {
-        // API 오류 시
-        toast.error('검색 중 오류가 발생했습니다.');
+        onSearch(trimmedQuery, '');
+      }
+      return;
+    }
+    
+    // onSearch가 없으면 스마트 라우팅 적용
+    try {
+      console.log('🔍 스마트 검색 시작:', trimmedQuery);
+      
+      // 🎯 1단계: 실시간 자동완성으로 아티스트/곡 확인
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+      const autocompleteUrl = `${apiUrl}/api/autocomplete/unified?q=${encodeURIComponent(trimmedQuery)}&limit=10`;
+      
+      console.log('🔍 실시간 자동완성 확인:', autocompleteUrl);
+      
+      let realTimeSuggestions = [];
+      try {
+        const response = await fetch(autocompleteUrl);
+        if (response.ok) {
+          const data = await response.json();
+          realTimeSuggestions = data.suggestions || [];
+          console.log('✅ 실시간 자동완성 결과:', realTimeSuggestions);
+        }
+      } catch (e) {
+        console.log('⚠️ 실시간 자동완성 실패, 직접 검색 진행:', e);
+      }
+      
+      // 🎯 2단계: 정확한 매칭 확인 - 아티스트와 곡 모두 체크
+      const exactArtistMatch = realTimeSuggestions.find((s: any) => 
+        s.type === 'artist' && 
+        s.artist.toLowerCase() === trimmedQuery.toLowerCase()
+      );
+      
+      const exactTrackMatch = realTimeSuggestions.find((s: any) => 
+        s.type === 'track' && 
+        s.track && s.track.toLowerCase() === trimmedQuery.toLowerCase()
+      );
+      
+      const similarArtistMatch = realTimeSuggestions.find((s: any) => 
+        s.type === 'artist' && 
+        (s.artist.toLowerCase().includes(trimmedQuery.toLowerCase()) ||
+         trimmedQuery.toLowerCase().includes(s.artist.toLowerCase()))
+      );
+      
+      const similarTrackMatch = realTimeSuggestions.find((s: any) => 
+        s.type === 'track' && s.track &&
+        (s.track.toLowerCase().includes(trimmedQuery.toLowerCase()) ||
+         trimmedQuery.toLowerCase().includes(s.track.toLowerCase()))
+      );
+      
+      // 🎯 3단계: 곡 우선 라우팅 - 곡 상세 페이지로 바로 이동 (메인 페이지와 동일)
+      if (exactTrackMatch) {
+        // 🎯 정확한 곡 매칭: 곡 상세 페이지로 바로 이동
+        if (exactTrackMatch.artist && exactTrackMatch.artist.trim()) {
+          console.log('🎯 정확한 곡 매칭: 곡 상세 페이지로 이동:', exactTrackMatch);
+          router.push(`/track/${encodeURIComponent(exactTrackMatch.artist)}/${encodeURIComponent(exactTrackMatch.track)}`);
+        } else {
+          // 🚨 아티스트 정보 없음 → 자동완성에서 아티스트 찾아서 매칭 시도
+          const artistFromSuggestions = realTimeSuggestions.find((s: any) => 
+            s.type === 'artist' && s.artist && s.artist.trim()
+          );
+          
+          if (artistFromSuggestions) {
+            console.log('🎯 아티스트 매칭 성공: 곡 상세 페이지로 이동:', artistFromSuggestions.artist, exactTrackMatch.track);
+            router.push(`/track/${encodeURIComponent(artistFromSuggestions.artist)}/${encodeURIComponent(exactTrackMatch.track)}`);
+          } else {
+            console.log('⚠️ 아티스트 매칭 실패: 검색 페이지로 이돐');
+            router.push(`/search?q=${encodeURIComponent(trimmedQuery)}`);
+          }
+        }
+      } else if (exactArtistMatch) {
+        // 🎯 정확한 아티스트 매칭: 아티스트 상세 페이지
+        console.log('🎯 정확한 아티스트 매칭: 아티스트 상세 페이지로 이동:', exactArtistMatch);
+        router.push(`/artist/${encodeURIComponent(exactArtistMatch.artist)}`);
+      } else if (similarTrackMatch) {
+        // 🎯 비슷한 곡 매칭: 곡 상세 페이지로 바로 이동
+        if (similarTrackMatch.artist && similarTrackMatch.artist.trim()) {
+          console.log('🎯 비슷한 곡 매칭: 곡 상세 페이지로 이동:', similarTrackMatch);
+          router.push(`/track/${encodeURIComponent(similarTrackMatch.artist)}/${encodeURIComponent(similarTrackMatch.track)}`);
+        } else {
+          // 🚨 아티스트 정보 없음 → 자동완성에서 아티스트 찾아서 매칭 시도
+          const artistFromSuggestions = realTimeSuggestions.find((s: any) => 
+            s.type === 'artist' && s.artist && s.artist.trim()
+          );
+          
+          if (artistFromSuggestions) {
+            console.log('🎯 아티스트 매칭 성공: 곡 상세 페이지로 이동:', artistFromSuggestions.artist, similarTrackMatch.track);
+            router.push(`/track/${encodeURIComponent(artistFromSuggestions.artist)}/${encodeURIComponent(similarTrackMatch.track)}`);
+          } else {
+            console.log('⚠️ 아티스트 매칭 실패: 검색 페이지로 이돐');
+            router.push(`/search?q=${encodeURIComponent(trimmedQuery)}`);
+          }
+        }
+      } else if (similarArtistMatch) {
+        // 🎯 비슷한 아티스트 매칭: 아티스트 상세 페이지
+        console.log('🎯 비슷한 아티스트 매칭: 아티스트 상세 페이지로 이동:', similarArtistMatch);
+        router.push(`/artist/${encodeURIComponent(similarArtistMatch.artist)}`);
+      } else {
+        // 🎯 매칭이 없으면 범용 검색 결과 페이지
+        console.log('🔥 매칭 없음: 범용 검색 페이지로 이동');
+        router.push(`/search?q=${encodeURIComponent(trimmedQuery)}`);
       }
       
     } catch (error) {
-      console.error('검색 중 오류:', error);
-      toast.error('검색 중 오류가 발생했습니다.');
-    } finally {
-      setIsLoading(false);
-      setQuery('');
+      console.error('🚨 검색 페이지 이동 중 오류:', error);
+      router.push(`/search?q=${encodeURIComponent(trimmedQuery)}`);
     }
   };
 
+  // 🔥 예시 클릭도 곡 상세 페이지로 수정
   const handleExampleClick = (example: typeof searchExamples[0]) => {
     setQuery(example.text);
     
-    // onSearch가 없으면 곡 상세 페이지로 직접 이동
+    // 🔥 포트폴리오 검색도 곡 상세 페이지로 바로 이동 (메인 페이지와 동일)
     if (!onSearch) {
+      console.log('🎯 포트폴리오에서 곡 상세 페이지로 이동: →', `${example.artist} - ${example.track}`);
       router.push(`/track/${encodeURIComponent(example.artist)}/${encodeURIComponent(example.track)}`);
     } else {
+      // 🔥 포트폴리오에서 onSearch 사용 (기존 동작 유지)
       onSearch(example.artist, example.track);
     }
     
@@ -325,7 +283,7 @@ const SmartSearchBox: React.FC<SmartSearchBoxProps> = ({
             <div className="p-4">
               <p className="text-sm text-gray-500 dark:text-gray-400 mb-3 flex items-center">
                 <FaInfoCircle className="w-4 h-4 mr-2" />
-                오타나 줄임말도 정확히 찾아드려요!
+                🔥 곡명 검색도 완벽 지원! 아티스트/곡 모두 스마트 라우팅!
               </p>
               <div className="space-y-2">
                 {searchExamples.map((example, index) => (
@@ -337,7 +295,7 @@ const SmartSearchBox: React.FC<SmartSearchBoxProps> = ({
                     className="w-full text-left p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-dark-300 transition-colors"
                   >
                     <p className="text-sm text-gray-600 dark:text-gray-300">
-                      "{example.text}" → {example.artist} - {example.track}
+                      "{example.text}" → {example.artist} - {example.track} 곡 차트
                     </p>
                   </motion.button>
                 ))}
@@ -379,4 +337,4 @@ const SmartSearchBox: React.FC<SmartSearchBoxProps> = ({
   );
 };
 
-export default SmartSearchBox;
+export default SmartSearchBoxFixed;

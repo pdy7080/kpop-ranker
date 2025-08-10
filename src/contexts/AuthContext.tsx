@@ -74,8 +74,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const login = async (provider: string, code?: string): Promise<boolean> => {
     try {
       setIsLoading(true);
-      // OAuth 로그인은 아직 구현되지 않았으므로 데모 로그인 사용
-      const response = await authApi.demoLogin(provider);
+      const response = await authApi.login(provider, code);
       
       // 백엔드는 'token'을 반환하고, 'access_token'이 아님
       if (response && response.data) {
@@ -106,7 +105,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const demoLogin = async (name = 'Demo User', email = 'demo@kpopranker.com'): Promise<boolean> => {
     try {
       setIsLoading(true);
-      const response = await authApi.demoLogin(name || 'Demo User');
+      const response = await authApi.demoLogin(name, email);
       
       // 백엔드는 'token'을 반환하고, 'access_token'이 아님
       if (response && response.data) {

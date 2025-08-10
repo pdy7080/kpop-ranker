@@ -1,282 +1,95 @@
-// API 라이브러리 - Vercel 배포용 (최종 수정)
-// CORS 및 API 연동 문제 완전 해결
+// API 설정 - CORS 문제 해결을 위한 프록시 사용
 
-import axios from 'axios';
+const isDevelopment = process.env.NODE_ENV === 'development';
 
-// API URL 설정 - 백엔드 확인
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.kpopranker.chargeapp.net';
+// 프록시를 통한 API 호출 (CORS 우회)
+export const API_BASE = '';  // 프록시 사용 시 빈 문자열
 
-console.log('API URL configured:', API_URL);
-
-// Axios 인스턴스 생성
-const api = axios.create({
-  baseURL: API_URL,
-  timeout: 30000,
-  headers: {
-    'Content-Type': 'application/json',
-    'Accept': 'application/json',
+// API 엔드포인트들
+export const API_ENDPOINTS = {
+  // 검색
+  search: '/api/search',
+  search2: '/api/search2',
+  autocomplete: '/api/autocomplete/unified',
+  
+  // 트렌딩
+  trending: '/api/trending',
+  
+  // 아티스트
+  artist: (name: string) => `/api/artist/${encodeURIComponent(name)}/complete`,
+  artistTracks: (name: string) => `/api/artist/${encodeURIComponent(name)}/tracks`,
+  
+  // 이미지 - 한글 파라미터 인코딩 필수!
+  albumImage: (artist: string, track: string) => 
+    `/api/album-image-v2/${encodeURIComponent(artist)}/${encodeURIComponent(track)}`,
+  
+  // 포트폴리오
+  portfolio: '/api/portfolio',
+  
+  // 인증
+  auth: {
+    login: '/api/auth/demo-login',
+    logout: '/api/auth/logout',
+    status: '/api/auth/status',
+    user: '/api/auth/user'
   },
-  // CORS 인증 정보 포함
-  withCredentials: false  // 일단 false로 설정 (쿠키 불필요)
-});
-
-// 요청 인터셉터
-api.interceptors.request.use(
-  (config) => {
-    // 브라우저 환경에서만 실행
-    if (typeof window !== 'undefined') {
-      const token = localStorage.getItem('auth_token');
-      if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
-      }
-    }
-    console.log('API Request:', config.method?.toUpperCase(), config.url, config.params);
-    return config;
+  
+  // 차트
+  chartHistory: (chart: string, artist: string, track: string) => 
+    `/api/chart/history/${chart}/${encodeURIComponent(artist)}/${encodeURIComponent(track)}`,
+  chartSummary: (artist: string, track: string) => 
+    `/api/charts/summary/${encodeURIComponent(artist)}/${encodeURIComponent(track)}`,
+  chartUpdateStatus: '/api/chart/update-status',
+  
+  // 인사이트
+  insights: {
+    daily: '/api/insights/daily',
+    marketPulse: '/api/insights/market-pulse',
+    recommendations: '/api/insights/recommendations',
+    artist: (name: string) => `/api/insights/artist/${encodeURIComponent(name)}`
   },
-  (error) => {
-    console.error('Request Error:', error);
-    return Promise.reject(error);
-  }
-);
+  
+  // 뉴스/굿즈
+  news: '/api/news',
+  goods: '/api/goods'
+};
 
-// 응답 인터셉터
-api.interceptors.response.use(
-  (response) => {
-    console.log('API Response:', response.config.url, response.status);
-    return response;
-  },
-  (error) => {
-    if (error.response) {
-      console.error('API Error:', error.response.status, error.response.data);
-      // CORS 에러 처리
-      if (error.response.status === 0 || !error.response.status) {
-        console.error('CORS Error detected. Check backend CORS settings.');
-      }
-    } else if (error.request) {
-      console.error('Network Error:', error.message);
-    } else {
-      console.error('Error:', error.message);
-    }
-    return Promise.reject(error);
-  }
-);
-
-// 안전한 API 호출 헬퍼
-const safeApiCall = async <T>(
-  apiCall: () => Promise<any>,
-  fallbackData: T
-): Promise<T> => {
+// API 호출 헬퍼 함수
+export async function apiCall(endpoint: string, options?: RequestInit) {
   try {
-    const response = await apiCall();
-    return response.data || response;
+    const response = await fetch(`${API_BASE}${endpoint}`, {
+      ...options,
+      headers: {
+        'Content-Type': 'application/json',
+        ...options?.headers,
+      },
+      credentials: 'include',  // 쿠키 포함
+    });
+    
+    if (!response.ok) {
+      throw new Error(`API Error: ${response.status}`);
+    }
+    
+    return await response.json();
   } catch (error) {
-    console.warn('API call failed, using fallback data:', error);
-    return fallbackData;
+    console.error('API Call Error:', error);
+    throw error;
   }
-};
+}
 
-// Search API
-export const searchApi = {
-  search: async (artist: string, track: string): Promise<any> => {
-    return safeApiCall(async () => {
-      if (track && track.trim() !== '' && track !== artist) {
-        return await api.get('/api/search2', {
-          params: { artist, track }
-        });
-      } else {
-        const query = track || artist;
-        return await api.get('/api/search', {
-          params: { q: query }
-        });
-      }
-    }, { results: [], message: 'No results found' });
-  },
+// 이미지 URL 생성 함수 (한글 인코딩 처리)
+export function getImageUrl(artist: string, track: string): string {
+  // 한글 파라미터 인코딩
+  const encodedArtist = encodeURIComponent(artist);
+  const encodedTrack = encodeURIComponent(track);
   
-  unifiedSearch: async (query: string): Promise<any> => {
-    return safeApiCall(
-      async () => await api.get('/api/search', { params: { q: query } }),
-      { results: [], message: 'No results found' }
-    );
-  },
-  
-  autocomplete: async (query: string): Promise<any> => {
-    return safeApiCall(
-      async () => await api.get('/api/autocomplete/unified', { 
-        params: { q: query, limit: 10 } 
-      }),
-      { suggestions: [] }
-    );
-  }
-};
+  // 프록시를 통한 이미지 URL
+  return `${API_BASE}/api/album-image-v2/${encodedArtist}/${encodedTrack}`;
+}
 
-// Trending API
-export const trendingApi = {
-  getTrending: async (type: string = 'all', limit: number = 10): Promise<any> => {
-    return safeApiCall(
-      async () => await api.get('/api/trending', { 
-        params: { type, limit } 
-      }),
-      { 
-        trending: [],
-        message: 'No trending data available'
-      }
-    );
-  }
+export default {
+  API_BASE,
+  API_ENDPOINTS,
+  apiCall,
+  getImageUrl
 };
-
-// Artist API
-export const artistApi = {
-  getArtistComplete: async (artistName: string): Promise<any> => {
-    return safeApiCall(
-      async () => await api.get(`/api/artist/${encodeURIComponent(artistName)}/complete`),
-      { 
-        artist: artistName,
-        tracks: [],
-        stats: {},
-        message: 'Artist data not found'
-      }
-    );
-  },
-  
-  getArtistTracks: async (artistName: string): Promise<any> => {
-    return safeApiCall(
-      async () => await api.get(`/api/artist/${encodeURIComponent(artistName)}/tracks`),
-      { tracks: [] }
-    );
-  }
-};
-
-// Chart API
-export const chartApi = {
-  getChartHistory: async (chart: string, artist: string, track: string): Promise<any> => {
-    return safeApiCall(
-      async () => await api.get(`/api/chart/history/${chart}/${encodeURIComponent(artist)}/${encodeURIComponent(track)}`),
-      { history: [], message: 'No history available' }
-    );
-  },
-  
-  getChartSummary: async (artist: string, track: string): Promise<any> => {
-    return safeApiCall(
-      async () => await api.get(`/api/charts/summary/${encodeURIComponent(artist)}/${encodeURIComponent(track)}`),
-      { summary: {}, charts: [] }
-    );
-  },
-  
-  getUpdateStatus: async (): Promise<any> => {
-    return safeApiCall(
-      async () => await api.get('/api/chart/update-status'),
-      { status: 'unknown', last_update: null }
-    );
-  }
-};
-
-// Portfolio API
-export const portfolioApi = {
-  getPortfolio: async (): Promise<any> => {
-    return safeApiCall(
-      async () => await api.get('/api/portfolio'),
-      { items: [] }
-    );
-  },
-  
-  addToPortfolio: async (item: any): Promise<any> => {
-    return safeApiCall(
-      async () => await api.post('/api/portfolio', item),
-      { success: false, message: 'Failed to add' }
-    );
-  },
-  
-  removeFromPortfolio: async (id: string): Promise<any> => {
-    return safeApiCall(
-      async () => await api.delete(`/api/portfolio/${id}`),
-      { success: false, message: 'Failed to remove' }
-    );
-  }
-};
-
-// Auth API
-export const authApi = {
-  demoLogin: async (name?: string, email?: string): Promise<any> => {
-    return safeApiCall(
-      async () => await api.post('/api/auth/demo-login', { 
-        name: name || 'Demo User',
-        email: email || 'demo@kpopranker.com'
-      }),
-      { success: false, message: 'Login failed' }
-    );
-  },
-  
-  logout: async (): Promise<any> => {
-    return safeApiCall(
-      async () => await api.post('/api/auth/logout'),
-      { success: true }
-    );
-  },
-  
-  getStatus: async (): Promise<any> => {
-    return safeApiCall(
-      async () => await api.get('/api/auth/status'),
-      { authenticated: false }
-    );
-  },
-  
-  getUser: async (): Promise<any> => {
-    return safeApiCall(
-      async () => await api.get('/api/auth/user'),
-      { user: null }
-    );
-  }
-};
-
-// Insights API
-export const insightsApi = {
-  getDaily: async (): Promise<any> => {
-    return safeApiCall(
-      async () => await api.get('/api/insights/daily'),
-      { insights: [], date: new Date().toISOString() }
-    );
-  },
-  
-  getRecommendations: async (): Promise<any> => {
-    return safeApiCall(
-      async () => await api.get('/api/insights/recommendations'),
-      { recommendations: [] }
-    );
-  },
-  
-  getMarketPulse: async (): Promise<any> => {
-    return safeApiCall(
-      async () => await api.get('/api/insights/market-pulse'),
-      { pulse: {}, trends: [] }
-    );
-  }
-};
-
-// Image API
-export const imageApi = {
-  getAlbumImage: (artist: string, track: string): string => {
-    // 직접 URL 생성 (API 호출 없이)
-    return `${API_URL}/api/album-image-v2/${encodeURIComponent(artist)}/${encodeURIComponent(track)}`;
-  },
-  
-  checkImageStatus: async (): Promise<any> => {
-    return safeApiCall(
-      async () => await api.get('/api/images/check'),
-      { status: 'unknown', count: 0 }
-    );
-  }
-};
-
-// Health Check
-export const healthCheck = async (): Promise<boolean> => {
-  try {
-    const response = await api.get('/api/health');
-    return response.data.status === 'healthy';
-  } catch (error) {
-    console.error('Health check failed:', error);
-    return false;
-  }
-};
-
-// Export default instance
-export default api;

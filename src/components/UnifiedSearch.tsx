@@ -8,6 +8,7 @@ interface Suggestion {
   id: string;
   type: 'artist' | 'track' | 'popular';
   artist: string;
+  artist_normalized?: string;  // 🎯 추가
   track: string | null;
   display: string;
   matched_text: string;
@@ -64,6 +65,7 @@ export default function UnifiedSearch() {
               id: `artist_${index}`,
               type: 'artist',
               artist: artistName,
+              artist_normalized: item.artist_normalized || item.normalized,  // 🎯 추가
               track: null,
               display: item.display || artistName,
               matched_text: artistName,
@@ -76,6 +78,7 @@ export default function UnifiedSearch() {
               id: `track_${index}`,
               type: 'track',
               artist: artistName,
+              artist_normalized: item.artist_normalized || item.normalized,  // 🎯 추가
               track: item.matched_by || item.track || '',
               display: item.display,
               matched_text: item.matched_by || item.track || '',
@@ -107,6 +110,7 @@ export default function UnifiedSearch() {
                     id: `track_${chart.artist}_${chart.track}`,
                     type: 'track',
                     artist: chart.artist,
+                    artist_normalized: chart.artist_normalized,  // 🎯 추가
                     track: chart.track,
                     display: `${chart.artist} - ${chart.track}`,
                     matched_text: chart.track,
@@ -306,14 +310,16 @@ export default function UnifiedSearch() {
     try {
       if (suggestion.type === 'artist') {
         // 아티스트는 아티스트 상세 페이지로 이동
-        // artist, matched_text, display 순서로 확인
-        const artistName = suggestion.artist || suggestion.matched_text || suggestion.display;
+        // 🎯 artist_normalized 우선 사용
+        const artistName = suggestion.artist_normalized || suggestion.artist || suggestion.matched_text || suggestion.display;
         const artistPath = `/artist/${encodeURIComponent(artistName)}`;
         console.log('아티스트 상세 페이지로 이동:', artistPath);
         router.push(artistPath);
       } else if (suggestion.type === 'track' || suggestion.type === 'popular') {
         // 트랙은 트랙 상세 페이지로 이동
-        const trackPath = `/track/${encodeURIComponent(suggestion.artist)}/${encodeURIComponent(suggestion.track || '')}`;
+        // 🎯 artist_normalized 우선 사용
+        const artistForRoute = suggestion.artist_normalized || suggestion.artist;
+        const trackPath = `/track/${encodeURIComponent(artistForRoute)}/${encodeURIComponent(suggestion.track || '')}`;
         console.log('트랙 상세 페이지로 이동:', trackPath);
         router.push(trackPath);
       } else {

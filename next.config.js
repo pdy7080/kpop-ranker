@@ -3,32 +3,48 @@ const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
   
-  // TypeScript 빌드 오류 무시
-  typescript: {
-    ignoreBuildErrors: true,
-  },
-  
-  // ESLint 오류 무시
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
-  
+  // 이미지 도메인 허용
   images: {
-    domains: [
-      'localhost',
-      'api.kpopranker.chargeapp.net',
-      'cdn.pixabay.com',
-      'via.placeholder.com'
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'api.kpopranker.chargeapp.net',
+        pathname: '/**',
+      },
+      {
+        protocol: 'http',
+        hostname: 'localhost',
+        port: '5000',
+        pathname: '/**',
+      },
+      {
+        protocol: 'http',
+        hostname: 'localhost',
+        port: '3007',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'cdn.pixabay.com',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'via.placeholder.com',
+        pathname: '/**',
+      }
     ],
-    unoptimized: true
+    unoptimized: false  // 이미지 최적화 활성화
   },
   
-  // API 라우트 설정
+  // API 프록시 설정 (개발 환경용)
   async rewrites() {
     return [
       {
         source: '/api/:path*',
-        destination: 'https://api.kpopranker.chargeapp.net/api/:path*',
+        destination: process.env.NODE_ENV === 'development' 
+          ? 'http://localhost:5000/api/:path*'
+          : 'https://api.kpopranker.chargeapp.net/api/:path*',
       },
     ];
   },
@@ -47,8 +63,11 @@ const nextConfig = {
     ];
   },
   
+  // 환경변수 설정
   env: {
-    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'https://api.kpopranker.chargeapp.net'
+    NEXT_PUBLIC_API_URL: process.env.NODE_ENV === 'development'
+      ? 'http://localhost:5000'
+      : 'https://api.kpopranker.chargeapp.net'
   }
 }
 

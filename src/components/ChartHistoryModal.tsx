@@ -73,7 +73,7 @@ const ChartHistoryModal: React.FC<ChartHistoryModalProps> = ({
   const fetchChartHistory = async () => {
     setLoading(true);
     try {
-      const response = await chartApi.getChartHistory(chart, artist, track) as ChartHistoryResponse;
+      const response = await chartApi.getHistory(chart, artist, track, 30) as ChartHistoryResponse;
       // response가 이미 데이터 객체임 (safeApiCall에서 response.data를 반환)
       setHistory(response.history || []);
       setRankChange(response.rank_change || 0);

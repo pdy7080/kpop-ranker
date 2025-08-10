@@ -46,7 +46,7 @@ interface PortfolioItem {
   perfect_system: boolean;
 }
 
-export default function PortfolioPage() {
+export default function FinalFixedPortfolioPage() {
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
   

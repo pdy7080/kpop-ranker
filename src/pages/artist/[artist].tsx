@@ -5,7 +5,7 @@
  * - 스마트스토어 굿즈 연동
  */
 import React, { useState, useEffect } from 'react';
-import { useRouter } from '@/hooks/useRouter';
+import { useRouter } from 'next/router';
 import Head from 'next/head';
 import Layout from '@/components/Layout';
 import ImageWithFallback from '@/components/ImageWithFallback';

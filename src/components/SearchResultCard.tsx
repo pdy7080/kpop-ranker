@@ -4,6 +4,7 @@ import AlbumImage from './AlbumImage';
 
 interface Track {
   artist: string;
+  artist_normalized?: string;  // 정규화된 아티스트명
   track: string;
   rank: number | null;
   views: string;
@@ -60,13 +61,13 @@ const SearchResultCard: React.FC<SearchResultCardProps> = ({
               <div className="flex-grow">
                 <div 
                   className="font-medium text-gray-900 cursor-pointer hover:text-purple-600"
-                  onClick={() => onTrackClick?.(track.artist, track.track)}
+                  onClick={() => onTrackClick?.(track.artist_normalized || track.artist, track.track)}
                 >
                   {track.track}
                 </div>
                 <div 
                   className="text-sm text-gray-600 cursor-pointer hover:text-purple-600"
-                  onClick={() => onArtistClick?.(track.artist)}
+                  onClick={() => onArtistClick?.(track.artist_normalized || track.artist)}
                 >
                   {track.artist}
                 </div>
