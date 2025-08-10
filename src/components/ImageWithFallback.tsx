@@ -32,31 +32,12 @@ const HUNTR_REAL_IMAGES = {
 /**
  * 🎯 한글 아티스트 직접 매핑 - URL 인코딩 문제 해결!
  */
-const KOREAN_ARTIST_MAP = {
-  '임영웅': 'LimYoungWoong',
-  '이무진': 'LeeMujin', 
-  '아이유': 'IU',
-  '뉴진스': 'NewJeans',
-  'NewJeans': 'NewJeans',
-  '블랙핑크': 'BLACKPINK',
-  'BLACKPINK': 'BLACKPINK',
-  '에스파': 'aespa',
-  'aespa': 'aespa'
-} as const;
-
+const KOREAN_ARTIST_MAP = {} as const;
+ 
 /**
  * 🎯 한글 트랙 직접 매핑 - 중요한 곡들
  */
-const KOREAN_TRACK_MAP = {
-  '사랑은 늘 도망가': 'sarangeun_neul_domangga',
-  '에피소드': 'episode',
-  '천국보다 아름다운': 'cheonguk_boda_areumdaun',
-  '우리들의 블루스': 'urideurui_blues',
-  '다시 만날 수 있을까': 'dasi_mannal_su_isseulkka',
-  '이제 나만 믿어요': 'ije_naman_mideoyo',
-  '모래 알갱이': 'morae_algaengi',
-  '청춘만화': 'cheongchun_manhwa'
-} as const;
+const KOREAN_ARTIST_MAP = {} as const;
 
 /**
  * 🔧 트랙명 정제 함수 - 복잡한 트랙명 처리
