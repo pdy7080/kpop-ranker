@@ -67,27 +67,37 @@ export function getImageUrl(artist: string, track: string): string {
   return API_ENDPOINTS.albumImage(artist, track);
 }
 
-// ---- Named APIs ----
+/* ------------------ Named APIs ------------------ */
+
+// 내부 헬퍼: 검색 오버로드 (1개/2개 인자 모두 지원)
+function _search(q: string): Promise<any>;
+function _search(artist: string, track: string): Promise<any>;
+function _search(a: string, b?: string) {
+  if (typeof b === 'string') {
+    // 아티스트+트랙 쿼리
+    return apiCall(
+      `${API_ENDPOINTS.search2}?artist=${encodeURIComponent(a ?? '')}&track=${encodeURIComponent(b ?? '')}`
+    );
+  }
+  // 자유 입력 검색
+  return apiCall(`${API_ENDPOINTS.search}?q=${encodeURIComponent(a ?? '')}`);
+}
 
 // SmartSearchBox 등에서 사용
 export const searchApi = {
-  // 🔽 이 줄 추가
   autocomplete(q: string) {
     return apiCall(`${API_ENDPOINTS.autocomplete}?q=${encodeURIComponent(q ?? '')}`);
   },
-
-  search(q: string) {
-    return apiCall(`${API_ENDPOINTS.search}?q=${encodeURIComponent(q ?? '')}`);
-  },
+  search: _search,
   searchByArtist(artist: string) {
-    return apiCall(`${API_ENDPOINTS.search}?q=${encodeURIComponent(artist ?? '')}`);
+    return _search(artist);
   },
   searchByTrack(track: string) {
-    return apiCall(`${API_ENDPOINTS.search}?q=${encodeURIComponent(track ?? '')}`);
+    return _search(track);
   },
   getArtistTracks(artist: string) {
     return apiCall(API_ENDPOINTS.artistTracks(artist));
-  }
+  },
 };
 
 export const chartApi = {
@@ -165,7 +175,7 @@ export const checkApiStatus = async () => {
   }
 };
 
-// default (혼합 import 사용 중인 코드 호환용)
+// default (혼합 import 호환)
 const api = {
   API_BASE,
   API_ENDPOINTS,
