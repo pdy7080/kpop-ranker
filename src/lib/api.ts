@@ -93,3 +93,5 @@ export default {
   apiCall,
   getImageUrl
 };
+
+export { chartApi };
