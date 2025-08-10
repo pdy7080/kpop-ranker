@@ -37,7 +37,7 @@ const KOREAN_ARTIST_MAP = {} as const;
 /**
  * 🎯 한글 트랙 직접 매핑 - 중요한 곡들
  */
-const KOREAN_ARTIST_MAP = {} as const;
+const KOREAN_TRACK_MAP = {} as const;
 
 /**
  * 🔧 트랙명 정제 함수 - 복잡한 트랙명 처리
