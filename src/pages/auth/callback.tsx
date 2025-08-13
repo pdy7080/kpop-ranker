@@ -16,7 +16,16 @@ const AuthCallbackPage: React.FC = () => {
       // URL에서 code와 provider 파라미터 추출
       const { code, state, error } = router.query;
       
+      // 디버깅 로그 추가
+      console.log('🔵 OAuth Callback Parameters:', {
+        code: code ? `${String(code).substring(0, 10)}...` : 'NO_CODE',
+        state: state,
+        error: error,
+        fullUrl: window.location.href
+      });
+      
       if (error) {
+        console.error('🔴 OAuth Error:', error);
         setStatus('error');
         setMessage('로그인이 취소되었거나 실패했습니다.');
         setTimeout(() => router.push('/'), 3000);
@@ -24,6 +33,7 @@ const AuthCallbackPage: React.FC = () => {
       }
 
       if (!code) {
+        console.error('🔴 No authorization code');
         setStatus('error');
         setMessage('인증 코드가 없습니다.');
         setTimeout(() => router.push('/'), 3000);
@@ -42,12 +52,22 @@ const AuthCallbackPage: React.FC = () => {
         }
 
         // OAuth 콜백 처리
+        console.log(`🟢 Calling ${provider} OAuth callback API...`);
+        
         let response;
         if (provider === 'google') {
           response = await authApi.googleCallback(code as string);
         } else {
           response = await authApi.kakaoCallback(code as string);
         }
+        
+        // 디버깅 로그 - API 응답
+        console.log('🟡 OAuth API Response:', {
+          success: response?.data?.success,
+          hasToken: !!response?.data?.token,
+          hasUser: !!response?.data?.user,
+          fullResponse: response?.data
+        });
 
         if (response?.data?.success && response?.data?.token) {
           // 토큰 저장
@@ -68,10 +88,17 @@ const AuthCallbackPage: React.FC = () => {
         } else {
           throw new Error('로그인 처리 실패');
         }
-      } catch (error) {
-        console.error('OAuth callback error:', error);
+      } catch (error: any) {
+        console.error('🔴 OAuth callback error:', error);
+        console.error('🔴 Error details:', {
+          message: error?.message,
+          response: error?.response?.data,
+          status: error?.response?.status
+        });
+        
         setStatus('error');
-        setMessage('로그인 처리 중 오류가 발생했습니다.');
+        const errorMessage = error?.response?.data?.error || error?.message || '로그인 처리 중 오류가 발생했습니다.';
+        setMessage(errorMessage);
         setTimeout(() => router.push('/'), 3000);
       }
     };
