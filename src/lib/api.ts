@@ -28,10 +28,8 @@ const api = axios.create({
   },
 });
 
-// 프로덕션 환경에서 CORS 처리
-if (process.env.NODE_ENV === 'production' && typeof window !== 'undefined') {
-  api.defaults.headers.common['Access-Control-Allow-Origin'] = '*';
-}
+// 프로덕션 환경에서 CORS 처리 - 클라이언트에서는 설정하지 않음
+// CORS 헤더는 서버에서만 설정해야 함
 
 // 요청 인터셉터 - 인증 토큰 자동 추가
 api.interceptors.request.use(
