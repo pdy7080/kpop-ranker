@@ -88,6 +88,15 @@ const safeApiCall = async <T>(
 
 // Search API - 배포 환경 최적화
 export const searchApi = {
+  // autocomplete 메서드 추가 (호환성을 위해)
+  autocomplete: async (query: string) => {
+    return safeApiCall(async () => {
+      return await api.get('/api/autocomplete/unified', {
+        params: { q: query }
+      });
+    }, { suggestions: [] });
+  },
+  
   search: async (artist: string, track: string): Promise<any> => {
     return safeApiCall(async () => {
       if (track && track.trim() !== '' && track !== artist) {
@@ -187,7 +196,7 @@ export const portfolioApi = {
   }
 };
 
-// Auth API
+// Auth API - OAuth 기능 추가
 export const authApi = {
   // OAuth URL 가져오기
   getGoogleOAuthUrl: async () => {
