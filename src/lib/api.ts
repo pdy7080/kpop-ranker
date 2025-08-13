@@ -1,193 +1,370 @@
-// src/lib/api.ts
-// 프록시(/api/*) 경유 전제: CORS 없이 동일 오리진으로 호출
+import axios from 'axios';
 
-export const API_BASE = ''; // 상대경로 사용
+// 🔧 FastComet 배포 환경 최적화된 API 설정
+// 시니어 개발자 Claude - 배포 문제 해결
 
-export const API_ENDPOINTS = {
-  // 검색
-  search: '/api/search',
-  search2: '/api/search2',
-  autocomplete: '/api/autocomplete/unified',
-
-  // 트렌딩
-  trending: '/api/trending',
-
-  // 아티스트
-  artist: (name: string) => `/api/artist/${encodeURIComponent(name)}/complete`,
-  artistTracks: (name: string) => `/api/artist/${encodeURIComponent(name)}/tracks`,
-
-  // 이미지 (한글 인코딩)
-  albumImage: (artist: string, track: string) =>
-    `/api/album-image-v2/${encodeURIComponent(artist ?? '')}/${encodeURIComponent(track ?? '')}`,
-
-  // 포트폴리오
-  portfolio: '/api/portfolio',
-
-  // 인증
-  auth: {
-    login: '/api/auth/demo-login',
-    logout: '/api/auth/logout',
-    status: '/api/auth/status',
-    user: '/api/auth/user',
-  },
-
-  // 차트
-  chartHistory: (chart: string, artist: string, track: string) =>
-    `/api/chart/history/${chart}/${encodeURIComponent(artist ?? '')}/${encodeURIComponent(track ?? '')}`,
-  chartSummary: (artist: string, track: string) =>
-    `/api/charts/summary/${encodeURIComponent(artist ?? '')}/${encodeURIComponent(track ?? '')}`,
-  chartUpdateStatus: '/api/chart/update-status',
-
-  // 인사이트
-  insights: {
-    daily: '/api/insights/daily',
-    marketPulse: '/api/insights/market-pulse',
-    recommendations: '/api/insights/recommendations',
-    artist: (name: string) => `/api/insights/artist/${encodeURIComponent(name ?? '')}`,
-  },
-
-  // 뉴스/굿즈
-  news: '/api/news',
-  goods: '/api/goods',
-};
-
-// 공통 호출
-export async function apiCall<T = any>(endpoint: string, options?: RequestInit): Promise<T> {
-  const res = await fetch(`${API_BASE}${endpoint}`, {
-    ...options,
-    headers: { 'Content-Type': 'application/json', ...(options?.headers || {}) },
-    credentials: 'include',
-  });
-  if (!res.ok) throw new Error(`API Error: ${res.status}`);
-  return res.json() as Promise<T>;
-}
-
-// 프록시 경유 이미지 URL
-export function getImageUrl(artist: string, track: string): string {
-  return API_ENDPOINTS.albumImage(artist, track);
-}
-
-/* ------------------ Named APIs ------------------ */
-
-// 내부 헬퍼: 검색 오버로드 (1개/2개 인자 모두 지원)
-function _search(q: string): Promise<any>;
-function _search(artist: string, track: string): Promise<any>;
-function _search(a: string, b?: string) {
-  if (typeof b === 'string') {
-    // 아티스트+트랙 쿼리
-    return apiCall(
-      `${API_ENDPOINTS.search2}?artist=${encodeURIComponent(a ?? '')}&track=${encodeURIComponent(b ?? '')}`
-    );
+// 🔥 API URL 설정 - 백엔드 refactored 버전 (포트 5000)
+const getApiUrl = () => {
+  // 환경 변수 확인
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+  
+  // 개발 환경 - main.py 사용 (포트 5000)
+  if (process.env.NODE_ENV === 'development') {
+    return apiUrl || 'http://localhost:5000';  // main.py 기본 포트
   }
-  // 자유 입력 검색
-  return apiCall(`${API_ENDPOINTS.search}?q=${encodeURIComponent(a ?? '')}`);
+  
+  // 프로덕션 환경 - 백엔드 서버 직접 연결
+  return apiUrl || 'https://api.kpopranker.chargeapp.net';
+};
+
+const API_URL = getApiUrl();
+
+const api = axios.create({
+  baseURL: API_URL,
+  timeout: 30000,
+  headers: {
+    'Content-Type': 'application/json',
+    'Accept': 'application/json',
+  },
+});
+
+// 프로덕션 환경에서 CORS 처리
+if (process.env.NODE_ENV === 'production' && typeof window !== 'undefined') {
+  api.defaults.headers.common['Access-Control-Allow-Origin'] = '*';
 }
 
-// SmartSearchBox 등에서 사용
+// 요청 인터셉터 - 인증 토큰 자동 추가
+api.interceptors.request.use(
+  (config) => {
+    // 브라우저 환경에서만 localStorage 접근
+    if (typeof window !== 'undefined') {
+      const token = localStorage.getItem('auth_token');
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
+// 응답 인터셉터 - 에러 처리 개선
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response) {
+      console.error('API Error:', {
+        status: error.response.status,
+        message: error.response.data?.message || error.response.statusText,
+        url: error.config?.url
+      });
+    } else if (error.request) {
+      console.error('Network Error:', {
+        message: error.message,
+        url: error.config?.url
+      });
+    } else {
+      console.error('Request Error:', error.message);
+    }
+    return Promise.reject(error);
+  }
+);
+
+// 안전한 API 호출 헬퍼
+const safeApiCall = async <T>(
+  apiCall: () => Promise<any>,
+  fallbackData: T
+): Promise<T> => {
+  try {
+    const response = await apiCall();
+    return response.data || response;
+  } catch (error) {
+    console.warn('API call failed, using fallback data:', error);
+    return fallbackData;
+  }
+};
+
+// Search API - 배포 환경 최적화
 export const searchApi = {
-  autocomplete(q: string) {
-    return apiCall(`${API_ENDPOINTS.autocomplete}?q=${encodeURIComponent(q ?? '')}`);
+  search: async (artist: string, track: string): Promise<any> => {
+    return safeApiCall(async () => {
+      if (track && track.trim() !== '' && track !== artist) {
+        // 트랙 지정 검색 - 아티스트와 트랙이 다를 때만
+        return await api.get('/api/search2', {
+          params: { artist, track }
+        });
+      } else {
+        // 통합 검색 - 아티스트나 트랙명으로 검색
+        const query = track || artist;
+        return await api.get('/api/search', {
+          params: { q: query }
+        });
+      }
+    }, { results: [], message: '검색 결과를 불러올 수 없습니다.' });
   },
-  search: _search,
-  searchByArtist(artist: string) {
-    return _search(artist);
+  
+  searchByArtist: async (artist: string): Promise<any> => {
+    return safeApiCall(async () => {
+      // 🔥 통합 검색 API 사용 (곡명도 검색 가능)
+      return await api.get('/api/search', {
+        params: { q: artist }
+      });
+    }, { results: [], message: '검색 결과를 불러올 수 없습니다.' });
   },
-  searchByTrack(track: string) {
-    return _search(track);
+  
+  // 🔥 새로운 곡명 검색 함수
+  searchByTrack: async (track: string): Promise<any> => {
+    return safeApiCall(async () => {
+      return await api.get('/api/search', {
+        params: { q: track }
+      });
+    }, { results: [], message: '검색 결과를 불러올 수 없습니다.' });
   },
-  getArtistTracks(artist: string) {
-    return apiCall(API_ENDPOINTS.artistTracks(artist));
-  },
+  
+  getArtistTracks: async (artist: string): Promise<any> => {
+    return safeApiCall(async () => {
+      return await api.get('/api/artist/tracks', {
+        params: { artist }
+      });
+    }, { tracks: [], message: '아티스트 트랙을 불러올 수 없습니다.' });
+  }
 };
 
-export const chartApi = {
-  getHistory(chart: string, artist: string, track: string, days = 30) {
-    return apiCall(`${API_ENDPOINTS.chartHistory(chart, artist, track)}?days=${days}`);
-  },
-  getSummary(artist: string, track: string) {
-    return apiCall(API_ENDPOINTS.chartSummary(artist, track));
-  },
-  getUpdateStatus() {
-    return apiCall(API_ENDPOINTS.chartUpdateStatus);
-  },
-};
-
+// Autocomplete API
 export const autocompleteApi = {
-  complete(q: string) {
-    return apiCall(`${API_ENDPOINTS.autocomplete}?q=${encodeURIComponent(q ?? '')}`);
-  },
+  complete: async (query: string) => {
+    return safeApiCall(async () => {
+      return await api.get('/api/autocomplete/unified', {
+        params: { q: query }
+      });
+    }, { suggestions: [] });
+  }
 };
 
+// Trending API
 export const trendingApi = {
-  getTrending(type = 'hot', limit = 20) {
-    return apiCall(`${API_ENDPOINTS.trending}?type=${type}&limit=${limit}`);
-  },
+  getTrending: async (type: 'rising' | 'hot' | 'new' = 'hot', limit?: number) => {
+    return safeApiCall(async () => {
+      return await api.get('/api/trending', {
+        params: { type, limit }
+      });
+    }, { tracks: [], artists: [] });
+  }
 };
 
+// Portfolio API
 export const portfolioApi = {
-  getPortfolio() {
-    return apiCall(API_ENDPOINTS.portfolio);
+  getPortfolio: async () => {
+    try {
+      const response = await api.get('/api/portfolio');
+      return response;
+    } catch (error) {
+      console.warn('Portfolio API failed:', error);
+      return { data: { items: [] } };
+    }
   },
-  addToPortfolio(data: { artist: string; track: string }) {
-    return apiCall(API_ENDPOINTS.portfolio, { method: 'POST', body: JSON.stringify(data) });
+  
+  addToPortfolio: async (data: { artist: string; track: string }) => {
+    try {
+      const response = await api.post('/api/portfolio', data);
+      return response;
+    } catch (error) {
+      console.warn('Add to portfolio failed:', error);
+      throw error;
+    }
   },
-  removeFromPortfolio(id: number) {
-    return apiCall(`${API_ENDPOINTS.portfolio}/${id}`, { method: 'DELETE' });
-  },
+  
+  removeFromPortfolio: async (id: number) => {
+    try {
+      const response = await api.delete(`/api/portfolio/${id}`);
+      return response;
+    } catch (error) {
+      console.warn('Remove from portfolio failed:', error);
+      throw error;
+    }
+  }
 };
 
+// Auth API
 export const authApi = {
-  demoLogin(name = 'Demo User', email = 'demo@kpopranker.com') {
-    return apiCall(API_ENDPOINTS.auth.login, { method: 'POST', body: JSON.stringify({ name, email }) });
+  // OAuth URL 가져오기
+  getGoogleOAuthUrl: async () => {
+    try {
+      const response = await api.get('/api/auth/oauth/google/url');
+      return response;
+    } catch (error) {
+      console.warn('Failed to get Google OAuth URL:', error);
+      throw error;
+    }
   },
-  logout() {
-    return apiCall(API_ENDPOINTS.auth.logout, { method: 'POST' });
+  
+  getKakaoOAuthUrl: async () => {
+    try {
+      const response = await api.get('/api/auth/oauth/kakao/url');
+      return response;
+    } catch (error) {
+      console.warn('Failed to get Kakao OAuth URL:', error);
+      throw error;
+    }
   },
-  getStatus() {
-    return apiCall(API_ENDPOINTS.auth.status);
+  
+  // OAuth 콜백 처리
+  googleCallback: async (code: string) => {
+    try {
+      const response = await api.post('/api/auth/oauth/google/callback', { code });
+      return response;
+    } catch (error) {
+      console.warn('Google OAuth callback failed:', error);
+      throw error;
+    }
   },
-  getUser() {
-    return apiCall(API_ENDPOINTS.auth.user);
+  
+  kakaoCallback: async (code: string) => {
+    try {
+      const response = await api.post('/api/auth/oauth/kakao/callback', { code });
+      return response;
+    } catch (error) {
+      console.warn('Kakao OAuth callback failed:', error);
+      throw error;
+    }
   },
-  login(provider: string, code?: string) {
-    return apiCall('/api/auth/login', { method: 'POST', body: JSON.stringify({ provider, code }) });
+  
+  // OAuth 설정 확인 (디버깅용)
+  checkOAuthConfig: async () => {
+    try {
+      const response = await api.get('/api/auth/oauth/config');
+      return response;
+    } catch (error) {
+      console.warn('Failed to check OAuth config:', error);
+      return { data: { config: {} } };
+    }
   },
+  
+  demoLogin: async (name: string = 'Demo User', email: string = 'demo@kpopranker.com') => {
+    try {
+      const response = await api.post('/api/auth/demo-login', { name, email });
+      return response;
+    } catch (error) {
+      console.warn('Demo login failed:', error);
+      throw error;
+    }
+  },
+  
+  logout: async () => {
+    try {
+      const response = await api.post('/api/auth/logout', {});
+      return response;
+    } catch (error) {
+      console.warn('Logout failed:', error);
+      throw error;
+    }
+  },
+  
+  getStatus: async () => {
+    return safeApiCall(async () => {
+      return await api.get('/api/auth/status');
+    }, { authenticated: false, user: null });
+  },
+  
+  login: async (provider: string, code?: string) => {
+    try {
+      const response = await api.post('/api/auth/login', { provider, code });
+      return response;
+    } catch (error) {
+      console.warn('Login failed:', error);
+      throw error;
+    }
+  },
+  
+  getUser: async () => {
+    return safeApiCall(async () => {
+      return await api.get('/api/auth/user');
+    }, { user: null });
+  }
 };
 
+// Chart API
+export const chartApi = {
+  getUpdateStatus: async () => {
+    return safeApiCall(async () => {
+      return await api.get('/api/chart/update-status');
+    }, { status: 'unknown', charts: [] });
+  },
+  
+  getHistory: async (chart: string, artist: string, track: string, days: number = 30) => {
+    return safeApiCall(async () => {
+      const encodedArtist = encodeURIComponent(artist);
+      const encodedTrack = encodeURIComponent(track);
+      return await api.get(`/api/chart/history/${chart}/${encodedArtist}/${encodedTrack}?days=${days}`);
+    }, { history: [], message: '차트 히스토리를 불러올 수 없습니다.' });
+  },
+  
+  getSummary: async (artist: string, track: string) => {
+    return safeApiCall(async () => {
+      const encodedArtist = encodeURIComponent(artist);
+      const encodedTrack = encodeURIComponent(track);
+      return await api.get(`/api/charts/summary/${encodedArtist}/${encodedTrack}`);
+    }, { charts: {}, summary: '차트 요약을 불러올 수 없습니다.' });
+  }
+};
+
+// Insights API - AI 분석 기능
 export const insightsApi = {
-  getDailyInsights() {
-    return apiCall(API_ENDPOINTS.insights.daily);
+  getDailyInsights: async () => {
+    return safeApiCall(async () => {
+      return await api.get('/api/insights/daily');
+    }, { 
+      data: {
+        trends: [],
+        market_analysis: '현재 분석 중입니다.',
+        recommendations: ['데이터를 수집하는 중입니다.']
+      }
+    });
   },
-  getMarketPulse() {
-    return apiCall(API_ENDPOINTS.insights.marketPulse);
+  
+  getMarketPulse: async () => {
+    return safeApiCall(async () => {
+      return await api.get('/api/insights/market-pulse');
+    }, { 
+      data: {
+        timestamp: new Date().toISOString(),
+        active_artists: 0,
+        trending_tracks: 0,
+        market_sentiment: 'neutral',
+        hot_topics: []
+      }
+    });
   },
-  getRecommendations() {
-    return apiCall(API_ENDPOINTS.insights.recommendations);
-  },
+  
+  getRecommendations: async () => {
+    return safeApiCall(async () => {
+      return await api.get('/api/insights/recommendations');
+    }, { 
+      data: {
+        artists_to_watch: [],
+        trending_genres: [],
+        investment_tips: ['곧 업데이트 예정입니다.']
+      }
+    });
+  }
 };
 
+// 개발 환경 체크 함수
+export const isDevelopment = () => {
+  return process.env.NODE_ENV === 'development';
+};
+
+// API 상태 체크 함수
 export const checkApiStatus = async () => {
   try {
-    const data = await apiCall('/api/health');
-    return { status: 'ok', data };
+    const response = await api.get('/');
+    return { status: 'ok', data: response.data };
   } catch (error) {
-    return { status: 'error', error };
+    return { status: 'error', error: error };
   }
 };
 
-// default (혼합 import 호환)
-const api = {
-  API_BASE,
-  API_ENDPOINTS,
-  apiCall,
-  getImageUrl,
-  searchApi,
-  chartApi,
-  autocompleteApi,
-  trendingApi,
-  portfolioApi,
-  authApi,
-  insightsApi,
-  checkApiStatus,
-};
+
 export default api;

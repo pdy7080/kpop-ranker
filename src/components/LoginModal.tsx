@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { FaTimes, FaGoogle, FaUser, FaEnvelope } from 'react-icons/fa';
 import { SiKakao } from 'react-icons/si';
 import { useAuth } from '@/contexts/AuthContext';
+import { authApi } from '@/lib/api';
 import toast from 'react-hot-toast';
 
 interface LoginModalProps {
@@ -22,19 +23,23 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
     setIsLoading(true);
     
     try {
-      // 실제 소셜 로그인 구현 (데모용으로 간단하게)
-      const success = await login(provider, 'demo_code_123');
-      
-      if (success) {
-        // 🔥 조용한 처리 - 알림창 제거
-        console.log(`✅ ${provider} 로그인 성공`);
-        onClose();
+      // OAuth URL 가져오기
+      let response;
+      if (provider === 'google') {
+        response = await authApi.getGoogleOAuthUrl();
+      } else if (provider === 'kakao') {
+        response = await authApi.getKakaoOAuthUrl();
       } else {
-        // 🔥 실패 시에만 조용한 콘솔 로그
-        console.warn(`${provider} 로그인 실패`);
+        throw new Error(`Unsupported provider: ${provider}`);
+      }
+      
+      if (response?.data?.url) {
+        // OAuth 페이지로 리다이렉트
+        window.location.href = response.data.url;
+      } else {
+        console.warn(`${provider} OAuth URL을 가져오지 못했습니다.`);
       }
     } catch (error) {
-      // 🔥 에러도 조용히 처리
       console.error('로그인 에러:', error);
     } finally {
       setIsLoading(false);
