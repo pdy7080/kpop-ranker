@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { FaPlus, FaTrash, FaMusic, FaHeart, FaExternalLinkAlt } from 'react-icons/fa';
 import toast from 'react-hot-toast';
@@ -22,8 +22,8 @@ const SimplePortfolio: React.FC = () => {
   const [newTrack, setNewTrack] = useState('');
   const [newNotes, setNewNotes] = useState('');
 
-  // 포트폴리오 조회
-  const fetchPortfolio = async () => {
+  // 포트폴리오 조회 - useCallback으로 메모이제이션
+  const fetchPortfolio = useCallback(async () => {
     try {
       setLoading(true);
       const response = await fetch('/api/portfolio/simple');
@@ -34,20 +34,30 @@ const SimplePortfolio: React.FC = () => {
         console.log('✅ 포트폴리오 조회 성공:', data);
       } else {
         console.error('❌ 포트폴리오 조회 실패:', data);
-        toast.error('포트폴리오를 불러올 수 없습니다');
+        // unique id로 중복 방지
+        toast.error('포트폴리오를 불러올 수 없습니다', { 
+          id: 'portfolio-load-error',
+          duration: 3000 
+        });
       }
     } catch (error) {
       console.error('❌ 포트폴리오 조회 오류:', error);
-      toast.error('네트워크 오류가 발생했습니다');
+      toast.error('네트워크 오류가 발생했습니다', { 
+        id: 'portfolio-network-error',
+        duration: 3000 
+      });
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   // 포트폴리오 추가
   const addToPortfolio = async () => {
     if (!newArtist.trim() || !newTrack.trim()) {
-      toast.error('아티스트명과 곡명을 입력해주세요');
+      toast.error('아티스트명과 곡명을 입력해주세요', { 
+        id: 'portfolio-input-error',
+        duration: 3000 
+      });
       return;
     }
 
@@ -68,19 +78,31 @@ const SimplePortfolio: React.FC = () => {
       const data = await response.json();
       
       if (data.status === 'success') {
-        toast.success('포트폴리오에 추가되었습니다!');
+        toast.success('포트폴리오에 추가되었습니다!', { 
+          id: 'portfolio-add-success',
+          duration: 3000 
+        });
         setNewArtist('');
         setNewTrack('');
         setNewNotes('');
-        fetchPortfolio(); // 새로고침
+        await fetchPortfolio(); // 새로고침
       } else if (data.status === 'info') {
-        toast(data.message);
+        toast(data.message, { 
+          id: 'portfolio-info',
+          duration: 3000 
+        });
       } else {
-        toast.error(data.message || '추가에 실패했습니다');
+        toast.error(data.message || '추가에 실패했습니다', { 
+          id: 'portfolio-add-error',
+          duration: 3000 
+        });
       }
     } catch (error) {
       console.error('❌ 포트폴리오 추가 오류:', error);
-      toast.error('추가 중 오류가 발생했습니다');
+      toast.error('추가 중 오류가 발생했습니다', { 
+        id: 'portfolio-add-exception',
+        duration: 3000 
+      });
     } finally {
       setAdding(false);
     }
@@ -100,14 +122,23 @@ const SimplePortfolio: React.FC = () => {
       const data = await response.json();
       
       if (data.status === 'success') {
-        toast.success('삭제되었습니다');
-        fetchPortfolio(); // 새로고침
+        toast.success('삭제되었습니다', { 
+          id: 'portfolio-delete-success',
+          duration: 3000 
+        });
+        await fetchPortfolio(); // 새로고침
       } else {
-        toast.error(data.message || '삭제에 실패했습니다');
+        toast.error(data.message || '삭제에 실패했습니다', { 
+          id: 'portfolio-delete-error',
+          duration: 3000 
+        });
       }
     } catch (error) {
       console.error('❌ 포트폴리오 삭제 오류:', error);
-      toast.error('삭제 중 오류가 발생했습니다');
+      toast.error('삭제 중 오류가 발생했습니다', { 
+        id: 'portfolio-delete-exception',
+        duration: 3000 
+      });
     }
   };
 
@@ -121,20 +152,38 @@ const SimplePortfolio: React.FC = () => {
       const data = await response.json();
       
       if (data.status === 'success') {
-        toast.success('데모 데이터가 추가되었습니다!');
-        fetchPortfolio(); // 새로고침
+        toast.success('데모 데이터가 추가되었습니다!', { 
+          id: 'portfolio-demo-success',
+          duration: 3000 
+        });
+        await fetchPortfolio(); // 새로고침
       } else {
-        toast.error(data.message || '데모 데이터 추가 실패');
+        toast.error(data.message || '데모 데이터 추가 실패', { 
+          id: 'portfolio-demo-error',
+          duration: 3000 
+        });
       }
     } catch (error) {
       console.error('❌ 데모 데이터 추가 오류:', error);
-      toast.error('데모 데이터 추가 중 오류가 발생했습니다');
+      toast.error('데모 데이터 추가 중 오류가 발생했습니다', { 
+        id: 'portfolio-demo-exception',
+        duration: 3000 
+      });
     }
   };
 
+  // 컴포넌트 마운트 시 한 번만 실행
   useEffect(() => {
-    fetchPortfolio();
-  }, []);
+    let mounted = true;
+    
+    if (mounted) {
+      fetchPortfolio();
+    }
+    
+    return () => {
+      mounted = false;
+    };
+  }, []); // 빈 의존성 배열 - 한 번만 실행
 
   if (loading) {
     return (
