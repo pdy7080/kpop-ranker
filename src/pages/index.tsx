@@ -99,7 +99,9 @@ export default function Home() {
     const loadingToast = toast.loading('검색 중...');
     
     try {
-      const response = await searchApi.search(artist, track);
+      // artist와 track을 합쳐서 검색 쿼리로 만들기
+      const searchQuery = track ? `${artist} ${track}` : artist;
+      const response = await searchApi.search(searchQuery);
       
       if (response && response.charts) {
         const foundInAnyChart = Object.values(response.charts).some(

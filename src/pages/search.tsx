@@ -71,7 +71,8 @@ export default function SearchPage() {
       }
     } catch (error) {
       console.error('검색 오류:', error);
-      toast.error('검색 중 오류가 발생했습니다');
+      // toast.error('검색 중 오류가 발생했습니다'); // 조용한 처리
+      console.warn('검색 중 오류가 발생했습니다');
       setNoResults(true);
     } finally {
       setIsLoading(false);
