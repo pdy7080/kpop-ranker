@@ -1,23 +1,7 @@
 import axios from 'axios';
 
-// 🔧 FastComet 배포 환경 최적화된 API 설정
-// 시니어 개발자 Claude - 배포 문제 해결
-
-// 🔥 API URL 설정 - 백엔드 refactored 버전 (포트 5000)
-const getApiUrl = () => {
-  // 환경 변수 확인
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-  
-  // 개발 환경 - main.py 사용 (포트 5000)
-  if (process.env.NODE_ENV === 'development') {
-    return apiUrl || 'http://localhost:5000';  // main.py 기본 포트
-  }
-  
-  // 프로덕션 환경 - 백엔드 서버 직접 연결
-  return apiUrl || 'https://api.kpopranker.chargeapp.net';
-};
-
-const API_URL = getApiUrl();
+// API URL 설정 - 백엔드 (포트 5000)
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
 const api = axios.create({
   baseURL: API_URL,
@@ -28,350 +12,177 @@ const api = axios.create({
   },
 });
 
-// 프로덕션 환경에서 CORS 처리 - 클라이언트에서는 설정하지 않음
-// CORS 헤더는 서버에서만 설정해야 함
+// API 호출 로깅
+api.interceptors.request.use((config) => {
+  if (process.env.NODE_ENV === 'development') {
+    console.log(`🔍 API Request: ${config.method?.toUpperCase()} ${config.url}`);
+  }
+  return config;
+});
 
-// 요청 인터셉터 - 인증 토큰 자동 추가
-api.interceptors.request.use(
-  (config) => {
-    // 브라우저 환경에서만 localStorage 접근
-    if (typeof window !== 'undefined') {
-      const token = localStorage.getItem('auth_token');
-      if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
-      }
+// 응답 로깅 및 에러 처리
+api.interceptors.response.use(
+  (response) => {
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`✅ API Response: ${response.config.url}`, response.data);
     }
-    return config;
+    return response;
   },
   (error) => {
+    console.error('API Error:', {
+      message: error.message,
+      url: error.config?.url,
+    });
     return Promise.reject(error);
   }
 );
 
-// 응답 인터셉터 - 에러 처리 개선
-api.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    if (error.response) {
-      console.error('API Error:', {
-        status: error.response.status,
-        message: error.response.data?.message || error.response.statusText,
-        url: error.config?.url
-      });
-    } else if (error.request) {
-      console.error('Network Error:', {
-        message: error.message,
-        url: error.config?.url
-      });
-    } else {
-      console.error('Request Error:', error.message);
-    }
-    return Promise.reject(error);
-  }
-);
-
-// 안전한 API 호출 헬퍼
-const safeApiCall = async <T>(
-  apiCall: () => Promise<any>,
-  fallbackData: T
-): Promise<T> => {
+// 안전한 API 호출 함수
+const safeApiCall = async (apiCall: () => Promise<any>, fallbackData: any = {}) => {
   try {
     const response = await apiCall();
-    return response.data || response;
+    return response.data;
   } catch (error) {
-    console.warn('API call failed, using fallback data:', error);
+    console.error('API call failed, using fallback data:', error);
     return fallbackData;
   }
 };
 
-// Search API - 배포 환경 최적화
-export const searchApi = {
-  // autocomplete 메서드 추가 (호환성을 위해)
-  autocomplete: async (query: string) => {
-    return safeApiCall(async () => {
-      return await api.get('/api/autocomplete/unified', {
-        params: { q: query }
-      });
-    }, { suggestions: [] });
+// 검색 API
+export const searchAPI = {
+  search: async (query: string) => {
+    return safeApiCall(
+      () => api.get('/api/search', { params: { q: query } }),
+      { results: [] }
+    );
   },
-  
-  search: async (artist: string, track: string): Promise<any> => {
-    return safeApiCall(async () => {
-      if (track && track.trim() !== '' && track !== artist) {
-        // 트랙 지정 검색 - 아티스트와 트랙이 다를 때만
-        return await api.get('/api/search2', {
-          params: { artist, track }
-        });
-      } else {
-        // 통합 검색 - 아티스트나 트랙명으로 검색
-        const query = track || artist;
-        return await api.get('/api/search', {
-          params: { q: query }
-        });
-      }
-    }, { results: [], message: '검색 결과를 불러올 수 없습니다.' });
+  autocomplete: async (query: string, limit = 10) => {
+    return safeApiCall(
+      () => api.get('/api/autocomplete/unified', { params: { q: query, limit } }),
+      { suggestions: [] }
+    );
   },
-  
-  searchByArtist: async (artist: string): Promise<any> => {
-    return safeApiCall(async () => {
-      // 🔥 통합 검색 API 사용 (곡명도 검색 가능)
-      return await api.get('/api/search', {
-        params: { q: artist }
-      });
-    }, { results: [], message: '검색 결과를 불러올 수 없습니다.' });
-  },
-  
-  // 🔥 새로운 곡명 검색 함수
-  searchByTrack: async (track: string): Promise<any> => {
-    return safeApiCall(async () => {
-      return await api.get('/api/search', {
-        params: { q: track }
-      });
-    }, { results: [], message: '검색 결과를 불러올 수 없습니다.' });
-  },
-  
-  getArtistTracks: async (artist: string): Promise<any> => {
-    return safeApiCall(async () => {
-      return await api.get('/api/artist/tracks', {
-        params: { artist }
-      });
-    }, { tracks: [], message: '아티스트 트랙을 불러올 수 없습니다.' });
-  }
 };
 
-// Autocomplete API
-export const autocompleteApi = {
-  complete: async (query: string) => {
-    return safeApiCall(async () => {
-      return await api.get('/api/autocomplete/unified', {
-        params: { q: query }
-      });
-    }, { suggestions: [] });
-  }
+// searchApi alias (호환성을 위해)
+export const searchApi = searchAPI;
+
+// 아티스트 API  
+export const artistAPI = {
+  getDetails: async (name: string) => {
+    return safeApiCall(
+      () => api.get(`/api/artist/${encodeURIComponent(name)}/complete`),
+      { artist: null, tracks: [] }
+    );
+  },
+  getTracks: async (artist: string) => {
+    return safeApiCall(
+      () => api.get('/api/artist/tracks', { params: { artist } }),
+      { tracks: [] }
+    );
+  },
 };
 
-// Trending API
-export const trendingApi = {
-  getTrending: async (type: 'rising' | 'hot' | 'new' = 'hot', limit?: number) => {
-    return safeApiCall(async () => {
-      return await api.get('/api/trending', {
-        params: { type, limit }
-      });
-    }, { tracks: [], artists: [] });
-  }
-};
-
-// Portfolio API
-export const portfolioApi = {
-  getPortfolio: async () => {
-    try {
-      const response = await api.get('/api/portfolio');
-      return response;
-    } catch (error) {
-      console.warn('Portfolio API failed:', error);
-      return { data: { items: [] } };
-    }
+// 차트 API
+export const chartAPI = {
+  getTrending: async (type = 'hot', limit = 10) => {
+    return safeApiCall(
+      () => api.get('/api/trending', { params: { type, limit } }),
+      { tracks: [], artists: [] }
+    );
   },
-  
-  addToPortfolio: async (data: { artist: string; track: string }) => {
-    try {
-      const response = await api.post('/api/portfolio', data);
-      return response;
-    } catch (error) {
-      console.warn('Add to portfolio failed:', error);
-      throw error;
-    }
+  getHistory: async (chart: string, artist: string, track: string) => {
+    return safeApiCall(
+      () => api.get(`/api/chart/history/${chart}/${encodeURIComponent(artist)}/${encodeURIComponent(track)}`),
+      { history: [] }
+    );
   },
-  
-  removeFromPortfolio: async (id: number) => {
-    try {
-      const response = await api.delete(`/api/portfolio/${id}`);
-      return response;
-    } catch (error) {
-      console.warn('Remove from portfolio failed:', error);
-      throw error;
-    }
-  }
-};
-
-// Auth API - OAuth 기능 추가
-export const authApi = {
-  // OAuth URL 가져오기
-  getGoogleOAuthUrl: async () => {
-    try {
-      const response = await api.get('/api/auth/oauth/google/url');
-      return response;
-    } catch (error) {
-      console.warn('Failed to get Google OAuth URL:', error);
-      throw error;
-    }
-  },
-  
-  getKakaoOAuthUrl: async () => {
-    try {
-      const response = await api.get('/api/auth/oauth/kakao/url');
-      return response;
-    } catch (error) {
-      console.warn('Failed to get Kakao OAuth URL:', error);
-      throw error;
-    }
-  },
-  
-  // OAuth 콜백 처리
-  googleCallback: async (code: string) => {
-    try {
-      const response = await api.post('/api/auth/oauth/google/callback', { code });
-      return response;
-    } catch (error) {
-      console.warn('Google OAuth callback failed:', error);
-      throw error;
-    }
-  },
-  
-  kakaoCallback: async (code: string) => {
-    try {
-      const response = await api.post('/api/auth/oauth/kakao/callback', { code });
-      return response;
-    } catch (error) {
-      console.warn('Kakao OAuth callback failed:', error);
-      throw error;
-    }
-  },
-  
-  // OAuth 설정 확인 (디버깅용)
-  checkOAuthConfig: async () => {
-    try {
-      const response = await api.get('/api/auth/oauth/config');
-      return response;
-    } catch (error) {
-      console.warn('Failed to check OAuth config:', error);
-      return { data: { config: {} } };
-    }
-  },
-  
-  demoLogin: async (name: string = 'Demo User', email: string = 'demo@kpopranker.com') => {
-    try {
-      const response = await api.post('/api/auth/demo-login', { name, email });
-      return response;
-    } catch (error) {
-      console.warn('Demo login failed:', error);
-      throw error;
-    }
-  },
-  
-  logout: async () => {
-    try {
-      const response = await api.post('/api/auth/logout', {});
-      return response;
-    } catch (error) {
-      console.warn('Logout failed:', error);
-      throw error;
-    }
-  },
-  
-  getStatus: async () => {
-    return safeApiCall(async () => {
-      return await api.get('/api/auth/status');
-    }, { authenticated: false, user: null });
-  },
-  
-  login: async (provider: string, code?: string) => {
-    try {
-      const response = await api.post('/api/auth/login', { provider, code });
-      return response;
-    } catch (error) {
-      console.warn('Login failed:', error);
-      throw error;
-    }
-  },
-  
-  getUser: async () => {
-    return safeApiCall(async () => {
-      return await api.get('/api/auth/user');
-    }, { user: null });
-  }
-};
-
-// Chart API
-export const chartApi = {
-  getUpdateStatus: async () => {
-    return safeApiCall(async () => {
-      return await api.get('/api/chart/update-status');
-    }, { status: 'unknown', charts: [] });
-  },
-  
-  getHistory: async (chart: string, artist: string, track: string, days: number = 30) => {
-    return safeApiCall(async () => {
-      const encodedArtist = encodeURIComponent(artist);
-      const encodedTrack = encodeURIComponent(track);
-      return await api.get(`/api/chart/history/${chart}/${encodedArtist}/${encodedTrack}?days=${days}`);
-    }, { history: [], message: '차트 히스토리를 불러올 수 없습니다.' });
-  },
-  
   getSummary: async (artist: string, track: string) => {
-    return safeApiCall(async () => {
-      const encodedArtist = encodeURIComponent(artist);
-      const encodedTrack = encodeURIComponent(track);
-      return await api.get(`/api/charts/summary/${encodedArtist}/${encodedTrack}`);
-    }, { charts: {}, summary: '차트 요약을 불러올 수 없습니다.' });
-  }
-};
-
-// Insights API - AI 분석 기능
-export const insightsApi = {
-  getDailyInsights: async () => {
-    return safeApiCall(async () => {
-      return await api.get('/api/insights/daily');
-    }, { 
-      data: {
-        trends: [],
-        market_analysis: '현재 분석 중입니다.',
-        recommendations: ['데이터를 수집하는 중입니다.']
-      }
-    });
+    return safeApiCall(
+      () => api.get(`/api/charts/summary/${encodeURIComponent(artist)}/${encodeURIComponent(track)}`),
+      { summary: {} }
+    );
   },
-  
-  getMarketPulse: async () => {
-    return safeApiCall(async () => {
-      return await api.get('/api/insights/market-pulse');
-    }, { 
-      data: {
-        timestamp: new Date().toISOString(),
-        active_artists: 0,
-        trending_tracks: 0,
-        market_sentiment: 'neutral',
-        hot_topics: []
-      }
-    });
+  getUpdateStatus: async () => {
+    return safeApiCall(
+      () => api.get('/api/chart/update-status'),
+      { status: null }
+    );
   },
-  
-  getRecommendations: async () => {
-    return safeApiCall(async () => {
-      return await api.get('/api/insights/recommendations');
-    }, { 
-      data: {
-        artists_to_watch: [],
-        trending_genres: [],
-        investment_tips: ['곧 업데이트 예정입니다.']
-      }
-    });
-  }
 };
 
-// 개발 환경 체크 함수
-export const isDevelopment = () => {
-  return process.env.NODE_ENV === 'development';
+// alias for compatibility
+export const trendingApi = chartAPI;
+export const chartApi = chartAPI;
+
+// 포트폴리오 API
+export const portfolioAPI = {
+  get: async () => {
+    return safeApiCall(
+      () => api.get('/api/portfolio'),
+      { items: [] }
+    );
+  },
+  add: async (item: any) => {
+    return safeApiCall(
+      () => api.post('/api/portfolio', item),
+      { success: false }
+    );
+  },
+  remove: async (id: string) => {
+    return safeApiCall(
+      () => api.delete(`/api/portfolio/${id}`),
+      { success: false }
+    );
+  },
 };
 
-// API 상태 체크 함수
-export const checkApiStatus = async () => {
-  try {
-    const response = await api.get('/');
-    return { status: 'ok', data: response.data };
-  } catch (error) {
-    return { status: 'error', error: error };
-  }
+// 인증 API
+export const authAPI = {
+  login: async (credentials: any) => {
+    return safeApiCall(
+      () => api.post('/api/auth/demo-login', credentials),
+      { success: false }
+    );
+  },
+  logout: async () => {
+    return safeApiCall(
+      () => api.post('/api/auth/logout'),
+      { success: false }
+    );
+  },
+  status: async () => {
+    return safeApiCall(
+      () => api.get('/api/auth/status'),
+      { authenticated: false }
+    );
+  },
 };
 
+// 이미지 API
+export const imageAPI = {
+  getAlbumImageUrl: (artist: string, track: string) => {
+    return `${API_URL}/api/album-image-v2/${encodeURIComponent(artist)}/${encodeURIComponent(track)}`;
+  },
+  getSmartImageUrl: (artist: string, track: string) => {
+    return `${API_URL}/api/album-image-smart/${encodeURIComponent(artist)}/${encodeURIComponent(track)}`;
+  },
+};
+
+// Convenience functions
+export const searchArtistTracks = artistAPI.getTracks;
+export const getArtistDetails = artistAPI.getDetails;
+export const getTrending = chartAPI.getTrending;
+export const getChartHistory = chartAPI.getHistory;
+export const getChartSummary = chartAPI.getSummary;
+export const getPortfolio = portfolioAPI.get;
+export const addToPortfolio = portfolioAPI.add;
+export const removeFromPortfolio = portfolioAPI.remove;
+export const login = authAPI.login;
+export const logout = authAPI.logout;
+export const checkAuthStatus = authAPI.status;
+export const getAlbumImageUrl = imageAPI.getAlbumImageUrl;
+export const getSmartImageUrl = imageAPI.getSmartImageUrl;
+export const getUpdateStatus = chartAPI.getUpdateStatus;
 
 export default api;

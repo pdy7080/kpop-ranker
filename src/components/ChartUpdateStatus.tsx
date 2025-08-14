@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { FaClock, FaSync } from 'react-icons/fa';
-import { chartApi } from '@/lib/api';
+import { chartAPI } from '@/lib/api';
 
 interface ChartUpdateStatusData {
   chart_name: string;
@@ -37,7 +37,7 @@ export default function ChartUpdateStatus({ className = '' }: ChartUpdateStatusP
   // 실시간 업데이트 현황 가져오기
   const fetchUpdateStatus = async () => {
     try {
-      const data = await chartApi.getUpdateStatus();
+      const data = await chartAPI.getUpdateStatus();
       // 안전하게 타입 체크
       if (data && data.charts && typeof data.charts === 'object' && !Array.isArray(data.charts)) {
         setUpdateStatus(data.charts as Record<string, ChartUpdateStatusData>);
