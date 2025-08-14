@@ -10,11 +10,26 @@ const AuthCallbackPage: React.FC = () => {
   const { login, checkAuth } = useAuth();
   const [status, setStatus] = useState<'processing' | 'success' | 'error'>('processing');
   const [message, setMessage] = useState('로그인 처리 중...');
+  const [isProcessing, setIsProcessing] = useState(false); // 중복 실행 방지
 
   useEffect(() => {
     const handleCallback = async () => {
+      // 이미 처리 중이면 무시
+      if (isProcessing) {
+        console.log('🔄 Already processing OAuth callback, skipping...');
+        return;
+      }
+      
       // URL에서 code와 provider 파라미터 추출
       const { code, state, error } = router.query;
+      
+      // code가 없으면 처리하지 않음
+      if (!code && !error) {
+        return;
+      }
+      
+      // 처리 시작
+      setIsProcessing(true);
       
       // 디버깅 로그 추가
       console.log('🔵 OAuth Callback Parameters:', {
