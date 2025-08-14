@@ -4,6 +4,11 @@ import { useEffect } from 'react';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider } from '@/contexts/AuthContext';
 
+// 개발 환경에서만 디버그 툴 로드
+if (process.env.NODE_ENV === 'development') {
+  import('@/utils/authDebug');
+}
+
 export default function App({ Component, pageProps }: AppProps) {
   useEffect(() => {
     // 다크모드 초기화

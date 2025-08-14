@@ -38,11 +38,33 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const checkAuth = async () => {
     try {
       const token = localStorage.getItem('auth_token');
+      const userInfo = localStorage.getItem('user_info');
+      
       if (!token) {
         setIsLoading(false);
+        setUser(null);
         return;
       }
 
+      // 먼저 localStorage에 저장된 user_info 사용
+      if (userInfo) {
+        try {
+          const parsedUser = JSON.parse(userInfo);
+          setUser({
+            user_id: parsedUser.email || 'user',
+            email: parsedUser.email,
+            name: parsedUser.name,
+            profile_image: parsedUser.picture || parsedUser.profile_image,
+            provider: parsedUser.provider || 'oauth'
+          });
+          setIsLoading(false);
+          return;
+        } catch (e) {
+          console.error('Failed to parse user info:', e);
+        }
+      }
+
+      // user_info가 없으면 API 호출
       const response = await authApi.getStatus();
       // safeApiCall로 래핑된 응답이므로 직접 접근
       if (response && 'authenticated' in response && response.authenticated) {
@@ -61,11 +83,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       } else {
         localStorage.removeItem('auth_token');
         localStorage.removeItem('refresh_token');
+        localStorage.removeItem('user_info');
+        setUser(null);
       }
     } catch (error) {
       console.error('Auth check failed:', error);
       localStorage.removeItem('auth_token');
       localStorage.removeItem('refresh_token');
+      localStorage.removeItem('user_info');
+      setUser(null);
     } finally {
       setIsLoading(false);
     }
@@ -158,6 +184,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } finally {
       localStorage.removeItem('auth_token');
       localStorage.removeItem('refresh_token');
+      localStorage.removeItem('user_info');
       setUser(null);
     }
   };

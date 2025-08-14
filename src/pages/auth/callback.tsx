@@ -7,7 +7,7 @@ import { FaSpinner } from 'react-icons/fa';
 
 const AuthCallbackPage: React.FC = () => {
   const router = useRouter();
-  const { login } = useAuth();
+  const { login, checkAuth } = useAuth();
   const [status, setStatus] = useState<'processing' | 'success' | 'error'>('processing');
   const [message, setMessage] = useState('로그인 처리 중...');
 
@@ -73,9 +73,13 @@ const AuthCallbackPage: React.FC = () => {
           // 토큰 저장
           localStorage.setItem('auth_token', response.data.token);
           
-          // 사용자 정보 저장 (선택적)
+          // 사용자 정보 저장
           if (response.data.user) {
             localStorage.setItem('user_info', JSON.stringify(response.data.user));
+            
+            // AuthContext 업데이트
+            // login 함수 대신 checkAuth 호출하여 상태 업데이트
+            await checkAuth();
           }
 
           setStatus('success');
