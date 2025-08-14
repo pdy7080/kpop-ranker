@@ -144,9 +144,16 @@ export default function TrackDetailPage() {
 
   // 포트폴리오 추가/제거
   const togglePortfolio = async () => {
+    // 이미 처리 중이면 무시 (중복 호출 방지)
+    if (loadingPortfolio) {
+      console.log('🔄 Already processing portfolio toggle, skipping...');
+      return;
+    }
+    
     setLoadingPortfolio(true);
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+      const token = localStorage.getItem('auth_token');
       
       if (isInPortfolio) {
         // 제거 로직 (필요시 구현)
@@ -157,7 +164,8 @@ export default function TrackDetailPage() {
         const response = await fetch(`${apiUrl}/api/portfolio`, {
           method: 'POST',
           headers: {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            ...(token ? { 'Authorization': `Bearer ${token}` } : {})
           },
           credentials: 'include', // 세션 쿠키 포함
           body: JSON.stringify({
@@ -167,7 +175,16 @@ export default function TrackDetailPage() {
         });
 
         if (response.ok) {
-          toast.success('포트폴리오에 추가되었습니다');
+          const data = await response.json();
+          if (data.requireAuth) {
+            toast.error('로그인이 필요합니다');
+            return;
+          }
+          // 중복 토스트 방지 - toast ID 사용
+          toast.success('포트폴리오에 추가되었습니다', {
+            id: 'portfolio-add',
+            duration: 3000
+          });
           setIsInPortfolio(true);
         } else {
           const errorData = await response.json();
