@@ -1,12 +1,41 @@
 import React, { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
 
+// 타입 정의
+interface SchedulerStatus {
+  enabled: boolean;
+  running: boolean;
+  last_run?: string;
+  next_run?: string;
+  interval_hours?: number;
+  charts?: string[];
+}
+
+interface DashboardData {
+  system_status?: {
+    api_status: string;
+    memory_usage?: string;
+  };
+  db_stats?: {
+    size_mb?: number;
+  };
+  api_stats?: {
+    active_users?: number;
+    total_requests?: number;
+    today_requests?: number;
+    popular_endpoints?: Array<{
+      endpoint: string;
+      count: number;
+    }>;
+  };
+}
+
 const AdminDashboard = () => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const [dashboardData, setDashboardData] = useState(null);
-  const [schedulerStatus, setSchedulerStatus] = useState(null);
+  const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
+  const [schedulerStatus, setSchedulerStatus] = useState<SchedulerStatus | null>(null);
 
   const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
@@ -80,7 +109,7 @@ const AdminDashboard = () => {
       });
       const data = await response.json();
       if (data.success) {
-        toast.success(data.message);
+        toast.success(data.message || '스케줄러 상태가 변경되었습니다');
         loadSchedulerStatus();
       }
     } catch (error) {
@@ -203,7 +232,7 @@ const AdminDashboard = () => {
               )}
             </div>
             <p className="text-xs text-gray-500 mt-1">
-              {dashboardData?.db_stats?.size_mb}MB
+              {dashboardData?.db_stats?.size_mb ? `${dashboardData.db_stats.size_mb}MB` : ''}
             </p>
           </div>
 
@@ -304,7 +333,7 @@ const AdminDashboard = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-600">
-                  실행 주기: <span className="font-semibold">{schedulerStatus?.interval_hours}시간</span>마다
+                  실행 주기: <span className="font-semibold">{schedulerStatus?.interval_hours || 6}시간</span>마다
                 </p>
               </div>
             </div>
