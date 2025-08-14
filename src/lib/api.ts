@@ -162,6 +162,20 @@ export const authAPI = {
       { authenticated: false }
     );
   },
+  // alias for status
+  getStatus: async () => {
+    return safeApiCall(
+      () => api.get('/api/auth/status'),
+      { authenticated: false }
+    );
+  },
+  // 사용자 정보 가져오기
+  getUser: async () => {
+    return safeApiCall(
+      () => api.get('/api/auth/user'),
+      { user: null }
+    );
+  },
   // OAuth URL 가져오기
   getGoogleOAuthUrl: async () => {
     return safeApiCall(
