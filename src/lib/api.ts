@@ -108,15 +108,6 @@ export const chartAPI = {
   },
 };
 
-// alias for compatibility (소문자 버전)
-export const trendingApi = chartAPI;
-export const chartApi = chartAPI;
-export const authApi = authAPI;
-export const searchApi = searchAPI;
-export const artistApi = artistAPI;
-export const portfolioApi = portfolioAPI;
-export const imageApi = imageAPI;
-
 // 포트폴리오 API
 export const portfolioAPI = {
   get: async () => {
@@ -217,6 +208,15 @@ export const imageAPI = {
     return `${API_URL}/api/album-image-smart/${encodeURIComponent(artist)}/${encodeURIComponent(track)}`;
   },
 };
+
+// alias for compatibility (소문자 버전) - 모든 API 정의 후에 선언
+export const trendingApi = chartAPI;
+export const chartApi = chartAPI;
+export const authApi = authAPI;
+export const searchApi = searchAPI;
+export const artistApi = artistAPI;
+export const portfolioApi = portfolioAPI;
+export const imageApi = imageAPI;
 
 // Convenience functions
 export const searchArtistTracks = artistAPI.getTracks;
