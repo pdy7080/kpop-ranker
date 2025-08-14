@@ -15,7 +15,7 @@ import {
 import { FaTimes, FaChartLine, FaFireAlt, FaTrophy } from 'react-icons/fa';
 import { HiTrendingUp, HiTrendingDown } from 'react-icons/hi';
 import toast from 'react-hot-toast';
-import { chartApi } from '@/lib/api';
+import { chartAPI } from '@/lib/api';
 
 // Chart.js 등록
 ChartJS.register(
@@ -73,7 +73,7 @@ const ChartHistoryModal: React.FC<ChartHistoryModalProps> = ({
   const fetchChartHistory = async () => {
     setLoading(true);
     try {
-      const response = await chartApi.getHistory(chart, artist, track, 30) as ChartHistoryResponse;
+      const response = await chartAPI.getHistory(chart, artist, track) as ChartHistoryResponse;
       // response가 이미 데이터 객체임 (safeApiCall에서 response.data를 반환)
       setHistory(response.history || []);
       setRankChange(response.rank_change || 0);
