@@ -64,9 +64,6 @@ export const searchAPI = {
   },
 };
 
-// searchApi alias (호환성을 위해)
-export const searchApi = searchAPI;
-
 // 아티스트 API  
 export const artistAPI = {
   getDetails: async (name: string) => {
