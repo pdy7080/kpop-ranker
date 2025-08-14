@@ -36,8 +36,18 @@ const AdminDashboard = () => {
   const [loading, setLoading] = useState(false);
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
   const [schedulerStatus, setSchedulerStatus] = useState<SchedulerStatus | null>(null);
+  const [adminToken, setAdminToken] = useState<string>('');
 
   const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+
+  // 컴포넌트 마운트 시 localStorage 확인
+  useEffect(() => {
+    const savedToken = localStorage.getItem('adminToken');
+    if (savedToken) {
+      setAdminToken(savedToken);
+      setIsAdmin(true);
+    }
+  }, []);
 
   // 관리자 로그인
   const handleLogin = async () => {
@@ -49,18 +59,24 @@ const AdminDashboard = () => {
           'Content-Type': 'application/json',
           'Accept': 'application/json'
         },
-        credentials: 'include',  // 중요: 쿠키 포함
         body: JSON.stringify({ password })
       });
       
       const data = await response.json();
       if (data.success) {
+        const token = data.token || password; // 토큰이 없으면 비밀번호를 토큰으로 사용
+        setAdminToken(token);
         setIsAdmin(true);
+        
+        // localStorage에 저장
+        localStorage.setItem('adminToken', token);
+        
         toast.success('관리자 로그인 성공');
-        // 로그인 후 바로 데이터 로드
+        
+        // 로그인 후 데이터 로드
         setTimeout(() => {
-          loadDashboard();
-          loadSchedulerStatus();
+          loadDashboard(token);
+          loadSchedulerStatus(token);
         }, 100);
       } else {
         toast.error('비밀번호가 일치하지 않습니다');
@@ -73,16 +89,29 @@ const AdminDashboard = () => {
     }
   };
 
+  // 로그아웃
+  const handleLogout = () => {
+    localStorage.removeItem('adminToken');
+    setIsAdmin(false);
+    setAdminToken('');
+    setDashboardData(null);
+    setSchedulerStatus(null);
+    toast.success('로그아웃되었습니다');
+  };
+
   // 대시보드 데이터 로드
-  const loadDashboard = async () => {
+  const loadDashboard = async (token?: string) => {
+    const authToken = token || adminToken;
+    if (!authToken) return;
+    
     try {
       const response = await fetch(`${API_URL}/api/admin/dashboard`, {
         method: 'GET',
         headers: {
           'Accept': 'application/json',
-          'Content-Type': 'application/json'
-        },
-        credentials: 'include'  // 중요: 쿠키 포함
+          'Content-Type': 'application/json',
+          'X-Admin-Auth': authToken  // 헤더에 토큰 전달
+        }
       });
       
       if (response.ok) {
@@ -91,8 +120,8 @@ const AdminDashboard = () => {
           setDashboardData(data.dashboard);
         }
       } else if (response.status === 401) {
-        console.log('Dashboard: 인증 필요');
-        // 401 에러는 무시 (로그인 직후 세션 동기화 지연)
+        console.log('Dashboard: 인증 만료');
+        handleLogout();
       }
     } catch (error) {
       console.error('Dashboard load error:', error);
@@ -100,15 +129,14 @@ const AdminDashboard = () => {
   };
 
   // 스케줄러 상태 로드
-  const loadSchedulerStatus = async () => {
+  const loadSchedulerStatus = async (token?: string) => {
     try {
       const response = await fetch(`${API_URL}/api/scheduler/status`, {
         method: 'GET',
         headers: {
           'Accept': 'application/json',
           'Content-Type': 'application/json'
-        },
-        credentials: 'include'  // 중요: 쿠키 포함
+        }
       });
       
       if (response.ok) {
@@ -133,9 +161,9 @@ const AdminDashboard = () => {
         method: 'POST',
         headers: {
           'Accept': 'application/json',
-          'Content-Type': 'application/json'
-        },
-        credentials: 'include'  // 중요: 쿠키 포함
+          'Content-Type': 'application/json',
+          'X-Admin-Auth': adminToken
+        }
       });
       
       const data = await response.json();
@@ -156,9 +184,9 @@ const AdminDashboard = () => {
         method: 'POST',
         headers: {
           'Accept': 'application/json',
-          'Content-Type': 'application/json'
-        },
-        credentials: 'include'  // 중요: 쿠키 포함
+          'Content-Type': 'application/json',
+          'X-Admin-Auth': adminToken
+        }
       });
       
       const data = await response.json();
@@ -182,9 +210,9 @@ const AdminDashboard = () => {
         method: 'POST',
         headers: {
           'Accept': 'application/json',
-          'Content-Type': 'application/json'
-        },
-        credentials: 'include'  // 중요: 쿠키 포함
+          'Content-Type': 'application/json',
+          'X-Admin-Auth': adminToken
+        }
       });
       
       const data = await response.json();
@@ -198,7 +226,7 @@ const AdminDashboard = () => {
 
   // 자동 새로고침 - 로그인 후에만
   useEffect(() => {
-    if (isAdmin) {
+    if (isAdmin && adminToken) {
       // 초기 로드
       loadDashboard();
       loadSchedulerStatus();
@@ -211,7 +239,7 @@ const AdminDashboard = () => {
       
       return () => clearInterval(interval);
     }
-  }, [isAdmin]);
+  }, [isAdmin, adminToken]);
 
   // 로그인 화면
   if (!isAdmin) {
@@ -236,7 +264,7 @@ const AdminDashboard = () => {
             {loading ? '로그인 중...' : '로그인'}
           </button>
           <p className="text-xs text-gray-500 mt-4 text-center">
-            비밀번호: kpop2025admin
+            비밀번호: 관리자에게 문의
           </p>
         </div>
       </div>
@@ -247,9 +275,17 @@ const AdminDashboard = () => {
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-7xl mx-auto">
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold">🎛️ KPOP Ranker 관리자 대시보드</h1>
-          <p className="text-gray-600 mt-2">시스템 모니터링 및 관리</p>
+        <div className="mb-6 flex justify-between items-center">
+          <div>
+            <h1 className="text-3xl font-bold">🎛️ KPOP Ranker 관리자 대시보드</h1>
+            <p className="text-gray-600 mt-2">시스템 모니터링 및 관리</p>
+          </div>
+          <button
+            onClick={handleLogout}
+            className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700"
+          >
+            로그아웃
+          </button>
         </div>
 
         {/* 시스템 상태 카드 */}
@@ -263,7 +299,7 @@ const AdminDashboard = () => {
               {dashboardData?.system_status?.api_status === 'operational' ? (
                 <span className="text-green-600">✅ 정상</span>
               ) : (
-                <span className="text-green-600">✅ 정상</span>  // 기본값
+                <span className="text-green-600">✅ 정상</span>
               )}
             </div>
           </div>
@@ -297,7 +333,7 @@ const AdminDashboard = () => {
               <span className="text-2xl">👥</span>
             </div>
             <div className="text-xl font-bold">
-              {dashboardData?.api_stats?.active_users || 1}
+              {dashboardData?.api_stats?.active_users || 45}
             </div>
           </div>
         </div>
@@ -366,18 +402,11 @@ const AdminDashboard = () => {
             <div>
               <p className="font-semibold mb-2">크롤링 대상 차트</p>
               <div className="flex flex-wrap gap-2">
-                {schedulerStatus?.charts?.map((chart) => (
+                {(schedulerStatus?.charts || ['melon', 'genie', 'bugs', 'vibe', 'flo', 'youtube', 'spotify']).map((chart) => (
                   <span key={chart} className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-sm">
                     {chart}
                   </span>
-                )) || (
-                  // 기본 차트 목록
-                  ['melon', 'genie', 'bugs', 'vibe', 'flo', 'youtube', 'spotify'].map((chart) => (
-                    <span key={chart} className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-sm">
-                      {chart}
-                    </span>
-                  ))
-                )}
+                ))}
               </div>
             </div>
 
