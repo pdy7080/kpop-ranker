@@ -162,6 +162,32 @@ export const authAPI = {
       { authenticated: false }
     );
   },
+  // OAuth URL 가져오기
+  getGoogleOAuthUrl: async () => {
+    return safeApiCall(
+      () => api.get('/api/auth/oauth/google/url'),
+      { url: null }
+    );
+  },
+  getKakaoOAuthUrl: async () => {
+    return safeApiCall(
+      () => api.get('/api/auth/oauth/kakao/url'),
+      { url: null }
+    );
+  },
+  // OAuth 콜백 처리
+  googleCallback: async (code: string) => {
+    return safeApiCall(
+      () => api.post('/api/auth/oauth/google/callback', { code }),
+      { success: false }
+    );
+  },
+  kakaoCallback: async (code: string) => {
+    return safeApiCall(
+      () => api.post('/api/auth/oauth/kakao/callback', { code }),
+      { success: false }
+    );
+  },
 };
 
 // 이미지 API

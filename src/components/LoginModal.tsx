@@ -33,14 +33,23 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
         throw new Error(`Unsupported provider: ${provider}`);
       }
       
-      if (response?.data?.url) {
+      if (response?.url) {
         // OAuth 페이지로 리다이렉트
-        window.location.href = response.data.url;
+        window.location.href = response.url;
+      } else if (response?.configured === false) {
+        // OAuth가 설정되지 않은 경우 데모 로그인으로 전환
+        console.log(`${provider} OAuth가 설정되지 않았습니다. 데모 로그인을 사용하세요.`);
+        toast('소셜 로그인 설정 중입니다. 데모 로그인을 사용해주세요.', {
+          icon: '🔧',
+        });
+        setShowDemoForm(true);
       } else {
         console.warn(`${provider} OAuth URL을 가져오지 못했습니다.`);
+        toast.error('로그인 서비스에 일시적인 문제가 있습니다.');
       }
     } catch (error) {
       console.error('로그인 에러:', error);
+      toast.error('로그인 중 오류가 발생했습니다.');
     } finally {
       setIsLoading(false);
     }
@@ -48,8 +57,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
 
   const handleDemoLogin = async () => {
     if (!demoName.trim()) {
-      // 🔥 입력 검증 실패 시에만 조용한 콘솔 로그
-      console.warn('이름을 입력해주세요.');
+      toast.error('이름을 입력해주세요.');
       return;
     }
 
@@ -57,21 +65,16 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
     
     try {
       const success = await demoLogin(demoName, demoEmail || undefined);
-      
       if (success) {
-        // 🔥 조용한 처리 - 알림창 제거
-        console.log('✅ 데모 로그인 성공');
+        toast.success(`환영합니다, ${demoName}님! 🎉`);
         onClose();
-        setShowDemoForm(false);
         setDemoName('');
         setDemoEmail('');
-      } else {
-        // 🔥 실패 시에만 조용한 콘솔 로그
-        console.warn('데모 로그인 실패');
+        setShowDemoForm(false);
       }
     } catch (error) {
-      // 🔥 에러도 조용히 처리
       console.error('데모 로그인 에러:', error);
+      toast.error('로그인에 실패했습니다.');
     } finally {
       setIsLoading(false);
     }
@@ -80,154 +83,137 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          {/* Overlay */}
+        <>
+          {/* 배경 오버레이 */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
             onClick={onClose}
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50"
           />
-
-          {/* Modal */}
+          
+          {/* 모달 */}
           <motion.div
             initial={{ opacity: 0, scale: 0.9, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.9, y: 20 }}
-            transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-            className="relative w-full max-w-md bg-white dark:bg-dark-200 rounded-2xl shadow-xl border border-gray-200 dark:border-dark-300"
+            className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl shadow-2xl z-50 p-6"
           >
-            {/* Header */}
-            <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-dark-300">
-              <h2 className="text-xl font-bold">로그인</h2>
-              <button
-                onClick={onClose}
-                className="p-2 hover:bg-gray-100 dark:hover:bg-dark-300 rounded-lg transition-colors"
-              >
-                <FaTimes className="w-5 h-5" />
-              </button>
+            {/* 닫기 버튼 */}
+            <button
+              onClick={onClose}
+              className="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors"
+            >
+              <FaTimes size={20} />
+            </button>
+            
+            {/* 타이틀 */}
+            <div className="text-center mb-6">
+              <h2 className="text-2xl font-bold text-white mb-2">
+                {showDemoForm ? '데모 로그인' : 'KPOP Ranker 로그인'}
+              </h2>
+              <p className="text-gray-400 text-sm">
+                {showDemoForm 
+                  ? '이름을 입력하고 시작하세요!'
+                  : '팬덤 활동을 시작하세요!'}
+              </p>
             </div>
-
-            {/* Content */}
-            <div className="p-6">
-              {!showDemoForm ? (
-                <div className="space-y-4">
-                  <p className="text-gray-600 dark:text-gray-400 text-center mb-6">
-                    K-POP 포트폴리오를 시작하세요!
-                  </p>
-
-                  {/* Social Login Buttons */}
-                  <div className="space-y-3">
-                    <motion.button
-                      onClick={() => handleSocialLogin('google')}
-                      disabled={isLoading}
-                      className="w-full flex items-center justify-center space-x-3 p-3 border border-gray-300 dark:border-dark-300 rounded-lg hover:bg-gray-50 dark:hover:bg-dark-300 transition-colors disabled:opacity-50"
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                    >
-                      <FaGoogle className="w-5 h-5 text-red-500" />
-                      <span>Google로 시작하기</span>
-                    </motion.button>
-
-                    <motion.button
-                      onClick={() => handleSocialLogin('kakao')}
-                      disabled={isLoading}
-                      className="w-full flex items-center justify-center space-x-3 p-3 bg-yellow-400 text-black rounded-lg hover:bg-yellow-500 transition-colors disabled:opacity-50"
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                    >
-                      <SiKakao className="w-5 h-5" />
-                      <span>카카오로 시작하기</span>
-                    </motion.button>
+            
+            {!showDemoForm ? (
+              <div className="space-y-3">
+                {/* 구글 로그인 버튼 */}
+                <button
+                  onClick={() => handleSocialLogin('google')}
+                  disabled={isLoading}
+                  className="w-full flex items-center justify-center gap-3 bg-white hover:bg-gray-100 text-gray-900 font-medium py-3 px-4 rounded-lg transition-colors disabled:opacity-50"
+                >
+                  <FaGoogle size={20} />
+                  Google로 로그인
+                </button>
+                
+                {/* 카카오 로그인 버튼 */}
+                <button
+                  onClick={() => handleSocialLogin('kakao')}
+                  disabled={isLoading}
+                  className="w-full flex items-center justify-center gap-3 bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-medium py-3 px-4 rounded-lg transition-colors disabled:opacity-50"
+                >
+                  <SiKakao size={20} />
+                  카카오로 로그인
+                </button>
+                
+                <div className="relative my-4">
+                  <div className="absolute inset-0 flex items-center">
+                    <div className="w-full border-t border-gray-700"></div>
                   </div>
-
-                  {/* Divider */}
-                  <div className="flex items-center my-6">
-                    <div className="flex-1 border-t border-gray-200 dark:border-dark-300"></div>
-                    <span className="px-4 text-sm text-gray-500">또는</span>
-                    <div className="flex-1 border-t border-gray-200 dark:border-dark-300"></div>
-                  </div>
-
-                  {/* Demo Login */}
-                  <motion.button
-                    onClick={() => setShowDemoForm(true)}
-                    className="w-full flex items-center justify-center space-x-3 p-3 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors"
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                  >
-                    <FaUser className="w-5 h-5" />
-                    <span>데모로 체험하기</span>
-                  </motion.button>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  <div className="text-center mb-4">
-                    <h3 className="text-lg font-semibold mb-2">데모 체험</h3>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
-                      간단한 정보로 포트폴리오 기능을 체험해보세요
-                    </p>
-                  </div>
-
-                  <div className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-medium mb-2">
-                        <FaUser className="inline w-4 h-4 mr-2" />
-                        이름 *
-                      </label>
-                      <input
-                        type="text"
-                        value={demoName}
-                        onChange={(e) => setDemoName(e.target.value)}
-                        placeholder="닉네임을 입력해주세요"
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-dark-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white dark:bg-dark-300"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium mb-2">
-                        <FaEnvelope className="inline w-4 h-4 mr-2" />
-                        이메일 (선택)
-                      </label>
-                      <input
-                        type="email"
-                        value={demoEmail}
-                        onChange={(e) => setDemoEmail(e.target.value)}
-                        placeholder="demo@example.com"
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-dark-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white dark:bg-dark-300"
-                      />
-                    </div>
-
-                    <div className="flex space-x-3 pt-2">
-                      <button
-                        onClick={() => setShowDemoForm(false)}
-                        className="flex-1 px-4 py-2 border border-gray-300 dark:border-dark-300 rounded-lg hover:bg-gray-50 dark:hover:bg-dark-300 transition-colors"
-                      >
-                        돌아가기
-                      </button>
-                      <motion.button
-                        onClick={handleDemoLogin}
-                        disabled={isLoading || !demoName.trim()}
-                        className="flex-1 px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors disabled:opacity-50"
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
-                      >
-                        {isLoading ? '로그인 중...' : '시작하기'}
-                      </motion.button>
-                    </div>
+                  <div className="relative flex justify-center text-sm">
+                    <span className="px-2 bg-gray-800 text-gray-400">또는</span>
                   </div>
                 </div>
-              )}
-
-              {/* Footer */}
-              <div className="mt-6 pt-4 border-t border-gray-200 dark:border-dark-300">
-                <p className="text-xs text-gray-500 text-center">
-                  로그인하면 서비스 이용약관 및 개인정보 처리방침에 동의하게 됩니다.
-                </p>
+                
+                {/* 데모 로그인 버튼 */}
+                <button
+                  onClick={() => setShowDemoForm(true)}
+                  disabled={isLoading}
+                  className="w-full flex items-center justify-center gap-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-medium py-3 px-4 rounded-lg transition-all disabled:opacity-50"
+                >
+                  <FaUser size={18} />
+                  데모로 시작하기
+                </button>
               </div>
+            ) : (
+              <div className="space-y-4">
+                {/* 데모 로그인 폼 */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    이름 *
+                  </label>
+                  <input
+                    type="text"
+                    value={demoName}
+                    onChange={(e) => setDemoName(e.target.value)}
+                    placeholder="닉네임을 입력하세요"
+                    className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    이메일 (선택)
+                  </label>
+                  <input
+                    type="email"
+                    value={demoEmail}
+                    onChange={(e) => setDemoEmail(e.target.value)}
+                    placeholder="example@email.com"
+                    className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  />
+                </div>
+                
+                <div className="flex gap-3 pt-2">
+                  <button
+                    onClick={() => setShowDemoForm(false)}
+                    className="flex-1 py-2 px-4 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition-colors"
+                  >
+                    뒤로
+                  </button>
+                  <button
+                    onClick={handleDemoLogin}
+                    disabled={isLoading || !demoName.trim()}
+                    className="flex-1 py-2 px-4 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white rounded-lg transition-all disabled:opacity-50"
+                  >
+                    {isLoading ? '로그인 중...' : '시작하기'}
+                  </button>
+                </div>
+              </div>
+            )}
+            
+            {/* 하단 안내 */}
+            <div className="mt-6 text-center text-xs text-gray-500">
+              로그인하면 서비스 이용약관 및 개인정보 처리방침에 동의하는 것으로 간주됩니다.
             </div>
           </motion.div>
-        </div>
+        </>
       )}
     </AnimatePresence>
   );
