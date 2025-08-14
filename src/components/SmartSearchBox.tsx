@@ -2,7 +2,7 @@ import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaSearch, FaTimes, FaInfoCircle } from 'react-icons/fa';
 import { useDebounce } from '@/hooks/useDebounce';
-import { searchApi, autocompleteApi } from '@/lib/api';
+import { searchApi } from '@/lib/api';
 import { useRouter } from 'next/router';
 import toast from 'react-hot-toast';
 
