@@ -56,15 +56,21 @@ const AuthCallbackPage: React.FC = () => {
       }
 
       try {
-        // URL 경로에서 provider 추측 (Google/Kakao)
-        const referrer = document.referrer;
-        let provider = 'google'; // 기본값
+        // localStorage에서 provider 확인 (우선)
+        let provider = localStorage.getItem('oauth_provider') || 'google';
         
-        if (referrer.includes('kakao') || window.location.href.includes('kakao')) {
-          provider = 'kakao';
-        } else if (state && typeof state === 'string' && state.includes('kakao')) {
-          provider = 'kakao';
+        // 추가적으로 URL에서 provider 판별 (폴백)
+        const referrer = document.referrer;
+        if (!localStorage.getItem('oauth_provider')) {
+          if (referrer.includes('kakao') || window.location.href.includes('kakao')) {
+            provider = 'kakao';
+          } else if (state && typeof state === 'string' && state.includes('kakao')) {
+            provider = 'kakao';
+          }
         }
+        
+        // provider 사용 후 localStorage에서 제거
+        localStorage.removeItem('oauth_provider');
 
         // OAuth 콜백 처리
         console.log(`🟢 Calling ${provider} OAuth callback API...`);

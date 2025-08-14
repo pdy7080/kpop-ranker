@@ -22,6 +22,9 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
   const handleSocialLogin = async (provider: string) => {
     setIsLoading(true);
     
+    // provider를 localStorage에 저장 (콜백 페이지에서 사용)
+    localStorage.setItem('oauth_provider', provider);
+    
     try {
       // OAuth URL 가져오기
       let response;
