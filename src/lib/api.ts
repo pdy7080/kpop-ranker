@@ -209,6 +209,34 @@ export const imageAPI = {
   },
 };
 
+// 인사이트 API
+export const insightsAPI = {
+  getDailyInsights: async () => {
+    return safeApiCall(
+      () => api.get('/api/insights/daily'),
+      { trends: [], market_analysis: '', recommendations: [] }
+    );
+  },
+  getMarketPulse: async () => {
+    return safeApiCall(
+      () => api.get('/api/insights/market-pulse'),
+      { active_artists: 0, trending_tracks: 0, market_sentiment: '', hot_topics: [] }
+    );
+  },
+  getRecommendations: async () => {
+    return safeApiCall(
+      () => api.get('/api/insights/recommendations'),
+      { artists_to_watch: [], trending_genres: [], investment_tips: [] }
+    );
+  },
+  getArtistInsight: async (artist: string) => {
+    return safeApiCall(
+      () => api.get(`/api/insights/artist/${encodeURIComponent(artist)}`),
+      { insights: null }
+    );
+  },
+};
+
 // alias for compatibility (소문자 버전) - 모든 API 정의 후에 선언
 export const trendingApi = chartAPI;
 export const chartApi = chartAPI;
@@ -217,6 +245,7 @@ export const searchApi = searchAPI;
 export const artistApi = artistAPI;
 export const portfolioApi = portfolioAPI;
 export const imageApi = imageAPI;
+export const insightsApi = insightsAPI;
 
 // Convenience functions
 export const searchArtistTracks = artistAPI.getTracks;
