@@ -74,24 +74,45 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const login = async (provider: string, code?: string): Promise<boolean> => {
     try {
       setIsLoading(true);
-      const response = await authApi.login(provider, code);
       
-      // 백엔드는 'token'을 반환하고, 'access_token'이 아님
-      if (response && response.data) {
-        if (response.data.token) {
-          localStorage.setItem('auth_token', response.data.token);
-        } else if (response.data.access_token) {
-          localStorage.setItem('auth_token', response.data.access_token);
+      // OAuth 로그인 처리
+      if (provider === 'google' && code) {
+        const response = await authApi.googleCallback(code);
+        if (response && response.success) {
+          if (response.token) {
+            localStorage.setItem('auth_token', response.token);
+          }
+          if (response.user) {
+            setUser(response.user);
+          }
+          return true;
         }
+      } else if (provider === 'kakao' && code) {
+        const response = await authApi.kakaoCallback(code);
+        if (response && response.success) {
+          if (response.token) {
+            localStorage.setItem('auth_token', response.token);
+          }
+          if (response.user) {
+            setUser(response.user);
+          }
+          return true;
+        }
+      } else {
+        // 일반 로그인 (데모 로그인 등)
+        const response = await authApi.login({ provider, code });
         
-        if (response.data.refresh_token) {
-          localStorage.setItem('refresh_token', response.data.refresh_token);
+        // 백엔드는 'token'을 반환하고, 'access_token'이 아님
+        if (response && response.success) {
+          if (response.token) {
+            localStorage.setItem('auth_token', response.token);
+          }
+          
+          if (response.user) {
+            setUser(response.user);
+          }
+          return true;
         }
-        
-        if (response.data.user) {
-          setUser(response.data.user);
-        }
-        return true;
       }
       return false;
     } catch (error) {
@@ -108,19 +129,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const response = await authApi.demoLogin(name, email);
       
       // 백엔드는 'token'을 반환하고, 'access_token'이 아님
-      if (response && response.data) {
-        if (response.data.token) {
-          localStorage.setItem('auth_token', response.data.token);
-        } else if (response.data.access_token) {
-          localStorage.setItem('auth_token', response.data.access_token);
+      if (response && response.success) {
+        if (response.token) {
+          localStorage.setItem('auth_token', response.token);
         }
         
-        if (response.data.refresh_token) {
-          localStorage.setItem('refresh_token', response.data.refresh_token);
-        }
-        
-        if (response.data.user) {
-          setUser(response.data.user);
+        if (response.user) {
+          setUser(response.user);
         }
         
         console.log('✅ AuthContext: 데모 로그인 성공');

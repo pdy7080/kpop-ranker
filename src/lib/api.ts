@@ -150,6 +150,13 @@ export const authAPI = {
       { success: false }
     );
   },
+  // 데모 로그인 (alias)
+  demoLogin: async (name: string, email?: string) => {
+    return safeApiCall(
+      () => api.post('/api/auth/demo-login', { name, email }),
+      { success: false }
+    );
+  },
   logout: async () => {
     return safeApiCall(
       () => api.post('/api/auth/logout'),
