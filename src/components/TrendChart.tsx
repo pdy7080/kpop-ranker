@@ -11,7 +11,7 @@ import {
   ChartOptions,
 } from 'chart.js';
 import { Line } from 'react-chartjs-2';
-import { chartApi } from '@/lib/api';
+import { chartAPI } from '@/lib/api';
 import { motion } from 'framer-motion';
 
 // Register ChartJS components
@@ -53,7 +53,7 @@ const TrendChart: React.FC<TrendChartProps> = ({
   const fetchHistory = async () => {
     setIsLoading(true);
     try {
-      const response = await chartApi.getHistory(chartName, artistName, trackName, period);
+      const response = await chartAPI.getHistory(chartName, artistName, trackName);
       if (response && response.history) {
         // 이미 특정 차트의 히스토리만 받아옴
         setHistoryData(response.history || []);
