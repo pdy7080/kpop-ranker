@@ -115,34 +115,6 @@ export default function PortfolioPage() {
     }
   };
 
-  // 🔥 완전히 조용한 로그인 (모든 안내창 제거)
-  const handleQuietLogin = async () => {
-    try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
-      const response = await fetch(`${apiUrl}/api/auth/demo-login`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          username: 'K-POP Fan',
-          email: 'demo@kpopranker.com'
-        })
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        setIsLoggedIn(true);
-        // 🔥 완전히 조용한 로그인 - 모든 안내창 제거
-        console.log('✅ 조용한 로그인 성공:', data.user?.name || 'Demo User');
-      }
-    } catch (error) {
-      console.error('로그인 실패:', error);
-      // 🔥 실패도 조용하게 처리 - 불필요한 안내창 제거
-      console.warn('조용한 로그인 실패 - 계속 진행');
-    }
-  };
-
   // 🎯 곡 클릭 시 곡 상세 페이지로 이동 (올바른 track 페이지로)
   const handleTrackClick = (artist: string, track: string) => {
     // 🎯 FIX: 새로운 곡 상세 페이지로 이동
@@ -293,15 +265,6 @@ export default function PortfolioPage() {
               </div>
               
               <div className="flex items-center space-x-3">
-                {!isLoggedIn && (
-                  <button
-                    onClick={handleQuietLogin}
-                    className="bg-green-600 text-white px-4 py-2 rounded-xl hover:bg-green-700 transition-colors flex items-center"
-                  >
-                    <FaSignInAlt className="w-4 h-4 mr-2" />
-                    조용한 로그인
-                  </button>
-                )}
                 <Link
                   href="/search"
                   className="bg-primary-600 text-white px-6 py-3 rounded-xl hover:bg-primary-700 transition-colors flex items-center"

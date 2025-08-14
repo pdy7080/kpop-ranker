@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { useAuth } from '@/contexts/AuthContext';
-import { authApi } from '@/lib/api';
+import { authApi } from '@/lib/api_fixed';
 import { motion } from 'framer-motion';
 import { FaSpinner } from 'react-icons/fa';
 

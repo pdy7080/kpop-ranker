@@ -221,6 +221,40 @@ export const authApi = {
       async () => await api.get('/api/auth/status'),
       { authenticated: false }
     );
+  },
+
+  // OAuth 콜백 처리
+  googleCallback: async (code: string): Promise<any> => {
+    try {
+      console.log('🟢 Calling google OAuth callback API...');
+      const response = await api.post('/api/auth/oauth/google', { code });
+      console.log('🟡 OAuth API Response:', {
+        success: response?.data?.success,
+        hasToken: !!response?.data?.token,
+        hasUser: !!response?.data?.user,
+        fullResponse: response?.data
+      });
+      return response;
+    } catch (error) {
+      console.error('🔴 Google OAuth API error:', error);
+      throw error;
+    }
+  },
+
+  kakaoCallback: async (code: string): Promise<any> => {
+    try {
+      console.log('🟢 Calling kakao OAuth callback API...');
+      const response = await api.post('/api/auth/oauth/kakao', { code });
+      console.log('🟡 OAuth API Response:', {
+        success: response?.data?.success,
+        hasToken: !!response?.data?.token,
+        hasUser: !!response?.data?.user
+      });
+      return response;
+    } catch (error) {
+      console.error('🔴 Kakao OAuth API error:', error);
+      throw error;
+    }
   }
 };
 
