@@ -111,9 +111,14 @@ export const chartAPI = {
   },
 };
 
-// alias for compatibility
+// alias for compatibility (소문자 버전)
 export const trendingApi = chartAPI;
 export const chartApi = chartAPI;
+export const authApi = authAPI;
+export const searchApi = searchAPI;
+export const artistApi = artistAPI;
+export const portfolioApi = portfolioAPI;
+export const imageApi = imageAPI;
 
 // 포트폴리오 API
 export const portfolioAPI = {
