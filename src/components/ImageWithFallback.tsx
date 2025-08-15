@@ -36,19 +36,20 @@ const ImageWithFallback: React.FC<ImageWithFallbackProps> = ({
   const [hasError, setHasError] = useState<boolean>(false);
   const attemptedUrlsRef = useRef<Set<string>>(new Set());
 
-  // Base64로 인코딩된 기본 SVG 이미지 (파일 시스템 의존 제거)
-  const DEFAULT_PLACEHOLDER = 'data:image/svg+xml;base64,' + btoa(`
-    <svg width="200" height="200" xmlns="http://www.w3.org/2000/svg">
-      <defs>
-        <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" style="stop-color:#667eea;stop-opacity:1" />
-          <stop offset="100%" style="stop-color:#764ba2;stop-opacity:1" />
-        </linearGradient>
-      </defs>
-      <rect width="200" height="200" fill="url(#bg)"/>
-      <text x="100" y="100" font-family="Arial" font-size="48" fill="white" text-anchor="middle" dy="0.35em">♪</text>
-    </svg>
-  `);
+  // Base64로 인코딩된 기본 SVG 이미지 (한글 안전 버전)
+  // btoa는 Latin1 범위만 지원하므로 템플릿 리터럴 대신 문자열 연결 사용
+  const DEFAULT_PLACEHOLDER = 'data:image/svg+xml;base64,' + btoa(
+    '<svg width="200" height="200" xmlns="http://www.w3.org/2000/svg">' +
+    '<defs>' +
+    '<linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">' +
+    '<stop offset="0%" style="stop-color:#667eea;stop-opacity:1" />' +
+    '<stop offset="100%" style="stop-color:#764ba2;stop-opacity:1" />' +
+    '</linearGradient>' +
+    '</defs>' +
+    '<rect width="200" height="200" fill="url(#bg)"/>' +
+    '<text x="100" y="100" font-family="Arial" font-size="48" fill="white" text-anchor="middle" dy="0.35em">\u266A</text>' +
+    '</svg>'
+  );
 
   // 스마트 이미지 URL 생성
   const generateSmartImageUrl = (): string => {
