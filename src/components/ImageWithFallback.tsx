@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 
 interface ImageWithFallbackProps {
   src: string;
@@ -10,15 +10,15 @@ interface ImageWithFallbackProps {
   artistName?: string;
   artistNameNormalized?: string;
   trackName?: string;
-  priority?: boolean;    // (미사용) Next/Image 대비 호환 보존
-  unoptimized?: boolean; // (미사용) Next/Image 대비 호환 보존
+  priority?: boolean;
+  unoptimized?: boolean;
 }
 
 /**
- * 🚀 스마트 이미지 컴포넌트 - 수정됨
- * - 백엔드 SmartImageResolver 연동 (album-image-smart)
- * - 하드코딩/폴더의존 제거, 100% 자동 매칭
- * - 🔧 렌더링 로직 수정: URL 있으면 즉시 img 태그 렌더링
+ * 🚨 긴급 수정 v2: placeholder-album.png 완전 제거
+ * - Base64 인코딩된 SVG 직접 사용
+ * - 외부 파일 의존성 제거
+ * - 무한 루프 완전 차단
  */
 const ImageWithFallback: React.FC<ImageWithFallbackProps> = ({
   src,
@@ -34,133 +34,144 @@ const ImageWithFallback: React.FC<ImageWithFallbackProps> = ({
   const [currentSrc, setCurrentSrc] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [hasError, setHasError] = useState<boolean>(false);
+  const attemptedUrlsRef = useRef<Set<string>>(new Set());
+
+  // Base64로 인코딩된 기본 SVG 이미지 (파일 시스템 의존 제거)
+  const DEFAULT_PLACEHOLDER = 'data:image/svg+xml;base64,' + btoa(`
+    <svg width="200" height="200" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" style="stop-color:#667eea;stop-opacity:1" />
+          <stop offset="100%" style="stop-color:#764ba2;stop-opacity:1" />
+        </linearGradient>
+      </defs>
+      <rect width="200" height="200" fill="url(#bg)"/>
+      <text x="100" y="100" font-family="Arial" font-size="48" fill="white" text-anchor="middle" dy="0.35em">♪</text>
+    </svg>
+  `);
 
   // 스마트 이미지 URL 생성
   const generateSmartImageUrl = (): string => {
     const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
     const useArtist = artistNameNormalized || artistName || '알수없음';
     const useTrack = trackName || '알수없음';
-
-    const smartUrl = `${baseUrl}/api/album-image-smart/${encodeURIComponent(useArtist)}/${encodeURIComponent(useTrack)}`;
-
-    // 🔎 인코딩 및 최종 URL 로깅
-    console.log('🎯 스마트 이미지 요청:', { artist: useArtist, track: useTrack, url: smartUrl });
-    console.log('🔧 인코딩된 URL:', smartUrl);
-
-    return smartUrl;
+    
+    // smart API 사용
+    return `${baseUrl}/api/album-image-smart/${encodeURIComponent(useArtist)}/${encodeURIComponent(useTrack)}`;
   };
 
   // 소스 결정
   useEffect(() => {
-    // 초기화
+    // URL 시도 기록 초기화
+    attemptedUrlsRef.current.clear();
     setHasError(false);
     setIsLoading(true);
 
+    let imageUrl = '';
+    
     if (artistName || artistNameNormalized) {
-      const smartUrl = generateSmartImageUrl();
-      setCurrentSrc(smartUrl);
-    } else if (src) {
-      setCurrentSrc(src);
+      // 아티스트 정보가 있으면 스마트 API 사용
+      imageUrl = generateSmartImageUrl();
+    } else if (src && !src.includes('placeholder')) {
+      // placeholder가 포함되지 않은 유효한 src
+      imageUrl = src;
+    }
+
+    if (imageUrl) {
+      setCurrentSrc(imageUrl);
+      attemptedUrlsRef.current.add(imageUrl);
     } else {
-      setCurrentSrc('');
-      setIsLoading(false); // 소스가 없으면 로딩 종료
+      // 유효한 소스가 없으면 바로 기본 이미지 사용
+      setCurrentSrc(DEFAULT_PLACEHOLDER);
+      setIsLoading(false);
     }
   }, [artistName, artistNameNormalized, trackName, src]);
 
-  // 상태 로깅 (디버깅 강화)
-  useEffect(() => {
-    console.log('🔧 ImageWithFallback 상태:', {
-      currentSrc,
-      isLoading,
-      hasError,
-      artist: artistName || artistNameNormalized,
-      track: trackName,
-    });
-  }, [currentSrc, isLoading, hasError, artistName, artistNameNormalized, trackName]);
-
   // 이미지 로드 성공
   const handleLoad = () => {
-    console.log('✅ 이미지 로드 성공:', currentSrc);
     setIsLoading(false);
     setHasError(false);
   };
 
   // 이미지 로드 실패
-  const handleError = () => {
-    console.log('❌ 이미지 로드 실패:', currentSrc);
-    setHasError(true);
-    setIsLoading(false);
+  const handleError = (e: React.SyntheticEvent<HTMLImageElement>) => {
+    const failedUrl = e.currentTarget.src;
+    
+    console.log('❌ 이미지 로드 실패:', failedUrl);
+    
+    // 이미 시도한 URL이면 무시 (무한 루프 방지)
+    if (attemptedUrlsRef.current.has(DEFAULT_PLACEHOLDER)) {
+      setHasError(true);
+      setIsLoading(false);
+      return;
+    }
+
+    // Base64 SVG로 폴백
+    if (failedUrl !== DEFAULT_PLACEHOLDER) {
+      console.log('🔄 기본 SVG 사용');
+      setCurrentSrc(DEFAULT_PLACEHOLDER);
+      attemptedUrlsRef.current.add(DEFAULT_PLACEHOLDER);
+    } else {
+      // SVG도 실패하면 렌더링된 폴백 사용
+      setHasError(true);
+      setIsLoading(false);
+    }
   };
 
-  // 에러 또는 소스 없음 → 텍스트 플레이스홀더
-  if (hasError || (!currentSrc && !isLoading)) {
+  // 에러 발생 시 렌더링된 플레이스홀더
+  if (hasError) {
     const useArtist = artistNameNormalized || artistName;
     const displayChar = useArtist ? useArtist.charAt(0).toUpperCase() : '♪';
 
     return (
       <div
         className={`flex items-center justify-center bg-gradient-to-br from-purple-500 to-indigo-600 text-white font-bold text-2xl rounded-lg ${className}`}
-        style={{ width, height }}
+        style={{ width: fill ? '100%' : width, height: fill ? '100%' : height }}
       >
         {displayChar}
       </div>
     );
   }
 
-  // 🔧 중요한 수정: currentSrc가 있으면 이미지 렌더링 (로딩 상태와 무관)
+  // 이미지 렌더링
   if (currentSrc) {
-    const imageElement = fill ? (
-      <img
-        src={currentSrc}
-        alt={alt}
-        className={`w-full h-full object-cover ${className}`}
-        onLoad={handleLoad}
-        onError={handleError}
-        crossOrigin="anonymous"   // ✅ CORS
-        loading="eager"           // ✅ 즉시 로드
-        style={{ maxWidth: '100%', height: '100%' }}
-        referrerPolicy="no-referrer" // CORS 환경 보조
-      />
-    ) : (
-      <img
-        src={currentSrc}
-        alt={alt}
-        width={width}
-        height={height}
-        className={className}
-        onLoad={handleLoad}
-        onError={handleError}
-        crossOrigin="anonymous"     // ✅ CORS
-        loading="eager"             // ✅ 즉시 로드
-        style={{ maxWidth: '100%', height: 'auto' }}
-        referrerPolicy="no-referrer" // CORS 환경 보조
-      />
-    );
+    const imgStyle = fill 
+      ? { width: '100%', height: '100%', objectFit: 'cover' as const }
+      : { maxWidth: '100%', height: 'auto' };
 
-    // 로딩 중이면 이미지 위에 로딩 오버레이 표시
-    if (isLoading) {
-      return (
-        <div className="relative" style={{ width, height }}>
-          {imageElement}
+    return (
+      <div className={fill ? 'relative w-full h-full' : ''} style={fill ? {} : { width, height }}>
+        <img
+          src={currentSrc}
+          alt={alt}
+          className={className}
+          onLoad={handleLoad}
+          onError={handleError}
+          style={imgStyle}
+          loading="lazy"
+          referrerPolicy="no-referrer"
+          width={!fill ? width : undefined}
+          height={!fill ? height : undefined}
+        />
+        {isLoading && currentSrc !== DEFAULT_PLACEHOLDER && (
           <div 
-            className="absolute inset-0 flex items-center justify-center bg-gray-200 bg-opacity-75 rounded-lg"
+            className="absolute inset-0 flex items-center justify-center bg-gray-200 bg-opacity-50 rounded-lg pointer-events-none"
+            style={{ width: fill ? '100%' : width, height: fill ? '100%' : height }}
           >
-            <div className="text-gray-600 text-sm">로딩중...</div>
+            <div className="text-gray-600 text-xs">...</div>
           </div>
-        </div>
-      );
-    }
-
-    return imageElement;
+        )}
+      </div>
+    );
   }
 
-  // 최종 폴백: 소스가 없고 로딩중인 경우
+  // 초기 로딩 상태
   return (
     <div
       className={`flex items-center justify-center bg-gray-200 animate-pulse rounded-lg ${className}`}
-      style={{ width, height }}
+      style={{ width: fill ? '100%' : width, height: fill ? '100%' : height }}
     >
-      <div className="text-gray-400 text-sm">로딩중...</div>
+      <div className="text-gray-400 text-sm">♪</div>
     </div>
   );
 };
