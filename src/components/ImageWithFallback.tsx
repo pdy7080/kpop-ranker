@@ -15,9 +15,9 @@ interface ImageWithFallbackProps {
 }
 
 /**
- * 🚨 긴급 수정 v2: placeholder-album.png 완전 제거
- * - Base64 인코딩된 SVG 직접 사용
- * - 외부 파일 의존성 제거
+ * 🚨 긴급 수정 v3: btoa 한글 인코딩 오류 해결
+ * - btoa() 대신 encodeURIComponent() 사용
+ * - placeholder-album.png 완전 제거
  * - 무한 루프 완전 차단
  */
 const ImageWithFallback: React.FC<ImageWithFallbackProps> = ({
@@ -36,9 +36,8 @@ const ImageWithFallback: React.FC<ImageWithFallbackProps> = ({
   const [hasError, setHasError] = useState<boolean>(false);
   const attemptedUrlsRef = useRef<Set<string>>(new Set());
 
-  // Base64로 인코딩된 기본 SVG 이미지 (한글 안전 버전)
-  // btoa는 Latin1 범위만 지원하므로 템플릿 리터럴 대신 문자열 연결 사용
-  const DEFAULT_PLACEHOLDER = 'data:image/svg+xml;base64,' + btoa(
+  // SVG 직접 인코딩 (btoa 대신 encodeURIComponent 사용)
+  const DEFAULT_PLACEHOLDER = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(
     '<svg width="200" height="200" xmlns="http://www.w3.org/2000/svg">' +
     '<defs>' +
     '<linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">' +
@@ -47,7 +46,7 @@ const ImageWithFallback: React.FC<ImageWithFallbackProps> = ({
     '</linearGradient>' +
     '</defs>' +
     '<rect width="200" height="200" fill="url(#bg)"/>' +
-    '<text x="100" y="100" font-family="Arial" font-size="48" fill="white" text-anchor="middle" dy="0.35em">\u266A</text>' +
+    '<text x="100" y="100" font-family="Arial" font-size="48" fill="white" text-anchor="middle" dy="0.35em">♪</text>' +
     '</svg>'
   );
 
@@ -98,81 +97,47 @@ const ImageWithFallback: React.FC<ImageWithFallbackProps> = ({
   const handleError = (e: React.SyntheticEvent<HTMLImageElement>) => {
     const failedUrl = e.currentTarget.src;
     
-    console.log('❌ 이미지 로드 실패:', failedUrl);
-    
     // 이미 시도한 URL이면 무시 (무한 루프 방지)
-    if (attemptedUrlsRef.current.has(DEFAULT_PLACEHOLDER)) {
+    if (attemptedUrlsRef.current.has(failedUrl)) {
+      console.log('이미지 로드 실패 (재시도 안함):', failedUrl);
+      setCurrentSrc(DEFAULT_PLACEHOLDER);
       setHasError(true);
       setIsLoading(false);
       return;
     }
 
-    // Base64 SVG로 폴백
-    if (failedUrl !== DEFAULT_PLACEHOLDER) {
-      console.log('🔄 기본 SVG 사용');
-      setCurrentSrc(DEFAULT_PLACEHOLDER);
-      attemptedUrlsRef.current.add(DEFAULT_PLACEHOLDER);
-    } else {
-      // SVG도 실패하면 렌더링된 폴백 사용
-      setHasError(true);
-      setIsLoading(false);
-    }
+    attemptedUrlsRef.current.add(failedUrl);
+    
+    // 기본 SVG로 폴백
+    console.log('이미지 로드 실패, 기본 이미지 사용:', failedUrl);
+    setCurrentSrc(DEFAULT_PLACEHOLDER);
+    setHasError(true);
+    setIsLoading(false);
   };
 
-  // 에러 발생 시 렌더링된 플레이스홀더
-  if (hasError) {
-    const useArtist = artistNameNormalized || artistName;
-    const displayChar = useArtist ? useArtist.charAt(0).toUpperCase() : '♪';
-
-    return (
-      <div
-        className={`flex items-center justify-center bg-gradient-to-br from-purple-500 to-indigo-600 text-white font-bold text-2xl rounded-lg ${className}`}
-        style={{ width: fill ? '100%' : width, height: fill ? '100%' : height }}
-      >
-        {displayChar}
-      </div>
-    );
-  }
-
-  // 이미지 렌더링
-  if (currentSrc) {
-    const imgStyle = fill 
-      ? { width: '100%', height: '100%', objectFit: 'cover' as const }
-      : { maxWidth: '100%', height: 'auto' };
-
-    return (
-      <div className={fill ? 'relative w-full h-full' : ''} style={fill ? {} : { width, height }}>
-        <img
-          src={currentSrc}
-          alt={alt}
-          className={className}
-          onLoad={handleLoad}
-          onError={handleError}
-          style={imgStyle}
-          loading="lazy"
-          referrerPolicy="no-referrer"
-          width={!fill ? width : undefined}
-          height={!fill ? height : undefined}
-        />
-        {isLoading && currentSrc !== DEFAULT_PLACEHOLDER && (
-          <div 
-            className="absolute inset-0 flex items-center justify-center bg-gray-200 bg-opacity-50 rounded-lg pointer-events-none"
-            style={{ width: fill ? '100%' : width, height: fill ? '100%' : height }}
-          >
-            <div className="text-gray-600 text-xs">...</div>
-          </div>
-        )}
-      </div>
-    );
-  }
-
-  // 초기 로딩 상태
   return (
-    <div
-      className={`flex items-center justify-center bg-gray-200 animate-pulse rounded-lg ${className}`}
-      style={{ width: fill ? '100%' : width, height: fill ? '100%' : height }}
+    <div 
+      className={`relative overflow-hidden bg-gray-100 ${className}`}
+      style={{ 
+        width: fill ? '100%' : width, 
+        height: fill ? '100%' : height 
+      }}
     >
-      <div className="text-gray-400 text-sm">♪</div>
+      {isLoading && (
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="animate-pulse bg-gradient-to-r from-purple-400 to-pink-400 w-full h-full" />
+        </div>
+      )}
+      
+      <img
+        src={currentSrc}
+        alt={alt}
+        width={width}
+        height={height}
+        onLoad={handleLoad}
+        onError={handleError}
+        className={`object-cover w-full h-full ${isLoading ? 'opacity-0' : 'opacity-100'} transition-opacity duration-300`}
+      />
     </div>
   );
 };
