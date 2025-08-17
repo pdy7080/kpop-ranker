@@ -237,11 +237,11 @@ export const insightsAPI = {
 // 이미지 API
 export const imageAPI = {
   getAlbumImage: (artist: string, track: string) => {
-    // 직접 URL 반환 (img src에 사용)
-    return `${API_URL}/api/album-image-v2/${encodeURIComponent(artist)}/${encodeURIComponent(track)}`;
+    // Smart Image API 사용 (백엔드가 자동 매핑 처리)
+    return `${API_URL}/api/album-image-smart/${encodeURIComponent(artist)}/${encodeURIComponent(track)}`;
   },
   getSmartImage: (artist: string, track: string) => {
-    // 스마트 이미지 API
+    // 동일한 Smart Image API 사용
     return `${API_URL}/api/album-image-smart/${encodeURIComponent(artist)}/${encodeURIComponent(track)}`;
   },
   checkImages: async () => {
