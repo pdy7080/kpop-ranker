@@ -300,4 +300,7 @@ export const schedulerAPI = {
   },
 };
 
+// 하위 호환성을 위한 alias exports
+export const authApi = authAPI;  // authApi -> authAPI alias
+
 export default api;

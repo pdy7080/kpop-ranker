@@ -1,6 +1,6 @@
 import { useState, useEffect, useContext, createContext, ReactNode } from 'react';
 import { useRouter } from 'next/router';
-import { authApi } from '@/lib/api';
+import { authAPI } from '@/lib/api';
 import toast from 'react-hot-toast';
 
 interface User {
@@ -34,7 +34,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         return;
       }
 
-      const response = await authApi.getUser();
+      const response = await authAPI.getUser();
       // safeApiCall로 래핑된 응답이므로 직접 접근
       if (response && 'user' in response && response.user) {
         setUser(response.user);
