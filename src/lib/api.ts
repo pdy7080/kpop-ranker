@@ -302,5 +302,8 @@ export const schedulerAPI = {
 
 // 하위 호환성을 위한 alias exports
 export const authApi = authAPI;  // authApi -> authAPI alias
+export const insightsApi = insightsAPI;  // insightsApi -> insightsAPI alias
+export const trendingAPI = trendingApi;  // trendingAPI -> trendingApi alias (역방향)
+// searchAPI와 searchApi는 이미 위에 정의됨
 
 export default api;
