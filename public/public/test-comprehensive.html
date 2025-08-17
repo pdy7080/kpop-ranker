@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KPOP Ranker 통합 테스트</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .test-section {
+            background: white;
+            margin: 20px 0;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1, h2 {
+            color: #333;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 5px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .result {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 4px;
+            padding: 15px;
+            margin: 10px 0;
+            white-space: pre-wrap;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .error {
+            background: #f8d7da;
+            border-color: #f5c6cb;
+            color: #721c24;
+        }
+        .success {
+            background: #d4edda;
+            border-color: #c3e6cb;
+            color: #155724;
+        }
+        input[type="text"] {
+            padding: 8px;
+            margin: 5px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            width: 200px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🎵 KPOP Ranker 통합 테스트</h1>
+    
+    <div class="test-section">
+        <h2>🔍 1. 백엔드 API 직접 테스트</h2>
+        <button onclick="testBackendDirect()">백엔드 서버 상태 확인</button>
+        <button onclick="testSearchDirect()">검색 API 직접 테스트</button>
+        <button onclick="testTrendingDirect()">트렌딩 API 직접 테스트</button>
+        <div id="backend-result" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>🔄 2. 프록시 API 테스트</h2>
+        <button onclick="testProxyAPI()">프록시 경로 테스트</button>
+        <button onclick="testSearchProxy()">검색 프록시 테스트</button>
+        <div id="proxy-result" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>🎯 3. 통합 검색 테스트</h2>
+        <div>
+            <input type="text" id="search-query" placeholder="검색어 입력 (예: BLACKPINK)" value="BLACKPINK">
+            <button onclick="testUnifiedSearch()">통합 검색 테스트</button>
+        </div>
+        <div>
+            <input type="text" id="artist-input" placeholder="아티스트명" value="BLACKPINK">
+            <input type="text" id="track-input" placeholder="곡명 (선택)" value="">
+            <button onclick="testArtistSearch()">아티스트 검색 테스트</button>
+        </div>
+        <div id="search-result" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>🔤 4. 자동완성 테스트</h2>
+        <div>
+            <input type="text" id="autocomplete-query" placeholder="자동완성 검색어" value="블랙핑크">
+            <button onclick="testAutocomplete()">자동완성 테스트</button>
+        </div>
+        <div id="autocomplete-result" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>🔥 5. 트렌딩 & 기타 API 테스트</h2>
+        <button onclick="testTrending()">트렌딩 데이터</button>
+        <button onclick="testGoods()">굿즈 API (BLACKPINK)</button>
+        <button onclick="testNews()">뉴스 API (BLACKPINK)</button>
+        <div id="trending-result" class="result"></div>
+    </div>
+
+    <script>
+        // 결과 표시 함수
+        function showResult(elementId, content, isError = false) {
+            const element = document.getElementById(elementId);
+            element.textContent = content;
+            element.className = isError ? 'result error' : 'result success';
+        }
+
+        // 1. 백엔드 API 직접 테스트
+        async function testBackendDirect() {
+            try {
+                const response = await fetch('http://localhost:5000/');
+                const text = await response.text();
+                showResult('backend-result', `✅ 백엔드 서버 정상 (${response.status})\\n\\n${text.substring(0, 500)}...`);
+            } catch (error) {
+                showResult('backend-result', `❌ 백엔드 서버 오류: ${error.message}`, true);
+            }
+        }
+
+        async function testSearchDirect() {
+            try {
+                const response = await fetch('http://localhost:5000/api/search?q=BLACKPINK');
+                const data = await response.json();
+                showResult('backend-result', `✅ 검색 API 응답:\\n\\n${JSON.stringify(data, null, 2)}`);
+            } catch (error) {
+                showResult('backend-result', `❌ 검색 API 오류: ${error.message}`, true);
+            }
+        }
+
+        async function testTrendingDirect() {
+            try {
+                const response = await fetch('http://localhost:5000/api/trending');
+                const data = await response.json();
+                showResult('backend-result', `✅ 트렌딩 API 응답 (${data.trending?.length || 0}개 항목):\\n\\n${JSON.stringify(data, null, 2).substring(0, 1000)}...`);
+            } catch (error) {
+                showResult('backend-result', `❌ 트렌딩 API 오류: ${error.message}`, true);
+            }
+        }
+
+        // 2. 프록시 API 테스트
+        async function testProxyAPI() {
+            try {
+                const response = await fetch('/api/search?q=test');
+                const data = await response.json();
+                showResult('proxy-result', `✅ 프록시 API 정상:\\n\\n${JSON.stringify(data, null, 2)}`);
+            } catch (error) {
+                showResult('proxy-result', `❌ 프록시 API 오류: ${error.message}`, true);
+            }
+        }
+
+        async function testSearchProxy() {
+            try {
+                const response = await fetch('/api/search?q=BLACKPINK');
+                const data = await response.json();
+                showResult('proxy-result', `✅ 검색 프록시 응답:\\n\\n${JSON.stringify(data, null, 2)}`);
+            } catch (error) {
+                showResult('proxy-result', `❌ 검색 프록시 오류: ${error.message}`, true);
+            }
+        }
+
+        // 3. 통합 검색 테스트
+        async function testUnifiedSearch() {
+            const query = document.getElementById('search-query').value;
+            try {
+                const response = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
+                const data = await response.json();
+                showResult('search-result', `✅ 통합 검색 결과 "${query}":\\n\\n${JSON.stringify(data, null, 2)}`);
+            } catch (error) {
+                showResult('search-result', `❌ 통합 검색 오류: ${error.message}`, true);
+            }
+        }
+
+        async function testArtistSearch() {
+            const artist = document.getElementById('artist-input').value;
+            const track = document.getElementById('track-input').value;
+            
+            try {
+                let url = '';
+                if (track && track.trim() !== '') {
+                    url = `/api/search2?artist=${encodeURIComponent(artist)}&track=${encodeURIComponent(track)}`;
+                } else {
+                    url = `/api/search?q=${encodeURIComponent(artist)}`;
+                }
+                
+                const response = await fetch(url);
+                const data = await response.json();
+                showResult('search-result', `✅ 아티스트 검색 결과:\\n아티스트: ${artist}\\n곡명: ${track || '(전체)'}\\n\\n${JSON.stringify(data, null, 2)}`);
+            } catch (error) {
+                showResult('search-result', `❌ 아티스트 검색 오류: ${error.message}`, true);
+            }
+        }
+
+        // 4. 자동완성 테스트
+        async function testAutocomplete() {
+            const query = document.getElementById('autocomplete-query').value;
+            try {
+                const response = await fetch(`/api/autocomplete/unified?q=${encodeURIComponent(query)}`);
+                const data = await response.json();
+                showResult('autocomplete-result', `✅ 자동완성 결과 "${query}":\\n\\n${JSON.stringify(data, null, 2)}`);
+            } catch (error) {
+                showResult('autocomplete-result', `❌ 자동완성 오류: ${error.message}`, true);
+            }
+        }
+
+        // 5. 기타 API 테스트
+        async function testTrending() {
+            try {
+                const response = await fetch('/api/trending');
+                const data = await response.json();
+                showResult('trending-result', `✅ 트렌딩 데이터 (${data.trending?.length || 0}개):\\n\\n${JSON.stringify(data, null, 2).substring(0, 1500)}...`);
+            } catch (error) {
+                showResult('trending-result', `❌ 트렌딩 오류: ${error.message}`, true);
+            }
+        }
+
+        async function testGoods() {
+            try {
+                const response = await fetch('/api/goods/BLACKPINK');
+                const data = await response.json();
+                showResult('trending-result', `✅ 굿즈 API 결과:\\n\\n${JSON.stringify(data, null, 2)}`);
+            } catch (error) {
+                showResult('trending-result', `❌ 굿즈 API 오류: ${error.message}`, true);
+            }
+        }
+
+        async function testNews() {
+            try {
+                const response = await fetch('/api/news/BLACKPINK');
+                const data = await response.json();
+                showResult('trending-result', `✅ 뉴스 API 결과:\\n\\n${JSON.stringify(data, null, 2)}`);
+            } catch (error) {
+                showResult('trending-result', `❌ 뉴스 API 오류: ${error.message}`, true);
+            }
+        }
+
+        // 페이지 로드 시 자동 테스트
+        window.onload = function() {
+            console.log('🎵 KPOP Ranker 통합 테스트 시작');
+            testBackendDirect();
+        };
+    </script>
+</body>
+</html>

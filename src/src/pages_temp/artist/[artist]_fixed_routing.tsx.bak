@@ -1,0 +1,573 @@
+"""
+🔧 아티스트 상세 페이지 곡 클릭 라우팅 수정
+- 곡 카드 클릭 시 /track/[artist]/[track] 페이지로 이동
+- 현재 onSelect 함수를 실제 라우팅으로 변경
+"""
+import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/router';
+import Head from 'next/head';
+import Layout from '@/components/Layout';
+import ImageWithFallback from '@/components/ImageWithFallback';
+import { motion, AnimatePresence } from 'framer-motion';
+import { FaHeart, FaExternalLinkAlt, FaPlay, FaTrophy, FaFire } from 'react-icons/fa';
+import { apiUrls } from '@/lib/apiConfig';
+
+// ========================================
+// 🎵 새로운 아티스트 상세 페이지 - 완전 재구현 (라우팅 수정)
+// ========================================
+
+interface ChartRank {
+  rank: number | null;
+  views_or_streams: string | null;
+  last_updated: string | null;
+  in_chart: boolean;
+  rank_class: string;
+}
+
+interface Track {
+  name: string;
+  album_image: string;
+  charts: {
+    melon: ChartRank;
+    genie: ChartRank;
+    bugs: ChartRank;
+    vibe: ChartRank;
+    spotify: ChartRank;
+    billboard: ChartRank;
+    youtube: ChartRank;
+  };
+  streaming_links: {
+    spotify: string;
+    apple_music: string;
+    youtube_music: string;
+    melon: string;
+    genie: string;
+    bugs: string;
+  };
+  trend_score: number;
+}
+
+interface ArtistStats {
+  total_tracks: number;
+  chart_presence: Record<string, number>;
+  best_ranks: Record<string, number>;
+  best_overall_rank: number | null;
+  global_popularity_score: number;
+  chart_diversity: number;
+}
+
+interface FandomInsight {
+  type: 'action_needed' | 'celebration' | 'info';
+  title: string;
+  message: string;
+  tracks?: Array<{
+    track: string;
+    chart: string;
+    rank: number;
+  }>;
+}
+
+interface ArtistData {
+  artist: string;
+  variations: string[];
+  tracks: Track[];
+  stats: ArtistStats;
+  fandom_insights: FandomInsight[];
+  last_updated: string;
+}
+
+// 차트별 설정 데이터
+const CHART_CONFIG = {
+  melon: {
+    name: 'Melon',
+    icon: '🍈',
+    emoji: '🔥',
+    color: '#00CD3C',
+    bgColor: 'bg-green-500/20',
+    borderColor: 'border-green-400/50',
+    description: '국내 최대'
+  },
+  genie: {
+    name: 'Genie', 
+    icon: '🧞',
+    emoji: '🚀',
+    color: '#1E40AF',
+    bgColor: 'bg-blue-500/20',
+    borderColor: 'border-blue-400/50',
+    description: '실시간 빠름'
+  },
+  bugs: {
+    name: 'Bugs',
+    icon: '🐛', 
+    emoji: '📊',
+    color: '#F97316',
+    bgColor: 'bg-orange-500/20',
+    borderColor: 'border-orange-400/50',
+    description: '다운로드 강세'
+  },
+  vibe: {
+    name: 'Vibe',
+    icon: '🎵',
+    emoji: '🎶', 
+    color: '#8B5CF6',
+    bgColor: 'bg-purple-500/20',
+    borderColor: 'border-purple-400/50',
+    description: '네이버 생태계'
+  },
+  spotify: {
+    name: 'Spotify',
+    icon: '🎧',
+    emoji: '🌍',
+    color: '#1DB954',
+    bgColor: 'bg-green-600/20', 
+    borderColor: 'border-green-500/50',
+    description: '글로벌 1위'
+  },
+  billboard: {
+    name: 'Billboard',
+    icon: '🏆',
+    emoji: '🇺🇸',
+    color: '#F59E0B',
+    bgColor: 'bg-yellow-500/20',
+    borderColor: 'border-yellow-400/50', 
+    description: '미국 공식'
+  },
+  youtube: {
+    name: 'YouTube',
+    icon: '▶️',
+    emoji: '❤️',
+    color: '#FF0000',
+    bgColor: 'bg-red-500/20',
+    borderColor: 'border-red-400/50',
+    description: '조회수'
+  }
+};
+
+export default function NewArtistDetailPage() {
+  const router = useRouter();
+  const { artist } = router.query;
+  const artistName = Array.isArray(artist) ? artist[0] : artist || '';
+
+  const [artistData, setArtistData] = useState<ArtistData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [selectedTrack, setSelectedTrack] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (artistName) {
+      loadArtistData();
+    }
+  }, [artistName]);
+
+  const loadArtistData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const response = await fetch(apiUrls.artistDetail(artistName));
+      
+      if (!response.ok) {
+        throw new Error(`아티스트 정보를 찾을 수 없습니다: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        setArtistData(data);
+        if (data.tracks.length > 0) {
+          setSelectedTrack(data.tracks[0].name);
+        }
+      } else {
+        throw new Error('아티스트 데이터를 불러올 수 없습니다');
+      }
+    } catch (error: any) {
+      console.error('아티스트 데이터 로드 오류:', error);
+      setError(error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 🔧 곡 클릭 시 곡 차트 페이지로 이동하는 함수
+  const handleTrackClick = (trackName: string) => {
+    console.log(`🎯 곡 클릭: ${artistName} - ${trackName}`);
+    console.log(`🎯 이동할 경로: /track/${encodeURIComponent(artistName)}/${encodeURIComponent(trackName)}`);
+    
+    // 곡 차트 페이지로 라우팅
+    router.push(`/track/${encodeURIComponent(artistName)}/${encodeURIComponent(trackName)}`);
+  };
+
+  // 로딩 상태
+  if (loading) {
+    return (
+      <Layout>
+        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-900 via-indigo-900 to-blue-900">
+          <div className="text-center">
+            <div className="relative w-32 h-32 mx-auto mb-8">
+              <div className="absolute inset-0 rounded-full border-4 border-purple-300 border-t-transparent animate-spin"></div>
+              <div className="absolute inset-4 rounded-full border-4 border-pink-300 border-b-transparent animate-spin" style={{animationDirection: 'reverse'}}></div>
+            </div>
+            <h2 className="text-2xl font-bold text-white mb-4">아티스트 정보를 불러오는 중...</h2>
+            <p className="text-purple-300">잠시만 기다려주세요</p>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
+
+  // 에러 상태
+  if (error || !artistData) {
+    return (
+      <Layout>
+        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-900 via-indigo-900 to-blue-900">
+          <div className="text-center">
+            <div className="text-6xl mb-8">😢</div>
+            <h1 className="text-4xl font-bold text-red-400 mb-4">아티스트를 찾을 수 없어요</h1>
+            <p className="text-xl text-gray-300 mb-8">{error || '알 수 없는 오류가 발생했습니다'}</p>
+            <div className="space-x-4">
+              <button 
+                onClick={() => router.push('/')}
+                className="px-8 py-4 bg-purple-600 text-white rounded-xl hover:bg-purple-700 transition-all duration-300 transform hover:scale-105 font-semibold"
+              >
+                홈으로 가기
+              </button>
+              <button 
+                onClick={() => router.back()}
+                className="px-8 py-4 bg-gray-600 text-white rounded-xl hover:bg-gray-700 transition-all duration-300 transform hover:scale-105 font-semibold"
+              >
+                돌아가기
+              </button>
+            </div>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
+
+  return (
+    <>
+      <Head>
+        <title>{artistData.artist} - KPOP Ranker</title>
+        <meta name="description" content={`${artistData.artist}의 전체 차트 순위와 트렌드를 확인하세요`} />
+        <meta property="og:title" content={`${artistData.artist} - KPOP Ranker`} />
+        <meta property="og:description" content={`${artistData.artist}의 7개 차트 순위 실시간 모니터링`} />
+      </Head>
+
+      <Layout>
+        <div className="min-h-screen bg-gradient-to-br from-purple-900 via-indigo-900 to-blue-900">
+          {/* 아티스트 헤더 */}
+          <ArtistHeader artistData={artistData} />
+          
+          {/* 팬덤 인사이트 */}
+          <FandomInsights insights={artistData.fandom_insights} />
+          
+          {/* 트랙 리스트 - 수정된 버전 */}
+          <TracksSection 
+            tracks={artistData.tracks} 
+            artistName={artistData.artist}
+            selectedTrack={selectedTrack}
+            onTrackClick={handleTrackClick} // onTrackSelect → onTrackClick으로 변경
+          />
+        </div>
+      </Layout>
+    </>
+  );
+}
+
+// ... (다른 컴포넌트들은 동일)
+
+// 트랙 섹션 컴포넌트 - 수정된 버전
+const TracksSection = ({ 
+  tracks, 
+  artistName, 
+  selectedTrack, 
+  onTrackClick  // 수정: onTrackSelect → onTrackClick
+}: { 
+  tracks: Track[]; 
+  artistName: string;
+  selectedTrack: string | null;
+  onTrackClick: (track: string) => void; // 수정: 실제 라우팅 함수
+}) => {
+  return (
+    <div className="max-w-7xl mx-auto px-4 pb-20">
+      <h2 className="text-4xl font-bold text-white mb-12 text-center">
+        🎵 전체 차트 순위
+        <p className="text-lg text-purple-300 mt-2">곡을 클릭하면 상세 차트를 볼 수 있어요</p>
+      </h2>
+      
+      <div className="space-y-6">
+        {tracks.map((track, index) => (
+          <TrackCard 
+            key={track.name}
+            track={track} 
+            artistName={artistName} 
+            index={index}
+            isSelected={selectedTrack === track.name}
+            onTrackClick={() => onTrackClick(track.name)} // 수정: 실제 라우팅 함수 호출
+          />
+        ))}
+      </div>
+    </div>
+  );
+};
+
+// ... (기존 컴포넌트들 - ArtistHeader, StatCard, FandomInsights, InsightCard 등)
+
+// YouTube 조회수 포맷팅
+const formatYouTubeViews = (views: string | null) => {
+  if (!views) return '0';
+  
+  const numericViews = views.replace(/[^0-9]/g, '');
+  if (numericViews) {
+    const num = parseInt(numericViews);
+    if (num >= 1000000000) return `${(num / 1000000000).toFixed(1)}B`;
+    if (num >= 1000000) return `${(num / 1000000).toFixed(0)}M`;
+    if (num >= 1000) return `${(num / 1000).toFixed(0)}K`;
+    return num.toString();
+  }
+  
+  return views || '0';
+};
+
+// 컴팩트 차트 카드 컴포넌트
+const CompactChartCard = ({ chart, data }: { chart: string, data: ChartRank }) => {
+  const config = CHART_CONFIG[chart.toLowerCase() as keyof typeof CHART_CONFIG];
+  if (!config) return null;
+
+  const getRankDisplay = () => {
+    if (!data.in_chart || !data.rank) {
+      return {
+        text: 'OUT',
+        class: 'text-gray-400 text-xs',
+        bgClass: 'bg-gray-500/10'
+      };
+    }
+    
+    if (chart.toLowerCase() === 'youtube') {
+      // YouTube는 조회수 표시
+      const views = formatYouTubeViews(data.views_or_streams);
+      return {
+        text: views,
+        class: 'text-white text-xs font-semibold',
+        bgClass: getRankBgClass(data.rank)
+      };
+    }
+    
+    return {
+      text: `#${data.rank}`,
+      class: 'text-white text-sm font-bold',
+      bgClass: getRankBgClass(data.rank)
+    };
+  };
+
+  const getRankBgClass = (rank: number) => {
+    if (rank <= 10) return 'bg-gradient-to-r from-yellow-400 to-yellow-600';
+    if (rank <= 30) return 'bg-gradient-to-r from-gray-300 to-gray-500'; 
+    if (rank <= 50) return 'bg-gradient-to-r from-orange-400 to-orange-600';
+    return 'bg-gradient-to-r from-purple-400 to-purple-600';
+  };
+
+  const rankDisplay = getRankDisplay();
+
+  return (
+    <div className={`${config.bgColor} ${config.borderColor} border rounded-lg px-3 py-2 text-center min-w-[80px] hover:scale-105 transition-all duration-200 group relative`}>
+      {/* 차트 아이콘 + 이름 */}
+      <div className="flex items-center justify-center mb-1">
+        <span className="text-lg mr-1">{config.icon}</span>
+        <span className="text-xs font-medium text-white">{config.name}</span>
+      </div>
+      
+      {/* 순위 또는 조회수 */}
+      <div className={`${rankDisplay.bgClass} rounded px-2 py-1 mb-1`}>
+        <span className={rankDisplay.class}>{rankDisplay.text}</span>
+      </div>
+      
+      {/* 특징 이모지 */}
+      <div className="text-sm">{config.emoji}</div>
+      
+      {/* 호버 시 설명 툴팁 */}
+      <div className="hidden group-hover:block absolute z-10 bg-black text-white text-xs rounded px-2 py-1 -top-8 left-1/2 transform -translate-x-1/2 whitespace-nowrap">
+        {config.description}
+      </div>
+    </div>
+  );
+};
+
+// 트랙 카드 (한 줄 레이아웃) - 수정된 버전
+const TrackCard = ({ 
+  track, 
+  artistName, 
+  index, 
+  isSelected, 
+  onTrackClick  // 수정: onSelect → onTrackClick
+}: { 
+  track: Track; 
+  artistName: string; 
+  index: number;
+  isSelected: boolean;
+  onTrackClick: () => void; // 수정: 실제 라우팅 함수
+}) => {
+  const [isInPortfolio, setIsInPortfolio] = useState(false);
+  const [showStreamingLinks, setShowStreamingLinks] = useState(false);
+
+  useEffect(() => {
+    checkPortfolioStatus();
+  }, []);
+
+  const checkPortfolioStatus = async () => {
+    try {
+      const response = await fetch(`${apiUrls.portfolio()}/track-status/${encodeURIComponent(artistName)}/${encodeURIComponent(track.name)}`);
+      const data = await response.json();
+      setIsInPortfolio(data.in_portfolio);
+    } catch (error) {
+      console.error('포트폴리오 상태 확인 오류:', error);
+    }
+  };
+
+  const addToPortfolio = async () => {
+    try {
+      const response = await fetch(apiUrls.portfolio(), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-User-ID': 'demo_user'
+        },
+        body: JSON.stringify({
+          artist: artistName,
+          track: track.name,
+          notes: `${artistName}의 ${track.name} - 차트 모니터링`
+        })
+      });
+      
+      if (response.ok) {
+        setIsInPortfolio(true);
+        // 성공 알림 (토스트 등)
+      }
+    } catch (error) {
+      console.error('포트폴리오 추가 오류:', error);
+    }
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 30 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: index * 0.1 }}
+      onClick={onTrackClick} // 수정: 클릭 시 곡 차트 페이지로 이동
+      className={`${
+        isSelected ? 'bg-white/20 ring-2 ring-purple-400' : 'bg-white/10'
+      } backdrop-blur-lg rounded-2xl p-6 hover:bg-white/15 transition-all duration-300 group cursor-pointer hover:scale-[1.02]`} // 수정: 호버 효과 강화
+    >
+      <div className="flex items-center space-x-6">
+        
+        {/* 앨범 이미지 */}
+        <div className="relative w-24 h-24 md:w-32 md:h-32 rounded-xl overflow-hidden flex-shrink-0 group-hover:scale-105 transition-transform duration-300">
+          <ImageWithFallback
+            src={track.album_image}
+            alt={track.name}
+            artistName={artistName}
+            trackName={track.name}
+            width={128}
+            height={128}
+            className="w-full h-full object-cover rounded-xl"
+            priority={index < 4}
+          />
+          <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+            <FaPlay className="w-6 h-6 text-white" />
+          </div>
+          
+          {/* 트렌드 스코어 배지 */}
+          <div className="absolute top-2 right-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white px-2 py-1 rounded-full text-xs font-bold">
+            {track.trend_score}점
+          </div>
+        </div>
+
+        {/* 곡 정보 및 차트 */}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-start justify-between mb-4">
+            <div>
+              <h3 className="text-xl md:text-2xl font-bold text-white mb-1 group-hover:text-purple-300 transition-colors">
+                {track.name}
+              </h3>
+              <p className="text-purple-300">{artistName}</p>
+              {/* 수정: 클릭 가이드 추가 */}
+              <p className="text-xs text-purple-400 mt-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                클릭하면 상세 차트를 볼 수 있어요 →
+              </p>
+            </div>
+            
+            <div className="flex items-center space-x-3">
+              {/* 액션 버튼들 */}
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  addToPortfolio();
+                }}
+                disabled={isInPortfolio}
+                className={`p-2 rounded-full transition-all duration-300 ${
+                  isInPortfolio 
+                    ? 'bg-red-500 text-white cursor-default' 
+                    : 'bg-white/20 text-white hover:bg-white/30 hover:scale-110'
+                }`}
+                title={isInPortfolio ? "포트폴리오에 담겨있음" : "포트폴리오에 담기"}
+              >
+                <FaHeart className="w-4 h-4" />
+              </button>
+              
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowStreamingLinks(!showStreamingLinks);
+                }}
+                className="p-2 bg-green-500 text-white rounded-full hover:bg-green-600 transition-all duration-300 hover:scale-110"
+                title="스트리밍 링크"
+              >
+                <FaExternalLinkAlt className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+
+          {/* 7개 차트 한 줄 표시 */}
+          <div className="flex space-x-2 overflow-x-auto scrollbar-hide mb-4">
+            <CompactChartCard chart="melon" data={track.charts.melon} />
+            <CompactChartCard chart="genie" data={track.charts.genie} />
+            <CompactChartCard chart="bugs" data={track.charts.bugs} />
+            <CompactChartCard chart="vibe" data={track.charts.vibe} />
+            <CompactChartCard chart="spotify" data={track.charts.spotify} />
+            <CompactChartCard chart="billboard" data={track.charts.billboard} />
+            <CompactChartCard chart="youtube" data={track.charts.youtube} />
+          </div>
+
+          {/* 스트리밍 링크 (펼쳐질 때) */}
+          <AnimatePresence>
+            {showStreamingLinks && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3"
+              >
+                {Object.entries(track.streaming_links).map(([platform, url]) => (
+                  <a
+                    key={platform}
+                    href={url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={(e) => e.stopPropagation()}
+                    className="p-3 bg-white/10 rounded-lg text-center hover:bg-white/20 transition-colors text-sm"
+                  >
+                    <div className="font-semibold text-white capitalize">
+                      {platform.replace('_', ' ')}
+                    </div>
+                  </a>
+                ))}
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      </div>
+    </motion.div>
+  );
+};
+
+// ... (나머지 컴포넌트들은 기존과 동일)
