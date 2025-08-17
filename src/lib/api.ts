@@ -211,19 +211,33 @@ export const insightsAPI = {
   getDaily: async () => {
     return safeApiCall(
       () => api.get('/api/insights/daily'),
-      { insights: [] }
+      { 
+        trends: [],
+        market_analysis: '',
+        recommendations: []
+      }
     );
   },
   getRecommendations: async () => {
     return safeApiCall(
       () => api.get('/api/insights/recommendations'),
-      { recommendations: [] }
+      { 
+        artists_to_watch: [],
+        trending_genres: [],
+        investment_tips: []
+      }
     );
   },
   getMarketPulse: async () => {
     return safeApiCall(
       () => api.get('/api/insights/market-pulse'),
-      { pulse: null }
+      { 
+        timestamp: new Date().toISOString(),
+        active_artists: 0,
+        trending_tracks: 0,
+        market_sentiment: '',
+        hot_topics: []
+      }
     );
   },
   getArtistInsights: async (name: string) => {

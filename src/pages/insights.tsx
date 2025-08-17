@@ -59,14 +59,14 @@ export default function InsightsPage() {
     setIsLoading(true);
     try {
       const [daily, pulse, recs] = await Promise.all([
-        insightsApi.getDailyInsights(),
+        insightsApi.getDaily(),
         insightsApi.getMarketPulse(),
         insightsApi.getRecommendations()
       ]);
 
-      if (daily.data) setDailyInsights(daily.data);
-      if (pulse.data) setMarketPulse(pulse.data);
-      if (recs.data) setRecommendations(recs.data);
+      if (daily) setDailyInsights(daily);
+      if (pulse) setMarketPulse(pulse);
+      if (recs) setRecommendations(recs);
     } catch (error) {
       console.error('Failed to fetch insights:', error);
       toast.error('인사이트를 불러오는데 실패했습니다');
