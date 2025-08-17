@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { authApi } from '@/lib/api';
+import { authAPI } from '@/lib/api';
 
 interface User {
   user_id: string;
@@ -65,10 +65,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
 
       // user_info가 없으면 API 호출
-      const response = await authApi.getStatus();
+      const response = await authAPI.getStatus();
       // safeApiCall로 래핑된 응답이므로 직접 접근
       if (response && 'authenticated' in response && response.authenticated) {
-        const userResponse = await authApi.getUser();
+        const userResponse = await authAPI.getUser();
         if (userResponse && 'user' in userResponse && userResponse.user) {
           setUser(userResponse.user);
         } else {
@@ -103,7 +103,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       // OAuth 로그인 처리
       if (provider === 'google' && code) {
-        const response = await authApi.googleCallback(code);
+        const response = await authAPI.googleCallback(code);
         if (response && response.success) {
           if (response.token) {
             localStorage.setItem('auth_token', response.token);
@@ -114,7 +114,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           return true;
         }
       } else if (provider === 'kakao' && code) {
-        const response = await authApi.kakaoCallback(code);
+        const response = await authAPI.kakaoCallback(code);
         if (response && response.success) {
           if (response.token) {
             localStorage.setItem('auth_token', response.token);
@@ -126,7 +126,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
       } else {
         // 일반 로그인 (데모 로그인 등)
-        const response = await authApi.login({ provider, code });
+        const response = await authAPI.login({ provider, code });
         
         // 백엔드는 'token'을 반환하고, 'access_token'이 아님
         if (response && response.success) {
@@ -152,7 +152,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const demoLogin = async (name = 'Demo User', email = 'demo@kpopranker.com'): Promise<boolean> => {
     try {
       setIsLoading(true);
-      const response = await authApi.demoLogin(name, email);
+      const response = await authAPI.demoLogin(name, email);
       
       // 백엔드는 'token'을 반환하고, 'access_token'이 아님
       if (response && response.success) {
@@ -178,7 +178,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const logout = async () => {
     try {
-      await authApi.logout();
+      await authAPI.logout();
     } catch (error) {
       console.error('Logout failed:', error);
     } finally {

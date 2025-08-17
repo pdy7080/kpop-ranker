@@ -191,6 +191,19 @@ export const authAPI = {
       { url: null, configured: false }
     );
   },
+  // OAuth Callbacks
+  googleCallback: async (code: string) => {
+    return safeApiCall(
+      () => api.post('/api/auth/google/callback', { code }),
+      { success: false }
+    );
+  },
+  kakaoCallback: async (code: string) => {
+    return safeApiCall(
+      () => api.post('/api/auth/kakao/callback', { code }),
+      { success: false }
+    );
+  },
 };
 
 // 인사이트 API
