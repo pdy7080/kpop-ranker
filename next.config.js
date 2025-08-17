@@ -19,21 +19,15 @@ const nextConfig = {
     ignoreDuringBuilds: true
   },
   
-  // exportPathMap 제거 (SSR 모드에서는 불필요)
-  // exportPathMap은 static export에서만 사용됨
-  
   // 페이지 확장자 설정 (_backup 폴더 제외)
   pageExtensions: ['page.tsx', 'page.ts', 'page.jsx', 'page.js', 'tsx', 'ts', 'jsx', 'js'],
   
-  // 특정 폴더 제외
-  excludeFiles: ['**/_backup/**', '**/*.backup.*', '**/*.old.*'],
-  
-  // 특정 파일 패턴 제외
+  // webpack 설정 (null-loader 제거, ignore-loader 사용)
   webpack: (config, { isServer }) => {
-    // 백업 파일들 빌드에서 제외
+    // 백업 파일들을 빌드에서 제외 (null-loader 대신 무시)
     config.module.rules.push({
       test: /.*(_backup_|_broken_|_old|\.backup|\.old).*\.(tsx?|jsx?)$/,
-      use: 'null-loader'
+      loader: 'ignore-loader'
     });
     
     return config;
