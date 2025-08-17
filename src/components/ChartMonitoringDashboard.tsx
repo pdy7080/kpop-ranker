@@ -1,6 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Alert, AlertDescription } from '@/components/ui/alert';
 import { CheckCircle, XCircle, RefreshCw, Clock, AlertCircle } from 'lucide-react';
 
 interface ChartStatus {
@@ -21,23 +19,25 @@ interface ChartStatusData {
     failed: number;
     pending: number;
   };
-  last_updated: string;
-  error?: string;
 }
 
-const ChartMonitoringDashboard: React.FC = () => {
-  const [statusData, setStatusData] = useState<ChartStatusData | null>(null);
+export default function ChartMonitoringDashboard() {
+  const [chartData, setChartData] = useState<ChartStatusData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchStatus = async () => {
+  useEffect(() => {
+    fetchChartStatus();
+    const interval = setInterval(fetchChartStatus, 30000); // 30초마다 갱신
+    return () => clearInterval(interval);
+  }, []);
+
+  const fetchChartStatus = async () => {
     try {
-      const response = await fetch('/api/chart/update-status');
-      if (!response.ok) {
-        throw new Error('Failed to fetch chart status');
-      }
+      const response = await fetch('/api/chart/status');
+      if (!response.ok) throw new Error('Failed to fetch chart status');
       const data = await response.json();
-      setStatusData(data);
+      setChartData(data);
       setError(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
@@ -46,13 +46,6 @@ const ChartMonitoringDashboard: React.FC = () => {
     }
   };
 
-  useEffect(() => {
-    fetchStatus();
-    // 30초마다 자동 새로고침
-    const interval = setInterval(fetchStatus, 30000);
-    return () => clearInterval(interval);
-  }, []);
-
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'success':
@@ -60,10 +53,9 @@ const ChartMonitoringDashboard: React.FC = () => {
       case 'failed':
       case 'error':
         return <XCircle className="w-5 h-5 text-red-500" />;
+      case 'pending':
       case 'retrying':
         return <RefreshCw className="w-5 h-5 text-yellow-500 animate-spin" />;
-      case 'pending':
-        return <Clock className="w-5 h-5 text-blue-500" />;
       default:
         return <AlertCircle className="w-5 h-5 text-gray-500" />;
     }
@@ -72,162 +64,125 @@ const ChartMonitoringDashboard: React.FC = () => {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'success':
-        return 'bg-green-100 text-green-800';
+        return 'bg-green-50 border-green-200';
       case 'failed':
       case 'error':
-        return 'bg-red-100 text-red-800';
-      case 'retrying':
-        return 'bg-yellow-100 text-yellow-800';
+        return 'bg-red-50 border-red-200';
       case 'pending':
-        return 'bg-blue-100 text-blue-800';
+      case 'retrying':
+        return 'bg-yellow-50 border-yellow-200';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-gray-50 border-gray-200';
     }
-  };
-
-  const formatTime = (timestamp?: string) => {
-    if (!timestamp) return '정보 없음';
-    const date = new Date(timestamp);
-    return date.toLocaleString('ko-KR', { 
-      month: 'short', 
-      day: 'numeric', 
-      hour: '2-digit', 
-      minute: '2-digit' 
-    });
-  };
-
-  const getChartDisplayName = (chartName: string) => {
-    const displayNames: { [key: string]: string } = {
-      'melon': '🍈 멜론',
-      'genie': '🧞 지니',
-      'bugs': '🐛 벅스',
-      'vibe': '💜 바이브',
-      'flo': '🌊 플로',
-      'youtube': '📺 유튜브',
-      'spotify': '🎵 스포티파이',
-      'billboard': '📊 빌보드'
-    };
-    return displayNames[chartName] || chartName;
   };
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center p-8">
-        <RefreshCw className="w-8 h-8 animate-spin text-blue-500" />
-        <span className="ml-2">차트 상태를 불러오는 중...</span>
+      <div className="flex items-center justify-center min-h-[400px]">
+        <RefreshCw className="w-8 h-8 text-blue-500 animate-spin" />
       </div>
     );
   }
 
   if (error) {
     return (
-      <Alert className="m-4">
-        <AlertCircle className="h-4 w-4" />
-        <AlertDescription>
-          차트 상태를 불러올 수 없습니다: {error}
-        </AlertDescription>
-      </Alert>
+      <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+        <div className="flex items-center gap-2">
+          <AlertCircle className="w-5 h-5 text-red-500" />
+          <p className="text-red-700">차트 상태를 불러올 수 없습니다: {error}</p>
+        </div>
+      </div>
     );
   }
 
-  if (!statusData) return null;
+  if (!chartData) {
+    return null;
+  }
 
   return (
-    <div className="p-4 space-y-4">
-      {/* 헤더 */}
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold">📊 차트 업데이트 모니터링</h2>
-        <button
-          onClick={fetchStatus}
-          className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 flex items-center gap-2"
-        >
-          <RefreshCw className="w-4 h-4" />
-          새로고침
-        </button>
-      </div>
-
-      {/* 요약 정보 */}
-      <Card>
-        <CardContent className="pt-6">
-          <div className="grid grid-cols-4 gap-4">
-            <div className="text-center">
-              <div className="text-2xl font-bold text-gray-900">{statusData.summary.total}</div>
-              <div className="text-sm text-gray-500">전체 차트</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-green-600">{statusData.summary.success}</div>
-              <div className="text-sm text-gray-500">정상</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-red-600">{statusData.summary.failed}</div>
-              <div className="text-sm text-gray-500">실패</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-yellow-600">{statusData.summary.pending}</div>
-              <div className="text-sm text-gray-500">진행중</div>
-            </div>
+    <div className="space-y-6">
+      {/* Summary Card */}
+      <div className="bg-white rounded-lg shadow-sm border p-6">
+        <h2 className="text-xl font-bold mb-4">차트 모니터링 대시보드</h2>
+        
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+          <div className="text-center">
+            <div className="text-2xl font-bold text-gray-900">{chartData.summary.total}</div>
+            <div className="text-sm text-gray-500">전체 차트</div>
           </div>
-        </CardContent>
-      </Card>
+          <div className="text-center">
+            <div className="text-2xl font-bold text-green-600">{chartData.summary.success}</div>
+            <div className="text-sm text-gray-500">정상</div>
+          </div>
+          <div className="text-center">
+            <div className="text-2xl font-bold text-red-600">{chartData.summary.failed}</div>
+            <div className="text-sm text-gray-500">실패</div>
+          </div>
+          <div className="text-center">
+            <div className="text-2xl font-bold text-yellow-600">{chartData.summary.pending}</div>
+            <div className="text-sm text-gray-500">대기중</div>
+          </div>
+        </div>
 
-      {/* 차트별 상태 */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {statusData.charts.map((chart) => (
-          <Card key={chart.chart_name} className="hover:shadow-lg transition-shadow">
-            <CardHeader className="pb-3">
-              <div className="flex justify-between items-center">
-                <CardTitle className="text-lg">
-                  {getChartDisplayName(chart.chart_name)}
-                </CardTitle>
-                {getStatusIcon(chart.status)}
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                <div className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(chart.status)}`}>
-                  {chart.status === 'success' && '정상'}
-                  {chart.status === 'failed' && '실패'}
-                  {chart.status === 'retrying' && '재시도 중'}
-                  {chart.status === 'pending' && '대기 중'}
-                  {chart.status === 'unknown' && '알 수 없음'}
-                  {chart.status === 'error' && '오류'}
+        {/* Chart List */}
+        <div className="space-y-2">
+          {chartData.charts.map((chart) => (
+            <div
+              key={chart.chart_name}
+              className={`p-4 rounded-lg border ${getStatusColor(chart.status)}`}
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  {getStatusIcon(chart.status)}
+                  <div>
+                    <h3 className="font-semibold text-gray-900">
+                      {chart.chart_name.toUpperCase()}
+                    </h3>
+                    {chart.last_success && (
+                      <p className="text-sm text-gray-500">
+                        마지막 성공: {new Date(chart.last_success).toLocaleString('ko-KR')}
+                      </p>
+                    )}
+                    {chart.error_message && (
+                      <p className="text-sm text-red-600 mt-1">
+                        오류: {chart.error_message}
+                      </p>
+                    )}
+                  </div>
                 </div>
                 
-                {chart.tracks_collected !== undefined && chart.tracks_collected > 0 && (
-                  <div className="text-sm text-gray-600">
-                    수집된 트랙: {chart.tracks_collected}개
-                  </div>
-                )}
-                
-                {chart.last_success && (
-                  <div className="text-xs text-gray-500">
-                    마지막 성공: {formatTime(chart.last_success)}
-                  </div>
-                )}
-                
-                {chart.retry_count !== undefined && chart.retry_count > 0 && (
-                  <div className="text-xs text-yellow-600">
-                    재시도: {chart.retry_count}회
-                  </div>
-                )}
-                
-                {chart.error_message && (
-                  <div className="text-xs text-red-600 truncate" title={chart.error_message}>
-                    오류: {chart.error_message}
-                  </div>
-                )}
+                <div className="text-right">
+                  {chart.tracks_collected !== undefined && (
+                    <div className="text-sm text-gray-600">
+                      {chart.tracks_collected}개 트랙
+                    </div>
+                  )}
+                  {chart.retry_count !== undefined && chart.retry_count > 0 && (
+                    <div className="text-sm text-yellow-600">
+                      재시도: {chart.retry_count}회
+                    </div>
+                  )}
+                </div>
               </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+            </div>
+          ))}
+        </div>
 
-      {/* 마지막 업데이트 시간 */}
-      <div className="text-center text-sm text-gray-500">
-        마지막 업데이트: {formatTime(statusData.last_updated)}
+        {/* Last Update */}
+        <div className="mt-4 flex items-center justify-between text-sm text-gray-500">
+          <div className="flex items-center gap-2">
+            <Clock className="w-4 h-4" />
+            마지막 업데이트: {new Date().toLocaleString('ko-KR')}
+          </div>
+          <button
+            onClick={fetchChartStatus}
+            className="flex items-center gap-2 px-3 py-1 bg-blue-50 text-blue-600 rounded-md hover:bg-blue-100 transition-colors"
+          >
+            <RefreshCw className="w-4 h-4" />
+            새로고침
+          </button>
+        </div>
       </div>
     </div>
   );
-};
-
-export default ChartMonitoringDashboard;
+}
