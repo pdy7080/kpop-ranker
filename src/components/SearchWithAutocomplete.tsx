@@ -48,7 +48,7 @@ const SearchWithAutocomplete: React.FC<SearchWithAutocompleteProps> = ({
       setLoading(true);
       try {
         const response = await fetch(
-          `${API_URL}/api/autocomplete/artist?q=${encodeURIComponent(query)}`
+          `${API_URL}/api/autocomplete/unified?q=${encodeURIComponent(query)}&limit=10`
         );
         const data = await response.json();
         setArtistSuggestions(data.suggestions || []);
@@ -73,9 +73,9 @@ const SearchWithAutocomplete: React.FC<SearchWithAutocompleteProps> = ({
       setLoading(true);
       try {
         const response = await fetch(
-          `${API_URL}/api/autocomplete/track?artist=${encodeURIComponent(
-            artistName
-          )}&q=${encodeURIComponent(query)}`
+          `${API_URL}/api/autocomplete/unified?q=${encodeURIComponent(
+            artistName + ' ' + query
+          )}&limit=10`
         );
         const data = await response.json();
         setTrackSuggestions(data.suggestions || []);

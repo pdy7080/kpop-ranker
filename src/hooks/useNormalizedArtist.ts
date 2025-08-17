@@ -2,8 +2,9 @@ import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 
 /**
- * 아티스트명 정규화 훅 (수정 버전)
- * 리다이렉트 대신 백엔드가 처리하도록 함
+ * 아티스트명 정규화 훅
+ * 한글 아티스트명으로 접근하면 영어 아티스트명으로 리다이렉트하고
+ * 정규화된 값을 반환
  */
 export function useNormalizedArtist() {
   const router = useRouter();
@@ -14,7 +15,7 @@ export function useNormalizedArtist() {
   useEffect(() => {
     if (!artistName || !router.isReady) return;
 
-    // 한글 -> 영어 매핑 (UI 표시용으로만 사용)
+    // 한글 -> 영어 매핑
     const artistMappings: Record<string, string> = {
       '에스파': 'aespa',
       '뉴진스': 'NewJeans',
@@ -30,6 +31,9 @@ export function useNormalizedArtist() {
       '트레저': 'TREASURE',
       '더보이즈': 'THE BOYZ',
       '아이유': 'IU',
+      '이무진': 'LeeMujin',
+      '이창섭': 'LeeChangsub',
+      '임영웅': 'LimYoungWoong',
       '태연': 'TAEYEON',
       '지드래곤': 'G-DRAGON',
       '빅뱅': 'BIGBANG',
@@ -63,7 +67,7 @@ export function useNormalizedArtist() {
       '드림캐쳐': 'Dreamcatcher',
       '마마무': 'MAMAMOO',
       '레드벨벳': 'Red Velvet',
-      '소녀시대': 'Girls\' Generation',
+      '소녀시대': "Girls' Generation",
       '카라': 'KARA',
       '블랙스완': 'BLACKSWAN',
       '퍼플키스': 'PURPLE KISS',
@@ -81,19 +85,18 @@ export function useNormalizedArtist() {
       '강혜원': 'KANG HYEWON'
     };
 
-    // 정규화된 이름 설정 (UI 표시용)
-    if (artistMappings[artistName]) {
-      setNormalizedName(artistMappings[artistName]);
-    } else {
-      setNormalizedName(artistName);
-    }
+    // 정규화된 이름 설정
+    const normalized = artistMappings[artistName] || artistName;
+    setNormalizedName(normalized);
 
-    // 리다이렉트 제거 - 백엔드가 처리하도록 함
-    // 아이유의 경우 백엔드가 "아이유"로 검색해야 찾을 수 있음
+    // 한글 아티스트명인 경우 영어로 리다이렉트 (URL 변경)
+    if (artistMappings[artistName] && artistName !== normalized) {
+      router.replace(`/artist/${encodeURIComponent(normalized)}`);
+    }
   }, [artistName, router]);
 
-  // URL의 아티스트명 그대로 반환 (리다이렉트 하지 않음)
-  return artistName;
+  // ✅ 정규화된 값 반환!
+  return normalizedName;
 }
 
 /**
@@ -105,7 +108,10 @@ export function getDisplayArtistName(artistName: string): string {
     '뉴진스': 'NewJeans',
     '블랙핑크': 'BLACKPINK',
     '아이유': 'IU',
-    // ... 나머지 매핑
+    '이무진': 'LeeMujin',
+    '이창섭': 'LeeChangsub',
+    '임영웅': 'LimYoungWoong',
+    // ... 필요시 더 추가
   };
 
   return artistMappings[artistName] || artistName;

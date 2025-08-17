@@ -32,6 +32,8 @@ api.interceptors.response.use(
     console.error('API Error:', {
       message: error.message,
       url: error.config?.url,
+      status: error.response?.status,
+      data: error.response?.data,
     });
     return Promise.reject(error);
   }
@@ -79,6 +81,19 @@ export const artistAPI = {
     );
   },
 };
+
+// 트렌딩 API (별도 export)
+export const trendingApi = {
+  getTrending: async (type = 'hot', limit = 10) => {
+    return safeApiCall(
+      () => api.get('/api/trending', { params: { type, limit } }),
+      { tracks: [], artists: [] }
+    );
+  },
+};
+
+// 검색 API (별도 export)
+export const searchApi = searchAPI;
 
 // 차트 API
 export const chartAPI = {
@@ -151,116 +166,112 @@ export const authAPI = {
       { success: false }
     );
   },
-  status: async () => {
-    return safeApiCall(
-      () => api.get('/api/auth/status'),
-      { authenticated: false }
-    );
-  },
-  // alias for status
   getStatus: async () => {
     return safeApiCall(
       () => api.get('/api/auth/status'),
       { authenticated: false }
     );
   },
-  // 사용자 정보 가져오기
   getUser: async () => {
     return safeApiCall(
       () => api.get('/api/auth/user'),
       { user: null }
     );
   },
-  // OAuth URL 가져오기
-  getGoogleOAuthUrl: async () => {
+};
+
+// 인사이트 API
+export const insightsAPI = {
+  getDaily: async () => {
     return safeApiCall(
-      () => api.get('/api/auth/oauth/google/url'),
-      { url: null }
+      () => api.get('/api/insights/daily'),
+      { insights: [] }
     );
   },
-  getKakaoOAuthUrl: async () => {
+  getRecommendations: async () => {
     return safeApiCall(
-      () => api.get('/api/auth/oauth/kakao/url'),
-      { url: null }
+      () => api.get('/api/insights/recommendations'),
+      { recommendations: [] }
     );
   },
-  // OAuth 콜백 처리
-  googleCallback: async (code: string) => {
+  getMarketPulse: async () => {
     return safeApiCall(
-      () => api.post('/api/auth/oauth/google/callback', { code }),
-      { success: false }
+      () => api.get('/api/insights/market-pulse'),
+      { pulse: null }
     );
   },
-  kakaoCallback: async (code: string) => {
+  getArtistInsights: async (name: string) => {
     return safeApiCall(
-      () => api.post('/api/auth/oauth/kakao/callback', { code }),
-      { success: false }
+      () => api.get(`/api/insights/artist/${encodeURIComponent(name)}`),
+      { insights: null }
     );
   },
 };
 
 // 이미지 API
 export const imageAPI = {
-  getAlbumImageUrl: (artist: string, track: string) => {
+  getAlbumImage: (artist: string, track: string) => {
+    // 직접 URL 반환 (img src에 사용)
     return `${API_URL}/api/album-image-v2/${encodeURIComponent(artist)}/${encodeURIComponent(track)}`;
   },
-  getSmartImageUrl: (artist: string, track: string) => {
+  getSmartImage: (artist: string, track: string) => {
+    // 스마트 이미지 API
     return `${API_URL}/api/album-image-smart/${encodeURIComponent(artist)}/${encodeURIComponent(track)}`;
   },
-};
-
-// 인사이트 API
-export const insightsAPI = {
-  getDailyInsights: async () => {
+  checkImages: async () => {
     return safeApiCall(
-      () => api.get('/api/insights/daily'),
-      { trends: [], market_analysis: '', recommendations: [] }
-    );
-  },
-  getMarketPulse: async () => {
-    return safeApiCall(
-      () => api.get('/api/insights/market-pulse'),
-      { active_artists: 0, trending_tracks: 0, market_sentiment: '', hot_topics: [] }
-    );
-  },
-  getRecommendations: async () => {
-    return safeApiCall(
-      () => api.get('/api/insights/recommendations'),
-      { artists_to_watch: [], trending_genres: [], investment_tips: [] }
-    );
-  },
-  getArtistInsight: async (artist: string) => {
-    return safeApiCall(
-      () => api.get(`/api/insights/artist/${encodeURIComponent(artist)}`),
-      { insights: null }
+      () => api.get('/api/images/check'),
+      { status: 'unknown' }
     );
   },
 };
 
-// alias for compatibility (소문자 버전) - 모든 API 정의 후에 선언
-export const trendingApi = chartAPI;
-export const chartApi = chartAPI;
-export const authApi = authAPI;
-export const searchApi = searchAPI;
-export const artistApi = artistAPI;
-export const portfolioApi = portfolioAPI;
-export const imageApi = imageAPI;
-export const insightsApi = insightsAPI;
+// 뉴스 API
+export const newsAPI = {
+  getLatest: async (limit = 10) => {
+    return safeApiCall(
+      () => api.get('/api/news', { params: { limit } }),
+      { news: [] }
+    );
+  },
+  getByArtist: async (artist: string) => {
+    return safeApiCall(
+      () => api.get('/api/news/artist', { params: { artist } }),
+      { news: [] }
+    );
+  },
+};
 
-// Convenience functions
-export const searchArtistTracks = artistAPI.getTracks;
-export const getArtistDetails = artistAPI.getDetails;
-export const getTrending = chartAPI.getTrending;
-export const getChartHistory = chartAPI.getHistory;
-export const getChartSummary = chartAPI.getSummary;
-export const getPortfolio = portfolioAPI.get;
-export const addToPortfolio = portfolioAPI.add;
-export const removeFromPortfolio = portfolioAPI.remove;
-export const login = authAPI.login;
-export const logout = authAPI.logout;
-export const checkAuthStatus = authAPI.status;
-export const getAlbumImageUrl = imageAPI.getAlbumImageUrl;
-export const getSmartImageUrl = imageAPI.getSmartImageUrl;
-export const getUpdateStatus = chartAPI.getUpdateStatus;
+// 굿즈 API
+export const goodsAPI = {
+  getAll: async () => {
+    return safeApiCall(
+      () => api.get('/api/goods'),
+      { goods: [] }
+    );
+  },
+  getByArtist: async (artist: string) => {
+    return safeApiCall(
+      () => api.get('/api/goods/artist', { params: { artist } }),
+      { goods: [] }
+    );
+  },
+};
+
+// 스케줄러 API
+export const schedulerAPI = {
+  getStatus: async () => {
+    return safeApiCall(
+      () => api.get('/api/scheduler/status'),
+      { status: 'unknown' }
+    );
+  },
+  triggerCrawl: async () => {
+    return safeApiCall(
+      () => api.post('/api/scheduler/crawl'),
+      { success: false }
+    );
+  },
+};
 
 export default api;

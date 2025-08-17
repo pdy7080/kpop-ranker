@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
+import { apiUrls } from '@/lib/apiConfig';
 
 interface ImageWithFallbackProps {
   src: string;
@@ -15,294 +16,140 @@ interface ImageWithFallbackProps {
   unoptimized?: boolean;
 }
 
-// 🎯 HUNTR 실제 앨범 이미지 매핑 - 완전 해결!
-const HUNTR_REAL_IMAGES = {
-  'Golden': 'HUNTR_Golden.jpg',
-  'How It\'s Done': 'HUNTR_How It\'s Done.jpg', 
-  'Battle Theme': 'HUNTR_Battle Theme.jpg',
-  'Dark Knight': 'HUNTR_Dark Knight.jpg',
-  'Hunt Mode': 'HUNTR_Hunt Mode.jpg',
-  'Victory Song': 'HUNTR_Victory Song.jpg',
-  'Takedown': 'HUNTR_Takedown.jpg',
-  'Risky Business': 'HUNTR_Risky Business.jpg',
-  'What It Sounds Like': 'HUNTR_What It Sounds Like.jpg',
-  'default': 'HUNTR_Golden.jpg'
-} as const;
-
 /**
- * 🔧 트랙명 정제 함수 - 복잡한 트랙명 처리
+ * 🎯 한글 아티스트 매핑 - 확장 버전
  */
-function sanitizeTrackName(trackName: string): string {
-  if (!trackName) return '';
-  
-  // 1. 괄호 안의 프로듀서 정보 제거
-  let cleaned = trackName.replace(/\s*\(Prod\.?\s*by\s+[^)]+\)/gi, '');
-  
-  // 2. 연속 공백 제거
-  cleaned = cleaned.replace(/\s+/g, ' ').trim();
-  
-  // 3. 길이 제한 (30글자)
-  if (cleaned.length > 30) {
-    cleaned = cleaned.substring(0, 30).trim();
-  }
-  
-  console.log('🔧 트랙명 정제:', { original: trackName, cleaned });
-  return cleaned;
-}
+const KOREAN_ARTIST_MAP: { [key: string]: string } = {
+  '뉴진스': 'NewJeans',
+  '블랙핑크': 'BLACKPINK',
+  '에스파': 'aespa',
+  '아이브': 'IVE',
+  '르세라핌': 'LE SSERAFIM',
+  '세븐틴': 'SEVENTEEN',
+  '스트레이키즈': 'Stray Kids',
+  '투모로우바이투게더': 'TXT',
+  '엔하이픈': 'ENHYPEN',
+  '트와이스': 'TWICE',
+  '있지': 'ITZY',
+  '아이유': 'IU',
+  '방탄소년단': 'BTS',
+  '이무진': '이무진',
+  '임영웅': '임영웅',
+  '데이식스': 'DAY6',
+  '지드래곤': 'G-DRAGON',
+  '로제': 'ROSÉ',
+  '제니': 'JENNIE'
+};
 
-/**
- * 🎯 HUNTR 실제 이미지 URL 생성 함수
- */
-function getHuntrRealImageUrl(artistName: string, trackName: string = '', baseUrl: string): string | null {
-  if (!artistName || !artistName.toUpperCase().includes('HUNTR')) {
-    return null;
-  }
-  
-  console.log('🎯 HUNTR 실제 이미지 매칭 시작:', { artistName, trackName });
-  
-  // 트랙명으로 정확한 이미지 찾기
-  let imageFile = null;
-  if (trackName) {
-    const cleanTrack = trackName.trim();
-    imageFile = HUNTR_REAL_IMAGES[cleanTrack as keyof typeof HUNTR_REAL_IMAGES];
-    
-    if (!imageFile) {
-      // 부분 매칭 시도
-      for (const [key, value] of Object.entries(HUNTR_REAL_IMAGES)) {
-        if (key !== 'default' && (key.toLowerCase().includes(cleanTrack.toLowerCase()) || 
-            cleanTrack.toLowerCase().includes(key.toLowerCase()))) {
-          imageFile = value;
-          console.log('🎯 HUNTR 부분 매칭 성공:', { trackName: cleanTrack, matched: key, file: value });
-          break;
-        }
-      }
-    }
-  }
-  
-  // 매칭 실패하면 기본값 (Golden)
-  if (!imageFile) {
-    imageFile = HUNTR_REAL_IMAGES.default;
-    console.log('🎯 HUNTR 기본 이미지 사용:', imageFile);
-  } else {
-    console.log('🎯 HUNTR 정확한 매칭:', { trackName, imageFile });
-  }
-  
-  const realImageUrl = `${baseUrl}/static/album_images/${imageFile}`;
-  console.log('✅ HUNTR 실제 이미지 URL:', realImageUrl);
-  
-  return realImageUrl;
-}
-
-/**
- * 🔥 핵심 수정: 한글 그대로 전송!
- * 한글→영어 변환을 제거하고 원본 그대로 사용
- */
-function generateSafeUrl(artist: string, track: string = '', baseUrl: string): string {
-  console.log('🚀 URL 생성 시작 (한글 그대로):', { artist, track });
-  
-  // 한글 변환 제거! 원본 그대로 사용
-  let finalArtist = artist;
-  let finalTrack = track;
-  
-  // 공백과 특수문자만 URL 인코딩
-  if (finalArtist) {
-    finalArtist = encodeURIComponent(finalArtist);
-  }
-  if (finalTrack) {
-    finalTrack = encodeURIComponent(finalTrack);
-  }
-  
-  const finalUrl = `${baseUrl}/api/album-image-v2/${finalArtist}/${finalTrack}`;
-  
-  console.log('✅ 최종 URL 생성 (한글 유지):', { 
-    originalArtist: artist,
-    finalArtist,
-    originalTrack: track,
-    finalTrack,
-    finalUrl
-  });
-  
-  return finalUrl;
-}
-
-/**
- * 🔧 앨범 이미지 문제 완전 해결 버전 - 한글 그대로 전송!
- * 
- * 해결사항:
- * 1. 🔥 한글 아티스트명 그대로 전송 (변환 제거)
- * 2. 백엔드 파일명과 일치하도록 함
- * 3. HUNTR은 특별 처리 유지
- * 4. 복잡한 트랙명 자동 정제
- * 5. 무조건 성공하는 SVG 폴백
- */
 const ImageWithFallback: React.FC<ImageWithFallbackProps> = ({
   src,
   alt,
-  width = 128,
-  height = 128,
+  width = 200,
+  height = 200,
   className = '',
   fill = false,
-  artistName = '',
-  artistNameNormalized = '',
-  trackName = '',
+  artistName,
+  artistNameNormalized,
+  trackName,
   priority = false,
-  unoptimized = true
+  unoptimized = true,
 }) => {
-  const [currentSrc, setCurrentSrc] = useState<string>('');
-  const [isLoading, setIsLoading] = useState(true);
-  const [hasError, setHasError] = useState(false);
+  const [imgSrc, setImgSrc] = useState<string>(src);
+  const [error, setError] = useState(false);
 
-  // v2 API URL 생성 - 한글 그대로!
-  const generateImageUrl = (): string => {
-    const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
-    
-    // 🎯 HUNTR 특별 처리 - 실제 이미지 파일 직접 요청!
-    const useArtist = artistName; // 정규화 사용 안함, 원본 사용
-    
-    if (useArtist && useArtist.toUpperCase().includes('HUNTR')) {
-      const huntrRealUrl = getHuntrRealImageUrl(useArtist, trackName, baseUrl);
-      if (huntrRealUrl) {
-        console.log('🎯 HUNTR 실제 이미지 URL 사용!');
-        return huntrRealUrl;
-      }
-    }
-    
-    // 🔧 복잡한 트랙명 정제 처리
-    let processedTrackName = trackName;
-    if (trackName && (trackName.includes('(') || trackName.includes('Prod.') || trackName.length > 30)) {
-      processedTrackName = sanitizeTrackName(trackName);
-      console.log('🔧 복잡한 트랙명 정제 적용:', { original: trackName, processed: processedTrackName });
-    }
-    
-    // 🔥 핵심: 한글 그대로 전송
-    return generateSafeUrl(useArtist, processedTrackName, baseUrl);
-  };
-
-  // 초기 URL 설정
   useEffect(() => {
-    const imageUrl = generateImageUrl();
-    console.log('🖼️ 이미지 URL 설정 (한글 유지):', {
-      url: imageUrl,
-      isHuntr: artistName?.toUpperCase().includes('HUNTR'),
-      original: artistName,
-      track: trackName,
-      isComplexTrack: trackName?.includes('(') || trackName?.includes('Prod.') || trackName?.length > 30
-    });
-    
-    setCurrentSrc(imageUrl);
-    setIsLoading(false);
-    setHasError(false);
-  }, [src, artistName, artistNameNormalized, trackName]);
+    setImgSrc(src);
+    setError(false);
+  }, [src]);
 
-  // 이미지 로드 실패 시 - 강화된 폴백 시스템
-  const handleError = (e: any) => {
-    console.error('🖼️ 이미지 로드 실패:', { 
-      url: currentSrc, 
-      artistName,
-      trackName, 
-      error: e 
-    });
-    
-    // 🔧 복잡한 트랙명으로 인한 실패 시 아티스트만으로 폴백
-    if (trackName && (trackName.includes('(') || trackName.includes('Prod.') || trackName.length > 20)) {
-      console.log('🔄 복잡한 트랙명 감지, 아티스트만으로 폴백:', artistName);
-      const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
-      const artistOnlyUrl = generateSafeUrl(artistName, '', baseUrl);
-      setCurrentSrc(artistOnlyUrl);
-      setHasError(false);
-      return;
+  const getSmartImageUrl = (): string => {
+    // 아티스트명과 트랙명이 있으면 API 사용
+    if (artistName && trackName) {
+      // 한글 아티스트명 변환
+      const artist = KOREAN_ARTIST_MAP[artistName] || artistName;
+      
+      // album-image-v2 API 사용 (백엔드의 Ultimate Image Service)
+      return apiUrls.albumImage(artist, trackName);
     }
     
-    // HUNTR인데 실패했으면 폴백 시도
-    if (artistName?.toUpperCase().includes('HUNTR') && currentSrc.includes('/static/album_images/')) {
-      console.log('🔄 HUNTR 폴백 시도: 기본 Golden.jpg');
-      const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
-      const fallbackUrl = `${baseUrl}/static/album_images/HUNTR_Golden.jpg`;
-      setCurrentSrc(fallbackUrl);
-      setHasError(false);
-    } else {
-      setHasError(true);
-      setIsLoading(false);
-    }
+    // 기본 src 사용
+    return src;
   };
 
-  // 이미지 로드 성공 시
-  const handleLoad = () => {
-    console.log('✅ 이미지 로드 성공:', { 
-      url: currentSrc, 
-      artistName,
-      trackName,
-      isHuntrReal: currentSrc.includes('/static/album_images/HUNTR'),
-      isComplexTrack: trackName?.includes('(') || trackName?.includes('Prod.')
-    });
-    setIsLoading(false);
-    setHasError(false);
-  };
-
-  // 극도로 드문 경우: 모든 이미지 실패한 경우 텍스트 플레이스홀더
-  if (hasError || (!isLoading && !currentSrc)) {
-    let displayChar = '♪';
-    
+  const getFallbackImage = (): string => {
+    // SVG 플레이스홀더 URL 생성
     if (artistName) {
-      if (artistName.toUpperCase().includes('HUNTR')) {
-        displayChar = 'H';
-      } else if (artistName === '조째즈') {
-        displayChar = '조';
-      } else {
-        // 한글 처리
-        const firstChar = artistName.charAt(0);
-        if (/[가-힣]/.test(firstChar)) {
-          displayChar = firstChar;
-        } else {
-          displayChar = firstChar.toUpperCase();
-        }
+      const artist = KOREAN_ARTIST_MAP[artistName] || artistName;
+      
+      // 백엔드가 SVG 플레이스홀더를 반환하도록
+      if (trackName) {
+        return apiUrls.albumImage(artist, trackName || 'Unknown');
       }
     }
     
-    return (
-      <div 
-        className={`flex items-center justify-center bg-gradient-to-br from-purple-500 to-indigo-600 text-white font-bold text-2xl rounded-lg ${className}`}
-        style={{ width, height }}
-      >
-        {displayChar}
-      </div>
-    );
-  }
+    // 기본 플레이스홀더
+    return 'data:image/svg+xml;base64,' + btoa(`
+      <svg width="200" height="200" xmlns="http://www.w3.org/2000/svg">
+        <rect width="200" height="200" fill="#e0e0e0"/>
+        <text x="50%" y="50%" text-anchor="middle" fill="#999" font-size="16">
+          No Image
+        </text>
+      </svg>
+    `);
+  };
 
-  // 로딩 중
-  if (isLoading) {
-    return (
-      <div 
-        className={`flex items-center justify-center bg-gray-200 animate-pulse rounded-lg ${className}`}
-        style={{ width, height }}
-      >
-        <div className="text-gray-400 text-sm">로딩중...</div>
-      </div>
-    );
-  }
+  const handleError = () => {
+    console.log(`이미지 로드 실패: ${imgSrc}`);
+    
+    if (!error) {
+      setError(true);
+      const smartUrl = getSmartImageUrl();
+      
+      if (smartUrl !== imgSrc) {
+        console.log(`스마트 URL 시도: ${smartUrl}`);
+        setImgSrc(smartUrl);
+      } else {
+        const fallback = getFallbackImage();
+        console.log(`폴백 이미지 사용`);
+        setImgSrc(fallback);
+      }
+    }
+  };
 
-  // 정상 이미지 표시
+  // 처음부터 스마트 URL 사용
+  useEffect(() => {
+    if (artistName && trackName) {
+      const smartUrl = getSmartImageUrl();
+      if (smartUrl !== src) {
+        setImgSrc(smartUrl);
+      }
+    }
+  }, [artistName, trackName]);
+
   if (fill) {
     return (
-      <img
-        src={currentSrc}
+      <Image
+        src={imgSrc}
         alt={alt}
-        className={`w-full h-full object-cover ${className}`}
+        fill
+        className={className}
         onError={handleError}
-        onLoad={handleLoad}
+        priority={priority}
+        unoptimized={unoptimized}
       />
     );
   }
 
   return (
-    <img
-      src={currentSrc}
+    <Image
+      src={imgSrc}
       alt={alt}
       width={width}
       height={height}
       className={className}
       onError={handleError}
-      onLoad={handleLoad}
+      priority={priority}
+      unoptimized={unoptimized}
     />
   );
 };

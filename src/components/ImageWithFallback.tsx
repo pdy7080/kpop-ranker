@@ -15,10 +15,9 @@ interface ImageWithFallbackProps {
 }
 
 /**
- * 🚨 긴급 수정 v3: btoa 한글 인코딩 오류 해결
- * - btoa() 대신 encodeURIComponent() 사용
- * - placeholder-album.png 완전 제거
- * - 무한 루프 완전 차단
+ * 🚨 v7.0 수정: 이미지 로드 에러 처리 개선
+ * - 불필요한 console.log 제거
+ * - 실제 에러만 처리
  */
 const ImageWithFallback: React.FC<ImageWithFallbackProps> = ({
   src,
@@ -35,6 +34,7 @@ const ImageWithFallback: React.FC<ImageWithFallbackProps> = ({
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [hasError, setHasError] = useState<boolean>(false);
   const attemptedUrlsRef = useRef<Set<string>>(new Set());
+  const isMountedRef = useRef<boolean>(true);
 
   // SVG 직접 인코딩 (btoa 대신 encodeURIComponent 사용)
   const DEFAULT_PLACEHOLDER = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(
@@ -59,6 +59,14 @@ const ImageWithFallback: React.FC<ImageWithFallbackProps> = ({
     // smart API 사용
     return `${baseUrl}/api/album-image-smart/${encodeURIComponent(useArtist)}/${encodeURIComponent(useTrack)}`;
   };
+
+  // 컴포넌트 마운트 상태 추적
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
 
   // 소스 결정
   useEffect(() => {
@@ -89,17 +97,30 @@ const ImageWithFallback: React.FC<ImageWithFallbackProps> = ({
 
   // 이미지 로드 성공
   const handleLoad = () => {
+    if (!isMountedRef.current) return;
+    
+    // 실제 이미지 로드 성공
     setIsLoading(false);
     setHasError(false);
   };
 
   // 이미지 로드 실패
   const handleError = (e: React.SyntheticEvent<HTMLImageElement>) => {
+    if (!isMountedRef.current) return;
+    
     const failedUrl = e.currentTarget.src;
     
+    // data URL은 에러 처리하지 않음
+    if (failedUrl.startsWith('data:')) {
+      return;
+    }
+    
     // 이미 시도한 URL이면 무시 (무한 루프 방지)
-    if (attemptedUrlsRef.current.has(failedUrl)) {
-      console.log('이미지 로드 실패 (재시도 안함):', failedUrl);
+    if (attemptedUrlsRef.current.has(failedUrl) && attemptedUrlsRef.current.size > 1) {
+      // 실제 에러인 경우에만 로그 (디버그 레벨)
+      if (process.env.NODE_ENV === 'development') {
+        console.debug('이미지 로드 실패 (재시도 안함):', failedUrl);
+      }
       setCurrentSrc(DEFAULT_PLACEHOLDER);
       setHasError(true);
       setIsLoading(false);
@@ -109,7 +130,9 @@ const ImageWithFallback: React.FC<ImageWithFallbackProps> = ({
     attemptedUrlsRef.current.add(failedUrl);
     
     // 기본 SVG로 폴백
-    console.log('이미지 로드 실패, 기본 이미지 사용:', failedUrl);
+    if (process.env.NODE_ENV === 'development') {
+      console.debug('이미지 로드 실패, 기본 이미지 사용');
+    }
     setCurrentSrc(DEFAULT_PLACEHOLDER);
     setHasError(true);
     setIsLoading(false);

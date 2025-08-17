@@ -98,15 +98,15 @@ interface GoodsItem {
   shop: string;
 }
 
-// 차트별 설정 데이터
+// 차트별 설정 데이터 (8개 차트 포함)
 const CHART_CONFIG = {
   melon: {
     name: 'Melon',
     icon: '🍈',
     emoji: '🔥',
     color: '#00CD3C',
-    bgColor: 'bg-green-500/20',
-    borderColor: 'border-green-400/50',
+    bgColor: 'bg-green-500/10',
+    borderColor: 'border-green-400/30',
     description: '국내 최대'
   },
   genie: {
@@ -114,53 +114,62 @@ const CHART_CONFIG = {
     icon: '🧞',
     emoji: '🚀',
     color: '#1E40AF',
-    bgColor: 'bg-blue-500/20',
-    borderColor: 'border-blue-400/50',
-    description: '실시간 빠름'
+    bgColor: 'bg-blue-500/10',
+    borderColor: 'border-blue-400/30',
+    description: '실시간'
   },
   bugs: {
     name: 'Bugs',
     icon: '🐛', 
     emoji: '📊',
     color: '#F97316',
-    bgColor: 'bg-orange-500/20',
-    borderColor: 'border-orange-400/50',
-    description: '다운로드 강세'
+    bgColor: 'bg-orange-500/10',
+    borderColor: 'border-orange-400/30',
+    description: '다운로드'
   },
   vibe: {
     name: 'Vibe',
     icon: '🎵',
     emoji: '🎶', 
     color: '#8B5CF6',
-    bgColor: 'bg-purple-500/20',
-    borderColor: 'border-purple-400/50',
-    description: '네이버 생태계'
+    bgColor: 'bg-purple-500/10',
+    borderColor: 'border-purple-400/30',
+    description: '네이버'
+  },
+  flo: {
+    name: 'FLO',
+    icon: '🌊',
+    emoji: '💙',
+    color: '#00A9FF',
+    bgColor: 'bg-cyan-500/10',
+    borderColor: 'border-cyan-400/30',
+    description: 'SK텔레콤'
   },
   spotify: {
     name: 'Spotify',
     icon: '🎧',
     emoji: '🌍',
     color: '#1DB954',
-    bgColor: 'bg-green-600/20', 
-    borderColor: 'border-green-500/50',
-    description: '글로벌 1위'
+    bgColor: 'bg-green-600/10', 
+    borderColor: 'border-green-500/30',
+    description: '글로벌'
   },
   billboard: {
     name: 'Billboard',
     icon: '🏆',
     emoji: '🇺🇸',
     color: '#F59E0B',
-    bgColor: 'bg-yellow-500/20',
-    borderColor: 'border-yellow-400/50', 
-    description: '미국 공식'
+    bgColor: 'bg-yellow-500/10',
+    borderColor: 'border-yellow-400/30', 
+    description: '미국'
   },
   youtube: {
     name: 'YouTube',
     icon: '▶️',
     emoji: '❤️',
     color: '#FF0000',
-    bgColor: 'bg-red-500/20',
-    borderColor: 'border-red-400/50',
+    bgColor: 'bg-red-500/10',
+    borderColor: 'border-red-400/30',
     description: '조회수'
   }
 };
@@ -202,6 +211,7 @@ function transformResponseToArtistData(response: any): ArtistData {
               genie: { rank: null, views_or_streams: null, last_updated: null, in_chart: false, rank_class: 'not-in-chart' },
               bugs: { rank: null, views_or_streams: null, last_updated: null, in_chart: false, rank_class: 'not-in-chart' },
               vibe: { rank: null, views_or_streams: null, last_updated: null, in_chart: false, rank_class: 'not-in-chart' },
+              flo: { rank: null, views_or_streams: null, last_updated: null, in_chart: false, rank_class: 'not-in-chart' },
               spotify: { rank: null, views_or_streams: null, last_updated: null, in_chart: false, rank_class: 'not-in-chart' },
               billboard: { rank: null, views_or_streams: null, last_updated: null, in_chart: false, rank_class: 'not-in-chart' },
               youtube: { rank: null, views_or_streams: null, last_updated: null, in_chart: false, rank_class: 'not-in-chart' },
@@ -615,8 +625,8 @@ export default function ArtistDetailPage() {
                         </div>
                       </div>
 
-                      {/* 차트별 순위 */}
-                      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
+                      {/* 차트별 순위 - 컴팩트한 4x2 그리드 */}
+                      <div className="grid grid-cols-4 gap-2">
                         {Object.entries(CHART_CONFIG).map(([chartKey, config]) => {
                           const chartData = track.charts[chartKey as keyof typeof track.charts];
                           const isInChart = chartData.in_chart;
@@ -625,29 +635,25 @@ export default function ArtistDetailPage() {
                           return (
                             <div
                               key={chartKey}
-                              className={`relative p-3 rounded-lg border ${config.borderColor} ${config.bgColor} ${
-                                isInChart ? 'opacity-100' : 'opacity-50'
-                              }`}
+                              className={`relative p-2 rounded-md border ${config.borderColor} ${config.bgColor} ${
+                                isInChart ? 'opacity-100' : 'opacity-60'
+                              } hover:scale-105 transition-transform`}
                             >
                               <div className="text-center">
-                                <div className="text-2xl mb-1">{config.icon}</div>
-                                <div className="text-xs font-medium text-gray-600 mb-1">
+                                <div className="text-xl">{config.icon}</div>
+                                <div className="text-[10px] font-medium text-gray-600">
                                   {config.name}
                                 </div>
                                 {isInChart && rank !== null ? (
-                                  <div className={`text-lg font-bold ${
+                                  <div className={`text-sm font-bold ${
                                     rank <= 10 ? 'text-red-600' :
                                     rank <= 50 ? 'text-orange-600' :
                                     'text-gray-700'
                                   }`}>
                                     #{rank}
                                   </div>
-                                ) : chartData.views_or_streams ? (
-                                  <div className="text-xs text-gray-500">
-                                    {chartData.views_or_streams}
-                                  </div>
                                 ) : (
-                                  <div className="text-xs text-gray-400">-</div>
+                                  <div className="text-[10px] text-gray-400">-</div>
                                 )}
                               </div>
                             </div>
