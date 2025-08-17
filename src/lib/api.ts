@@ -178,6 +178,19 @@ export const authAPI = {
       { user: null }
     );
   },
+  // OAuth URLs
+  getGoogleOAuthUrl: async () => {
+    return safeApiCall(
+      () => api.get('/api/auth/google/url'),
+      { url: null, configured: false }
+    );
+  },
+  getKakaoOAuthUrl: async () => {
+    return safeApiCall(
+      () => api.get('/api/auth/kakao/url'),
+      { url: null, configured: false }
+    );
+  },
 };
 
 // 인사이트 API

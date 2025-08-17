@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { FaTimes, FaGoogle, FaUser, FaEnvelope } from 'react-icons/fa';
 import { SiKakao } from 'react-icons/si';
 import { useAuth } from '@/contexts/AuthContext';
-import { authApi } from '@/lib/api';
+import { authAPI } from '@/lib/api';
 import toast from 'react-hot-toast';
 
 interface LoginModalProps {
@@ -29,9 +29,9 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
       // OAuth URL 가져오기
       let response;
       if (provider === 'google') {
-        response = await authApi.getGoogleOAuthUrl();
+        response = await authAPI.getGoogleOAuthUrl();
       } else if (provider === 'kakao') {
-        response = await authApi.getKakaoOAuthUrl();
+        response = await authAPI.getKakaoOAuthUrl();
       } else {
         throw new Error(`Unsupported provider: ${provider}`);
       }
