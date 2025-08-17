@@ -34,6 +34,7 @@ interface Track {
     genie: ChartRank;
     bugs: ChartRank;
     vibe: ChartRank;
+    flo: ChartRank;
     spotify: ChartRank;
     billboard: ChartRank;
     youtube: ChartRank;

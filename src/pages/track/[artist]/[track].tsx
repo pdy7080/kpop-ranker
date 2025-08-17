@@ -97,6 +97,12 @@ const chartConfigs: Record<string, {
     accentColor: 'text-purple-500',
     bgPattern: 'bg-gradient-to-br from-purple-50 to-purple-100'
   },
+  'FLO': {
+    icon: <div className="text-2xl">🌊</div>,
+    gradient: 'from-cyan-400 to-cyan-500',
+    accentColor: 'text-cyan-500',
+    bgPattern: 'bg-gradient-to-br from-cyan-50 to-cyan-100'
+  },
   'Billboard': {
     icon: <SiBillboard className="text-xl" />,
     gradient: 'from-yellow-400 to-yellow-500',

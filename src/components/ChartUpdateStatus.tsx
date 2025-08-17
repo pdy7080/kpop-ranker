@@ -25,6 +25,7 @@ const CHART_NAMES: Record<string, string> = {
   genie: 'GENIE',
   bugs: 'BUGS',
   vibe: 'VIBE',
+  flo: 'FLO',
   spotify: 'SPOTIFY',
   youtube: 'YOUTUBE',
   billboard: 'BILLBOARD'
@@ -118,6 +119,9 @@ export default function ChartUpdateStatus({ className = '' }: ChartUpdateStatusP
             </p>
             <p className="text-gray-600 dark:text-gray-400">
               • <span className="font-semibold">Vibe</span> → 하루 2회: 01시 / 13시
+            </p>
+            <p className="text-gray-600 dark:text-gray-400">
+              • <span className="font-semibold">FLO</span> → 하루 4회: 01시 / 07시 / 13시 / 19시
             </p>
             <p className="text-gray-600 dark:text-gray-400">
               • <span className="font-semibold">Spotify</span> → 매일 09:00 KST

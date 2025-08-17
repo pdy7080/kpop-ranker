@@ -146,11 +146,11 @@ export default function Home() {
     <>
       <Head>
         <title>KPOP FANfolio - 실시간 K-POP 차트 통합 모니터링</title>
-        <meta name="description" content="Spotify, YouTube, Billboard, 멜론 등 전 세계 7개 주요 음원 차트를 한 곳에서! 실시간 자동 업데이트로 최신 순위를 확인하세요." />
+        <meta name="description" content="Spotify, YouTube, Billboard, 멜론, FLO 등 전 세계 8개 주요 음원 차트를 한 곳에서! 실시간 자동 업데이트로 최신 순위를 확인하세요." />
         <meta property="og:title" content="KPOP FANfolio - 실시간 K-POP 차트 모니터링" />
-        <meta property="og:description" content="7개 글로벌 & 국내 차트를 실시간으로 한눈에! 매일 자동 업데이트" />
+        <meta property="og:description" content="8개 글로벌 & 국내 차트를 실시간으로 한눈에! 매일 자동 업데이트" />
         <meta property="og:type" content="website" />
-        <meta name="keywords" content="K-POP,케이팝,차트,순위,실시간,모니터링,Spotify,YouTube,Billboard,멜론,지니,벅스" />
+        <meta name="keywords" content="K-POP,케이팝,차트,순위,실시간,모니터링,Spotify,YouTube,Billboard,멜론,지니,벅스,FLO,플로" />
       </Head>
       
       <Layout>
@@ -176,7 +176,7 @@ export default function Home() {
               
               <h1 className="text-5xl md:text-7xl font-black mb-6 leading-tight">
                 <span className="bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600 bg-clip-text text-transparent animate-gradient">
-                  7개 차트
+                  8개 차트
                 </span>
                 <br />
                 <span className="text-gray-900 dark:text-white">
@@ -188,7 +188,7 @@ export default function Home() {
                 최애 아티스트의 글로벌 & 국내 차트 순위
               </p>
               <p className="text-lg text-gray-600 dark:text-gray-400 mb-8">
-                Spotify, YouTube, Billboard, 멜론, 지니, 벅스를 한눈에!
+                Spotify, YouTube, Billboard, 멜론, 지니, 벅스, FLO를 한눈에!
               </p>
             </motion.div>
             
