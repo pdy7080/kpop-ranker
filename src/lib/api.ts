@@ -58,6 +58,12 @@ export const searchAPI = {
       { results: [] }
     );
   },
+  searchUnified: async (query: string) => {
+    return safeApiCall(
+      () => api.get('/api/search', { params: { q: query } }),
+      { artists: [], tracks: [] }
+    );
+  },
   autocomplete: async (query: string, limit = 10) => {
     return safeApiCall(
       () => api.get('/api/autocomplete/unified', { params: { q: query, limit } }),
@@ -69,10 +75,19 @@ export const searchAPI = {
 // 아티스트 API  
 export const artistAPI = {
   getDetails: async (name: string) => {
-    return safeApiCall(
+    const response = await safeApiCall(
       () => api.get(`/api/artist/${encodeURIComponent(name)}/complete`),
-      { artist: null, tracks: [] }
+      { artist_info: null, tracks: [] }
     );
+    
+    // 응답 형식 변환 (백엔드 호환성)
+    if (response.artist_info) {
+      return {
+        artist: response.artist_info,
+        tracks: response.tracks || []
+      };
+    }
+    return response;
   },
   getTracks: async (artist: string) => {
     return safeApiCall(
@@ -85,10 +100,32 @@ export const artistAPI = {
 // 트렌딩 API (별도 export)
 export const trendingApi = {
   getTrending: async (type = 'hot', limit = 10) => {
-    return safeApiCall(
+    const response = await safeApiCall(
       () => api.get('/api/trending', { params: { type, limit } }),
-      { tracks: [], artists: [] }
+      { trending: [], tracks: [] }
     );
+    
+    // 백엔드 응답 형식 변환
+    if (response.trending) {
+      // trending 배열을 tracks 형식으로 변환
+      return {
+        tracks: response.trending.map((item: any) => ({
+          id: item.id || Math.random(),
+          artist: item.artist || item.unified_artist,
+          title: item.track || item.unified_track || item.title,
+          name: item.track || item.unified_track || item.title,
+          rank: item.best_ranking || item.best_rank || 1,
+          prev_rank: item.prev_rank,
+          album_image: item.album_image || item.optimized_album_image,
+          trending_score: item.trend_score || Math.round(item.avg_rank ? (100 - item.avg_rank) : 50),
+          chart_scores: item.chart_scores || {},
+          youtube_views: item.youtube_views,
+          rank_change: item.rank_change,
+        })),
+        artists: []
+      };
+    }
+    return response;
   },
 };
 

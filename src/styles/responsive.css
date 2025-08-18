@@ -1,0 +1,133 @@
+/* Responsive Design System */
+
+/* Mobile First Breakpoints */
+@media (max-width: 640px) {
+  /* Mobile Optimizations */
+  .neon-text {
+    font-size: 2rem;
+  }
+  
+  .glass-card {
+    padding: 1rem;
+  }
+  
+  .race-track {
+    padding: 0.5rem;
+  }
+  
+  /* Mobile Navigation */
+  .mobile-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: var(--bg-primary);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 1rem;
+    z-index: 50;
+  }
+  
+  /* Swipe Gestures */
+  .swipe-container {
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  .swipe-item {
+    scroll-snap-align: start;
+    flex-shrink: 0;
+  }
+}
+
+/* Tablet */
+@media (min-width: 641px) and (max-width: 1024px) {
+  .glass-card {
+    padding: 1.5rem;
+  }
+  
+  .neon-text {
+    font-size: 3rem;
+  }
+}
+
+/* Desktop Enhancements */
+@media (min-width: 1025px) {
+  /* Hover Effects only on Desktop */
+  .desktop-hover:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 20px 40px rgba(147, 51, 234, 0.3);
+  }
+  
+  /* Large Screen Optimizations */
+  .container-xl {
+    max-width: 1440px;
+    margin: 0 auto;
+  }
+}
+
+/* Ultra Wide */
+@media (min-width: 1920px) {
+  .container-xxl {
+    max-width: 1920px;
+    margin: 0 auto;
+  }
+  
+  .neon-text {
+    font-size: 5rem;
+  }
+}
+
+/* Touch Device Optimizations */
+@media (hover: none) and (pointer: coarse) {
+  /* Remove hover effects on touch devices */
+  .hover\:scale-105:hover {
+    transform: none;
+  }
+  
+  /* Larger touch targets */
+  button, a {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  /* Disable parallax on mobile for performance */
+  .parallax {
+    transform: none !important;
+  }
+}
+
+/* Dark Mode Optimizations */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg-primary: #0A0A0F;
+    --text-primary: #FFFFFF;
+  }
+}
+
+/* Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Print Styles */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  
+  body {
+    background: white;
+    color: black;
+  }
+  
+  .glass-card {
+    border: 1px solid #000;
+    background: transparent;
+  }
+}

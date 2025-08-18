@@ -1,64 +1,62 @@
+@import './design-system.css';
+@import './responsive.css';
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
-    --border: 214.3 31.8% 91.4%;
-  }
-
-  .dark {
-    --background: 222.2 84% 4.9%;
+    --background: 10 10 15;
     --foreground: 210 40% 98%;
-    --border: 217.2 32.6% 17.5%;
+    --border: 240 20% 20%;
   }
-}
 
-@layer base {
-  * {
-    @apply border-gray-200 dark:border-gray-800;
-  }
   body {
-    @apply bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100;
+    @apply bg-[#0A0A0F] text-gray-100;
+    font-family: 'Inter', 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif;
   }
 }
 
-/* Custom scrollbar */
+/* Custom scrollbar with neon glow */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 10px;
+  height: 10px;
 }
 
 ::-webkit-scrollbar-track {
-  @apply bg-gray-100 dark:bg-gray-800;
+  @apply bg-gray-900;
+  border-radius: 10px;
 }
 
 ::-webkit-scrollbar-thumb {
-  @apply bg-gray-400 dark:bg-gray-600 rounded-full;
+  background: linear-gradient(180deg, #9333EA, #EC4899);
+  border-radius: 10px;
+  box-shadow: 0 0 10px rgba(236, 72, 153, 0.5);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  @apply bg-gray-500 dark:bg-gray-700;
+  background: linear-gradient(180deg, #A855F7, #F472B6);
+  box-shadow: 0 0 20px rgba(236, 72, 153, 0.8);
 }
 
-/* Glassmorphism effect */
-.glass {
-  @apply backdrop-blur-lg bg-white/80 dark:bg-gray-800/80 border border-white/20;
+/* Selection color */
+::selection {
+  background: rgba(236, 72, 153, 0.3);
+  color: #fff;
 }
 
-/* Gradient text */
-.gradient-text {
-  @apply bg-gradient-to-r from-primary-500 to-secondary-500 bg-clip-text text-transparent;
+/* Loading animation */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
 }
 
-/* Card hover effect */
-.card-hover {
-  @apply transition-all duration-300 hover:scale-[1.02] hover:shadow-xl;
-}
-
-/* Loading skeleton */
-.skeleton {
-  @apply animate-pulse bg-gray-200 dark:bg-gray-700 rounded;
+.shimmer {
+  background: linear-gradient(90deg, 
+    transparent 0%, 
+    rgba(255, 255, 255, 0.1) 50%, 
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite;
 }
