@@ -99,6 +99,101 @@ interface GoodsItem {
   shop: string;
 }
 
+  // 트랙 데이터 가져오기
+  const fetchTrackData = async () => {
+    if (!artist || !track) return;
+
+    setIsLoading(true);
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+      
+      // 먼저 charts/summary API 시도
+      const chartsResponse = await fetch(
+        `${apiUrl}/api/charts/summary/${encodeURIComponent(artist as string)}/${encodeURIComponent(track as string)}`
+      );
+      
+      if (chartsResponse.ok) {
+        const chartsData = await chartsResponse.json();
+        
+        if (chartsData.success && chartsData.charts) {
+          const processedCharts: ChartData[] = [];
+          
+          // charts/summary API 응답 처리
+          Object.entries(chartsData.charts).forEach(([chartName, chartInfo]: [string, any]) => {
+            if (chartInfo.rank) {
+              processedCharts.push({
+                chart: chartName.charAt(0).toUpperCase() + chartName.slice(1),
+                rank: chartInfo.rank,
+                views: chartInfo.views || '',
+                album_image: chartInfo.album_image,
+                crawl_time: chartInfo.last_update,
+                rank_change: chartInfo.change
+              });
+            }
+          });
+          
+          setTrackData({
+            artist: chartsData.found_artist || chartsData.artist || artist as string,
+            track: chartsData.found_track || chartsData.track || track as string,
+            charts: processedCharts
+          });
+          return;
+        }
+      }
+      
+      // charts/summary 실패 시 search2 API 시도
+      const response = await fetch(
+        `${apiUrl}/api/search2?artist=${encodeURIComponent(artist as string)}&track=${encodeURIComponent(track as string)}`
+      );
+      
+      if (!response.ok) {
+        const searchResponse = await fetch(
+          `${apiUrl}/api/search?artist=${encodeURIComponent(artist as string)}&track=${encodeURIComponent(track as string)}`
+        );
+        
+        if (!searchResponse.ok) {
+          throw new Error('트랙 정보를 불러올 수 없습니다');
+        }
+        
+        const searchData = await searchResponse.json();
+        processSearchData(searchData);
+        return;
+      }
+
+      const data = await response.json();
+      
+      if (data.results && data.results.length > 0) {
+        const chartsData: ChartData[] = [];
+        
+        // search2 API 응답 처리 - results가 이미 트랙 정보 배열
+        data.results.forEach((trackInfo: any) => {
+          chartsData.push({
+            chart: trackInfo.chart,
+            rank: trackInfo.rank,
+            views: trackInfo.views || '',
+            album_image: trackInfo.image,
+            crawl_time: trackInfo.created_at,
+            rank_change: null
+          });
+        });
+
+        setTrackData({
+          artist: data.artist || (artist as string),
+          artist_normalized: data.artist_normalized,
+          track: data.track || (track as string),
+          charts: chartsData
+        });
+      } else {
+        throw new Error('차트 데이터를 찾을 수 없습니다');
+      }
+    } catch (error) {
+      console.error('트랙 데이터 로드 오류:', error);
+      setTrackData(null);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
 // 차트별 설정 데이터 (8개 차트 포함)
 const CHART_CONFIG = {
   melon: {
