@@ -14,9 +14,7 @@ const api = axios.create({
 
 // API 호출 로깅
 api.interceptors.request.use((config) => {
-  if (process.env.NODE_ENV === 'development') {
-    console.log(`🔍 API Request: ${config.method?.toUpperCase()} ${config.url}`);
-  }
+  console.log(`🔍 API Request: ${config.method?.toUpperCase()} ${config.baseURL}${config.url}`);
   return config;
 });
 
@@ -116,7 +114,8 @@ export const trendingApi = {
           name: item.track || item.unified_track || item.title,
           rank: item.best_ranking || item.best_rank || 1,
           prev_rank: item.prev_rank,
-          album_image: item.album_image || item.optimized_album_image,
+          album_image: item.album_image || item.optimized_album_image || 
+            `/api/album-image-smart/${encodeURIComponent(item.artist || item.unified_artist)}/${encodeURIComponent(item.track || item.unified_track || item.title)}`,
           trending_score: item.trend_score || Math.round(item.avg_rank ? (100 - item.avg_rank) : 50),
           chart_scores: item.chart_scores || {},
           youtube_views: item.youtube_views,

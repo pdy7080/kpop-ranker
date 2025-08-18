@@ -67,7 +67,7 @@ export default function Home() {
     <Layout>
       <Head>
         <title>KPOP Ranker - 실시간 K-POP 차트</title>
-        <link rel="stylesheet" href="/styles/design-system.css" />
+
       </Head>
 
       <MouseGradient>
@@ -204,7 +204,7 @@ export default function Home() {
                     >
                       <div className="relative">
                         <Album3D 
-                          src={item.albumImage || '/placeholder.jpg'} 
+                          src={item.albumImage || `${process.env.NEXT_PUBLIC_API_URL}/api/album-image-smart/${encodeURIComponent(item.artist)}/${encodeURIComponent(item.title)}`} 
                           artist={item.artist}
                           title={item.title}
                         />

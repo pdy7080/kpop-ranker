@@ -194,13 +194,14 @@ export default function SearchPage() {
                                 className="relative h-48 bg-gradient-to-br from-purple-600 to-blue-600 cursor-pointer"
                                 onClick={() => router.push(`/track/${track.artist}/${track.title}`)}
                               >
-                                {track.album_image && (
-                                  <img 
-                                    src={track.album_image} 
-                                    alt={track.title}
-                                    className="w-full h-full object-cover"
-                                  />
-                                )}
+                                <img 
+                                  src={track.album_image || `${process.env.NEXT_PUBLIC_API_URL}/api/album-image-smart/${encodeURIComponent(track.artist)}/${encodeURIComponent(track.title)}`}
+                                  alt={track.title}
+                                  className="w-full h-full object-cover"
+                                  onError={(e) => {
+                                    (e.target as HTMLImageElement).src = '/placeholder.jpg';
+                                  }}
+                                />
                                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
                                   <div className="absolute bottom-4 left-4 right-4">
                                     <p className="text-sm opacity-90">클릭하여 상세보기</p>
