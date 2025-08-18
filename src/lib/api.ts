@@ -104,18 +104,18 @@ export const trendingApi = {
     );
     
     // 백엔드 응답 형식 변환
-    if (response.trending) {
+    if (response.trending && Array.isArray(response.trending)) {
       // trending 배열을 tracks 형식으로 변환
       return {
         tracks: response.trending.map((item: any) => ({
           id: item.id || Math.random(),
-          artist: item.artist || item.unified_artist,
-          title: item.track || item.unified_track || item.title,
-          name: item.track || item.unified_track || item.title,
+          artist: item.artist || item.unified_artist || 'Unknown Artist',
+          title: item.track || item.unified_track || item.title || 'Unknown Track',
+          name: item.track || item.unified_track || item.title || 'Unknown Track',
           rank: item.best_ranking || item.best_rank || 1,
           prev_rank: item.prev_rank,
           album_image: item.album_image || item.optimized_album_image || 
-            `/api/album-image-smart/${encodeURIComponent(item.artist || item.unified_artist)}/${encodeURIComponent(item.track || item.unified_track || item.title)}`,
+            `${API_URL}/api/album-image-smart/${encodeURIComponent(item.artist || item.unified_artist || 'Unknown')}/${encodeURIComponent(item.track || item.unified_track || item.title || 'Unknown')}`,
           trending_score: item.trend_score || Math.round(item.avg_rank ? (100 - item.avg_rank) : 50),
           chart_scores: item.chart_scores || {},
           youtube_views: item.youtube_views,
@@ -124,7 +124,13 @@ export const trendingApi = {
         artists: []
       };
     }
-    return response;
+    
+    // 이미 tracks 형식인 경우
+    if (response.tracks) {
+      return response;
+    }
+    
+    return { tracks: [], artists: [] };
   },
 };
 
@@ -134,10 +140,8 @@ export const searchApi = searchAPI;
 // 차트 API
 export const chartAPI = {
   getTrending: async (type = 'hot', limit = 10) => {
-    return safeApiCall(
-      () => api.get('/api/trending', { params: { type, limit } }),
-      { tracks: [], artists: [] }
-    );
+    // trendingApi.getTrending과 동일
+    return trendingApi.getTrending(type, limit);
   },
   getHistory: async (chart: string, artist: string, track: string) => {
     return safeApiCall(
@@ -208,6 +212,12 @@ export const authAPI = {
       { authenticated: false }
     );
   },
+  status: async () => {
+    return safeApiCall(
+      () => api.get('/api/auth/status'),
+      { authenticated: false }
+    );
+  },
   getUser: async () => {
     return safeApiCall(
       () => api.get('/api/auth/user'),
@@ -254,6 +264,16 @@ export const insightsAPI = {
       }
     );
   },
+  getDailyInsights: async () => {
+    return safeApiCall(
+      () => api.get('/api/insights/daily'),
+      { 
+        trends: [],
+        market_analysis: '',
+        recommendations: []
+      }
+    );
+  },
   getRecommendations: async () => {
     return safeApiCall(
       () => api.get('/api/insights/recommendations'),
@@ -282,17 +302,31 @@ export const insightsAPI = {
       { insights: null }
     );
   },
+  getArtistInsight: async (name: string) => {
+    return safeApiCall(
+      () => api.get(`/api/insights/artist/${encodeURIComponent(name)}`),
+      { insights: null }
+    );
+  },
 };
 
 // 이미지 API
 export const imageAPI = {
   getAlbumImage: (artist: string, track: string) => {
-    // Smart Image API 사용 (백엔드가 자동 매핑 처리)
-    return `${API_URL}/api/album-image-smart/${encodeURIComponent(artist)}/${encodeURIComponent(track)}`;
+    // album-image-v2 사용 (백엔드가 모든 경로 지원)
+    return `${API_URL}/api/album-image-v2/${encodeURIComponent(artist)}/${encodeURIComponent(track)}`;
+  },
+  getAlbumImageUrl: (artist: string, track: string) => {
+    // album-image-v2 사용 (백엔드가 모든 경로 지원)
+    return `${API_URL}/api/album-image-v2/${encodeURIComponent(artist)}/${encodeURIComponent(track)}`;
   },
   getSmartImage: (artist: string, track: string) => {
-    // 동일한 Smart Image API 사용
-    return `${API_URL}/api/album-image-smart/${encodeURIComponent(artist)}/${encodeURIComponent(track)}`;
+    // smart도 지원하지만 v2가 더 안정적
+    return `${API_URL}/api/album-image-v2/${encodeURIComponent(artist)}/${encodeURIComponent(track)}`;
+  },
+  getSmartImageUrl: (artist: string, track: string) => {
+    // smart도 지원하지만 v2가 더 안정적
+    return `${API_URL}/api/album-image-v2/${encodeURIComponent(artist)}/${encodeURIComponent(track)}`;
   },
   checkImages: async () => {
     return safeApiCall(
@@ -351,9 +385,28 @@ export const schedulerAPI = {
 };
 
 // 하위 호환성을 위한 alias exports
-export const authApi = authAPI;  // authApi -> authAPI alias
-export const insightsApi = insightsAPI;  // insightsApi -> insightsAPI alias
-export const trendingAPI = trendingApi;  // trendingAPI -> trendingApi alias (역방향)
-// searchAPI와 searchApi는 이미 위에 정의됨
+export const authApi = authAPI;  
+export const insightsApi = insightsAPI;  
+export const trendingAPI = trendingApi;  
+export const artistApi = artistAPI;
+export const portfolioApi = portfolioAPI;
+export const imageApi = imageAPI;
+export const chartApi = chartAPI;
+
+// Convenience functions (백업 버전 호환)
+export const searchArtistTracks = artistAPI.getTracks;
+export const getArtistDetails = artistAPI.getDetails;
+export const getTrending = chartAPI.getTrending;
+export const getChartHistory = chartAPI.getHistory;
+export const getChartSummary = chartAPI.getSummary;
+export const getPortfolio = portfolioAPI.get;
+export const addToPortfolio = portfolioAPI.add;
+export const removeFromPortfolio = portfolioAPI.remove;
+export const login = authAPI.login;
+export const logout = authAPI.logout;
+export const checkAuthStatus = authAPI.status;
+export const getAlbumImageUrl = imageAPI.getAlbumImageUrl;
+export const getSmartImageUrl = imageAPI.getSmartImageUrl;
+export const getUpdateStatus = chartAPI.getUpdateStatus;
 
 export default api;

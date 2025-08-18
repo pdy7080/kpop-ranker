@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 
 interface ImageWithFallbackProps {
   src: string;
@@ -48,16 +48,17 @@ const ImageWithFallback: React.FC<ImageWithFallbackProps> = ({
     let imageUrl = '';
     
     // src가 이미 완전한 URL인 경우
-    if (src && (src.startsWith('http') || src.startsWith('/api'))) {
-      // /api/album-image-v2를 /api/album-image-smart로 변경
-      if (src.includes('/api/album-image-v2/')) {
-        imageUrl = src.replace('/api/album-image-v2/', '/api/album-image-smart/');
-      } else {
-        imageUrl = src;
-      }
+    if (src && src.startsWith('http')) {
+      imageUrl = src;
+    }
+    // src가 /api로 시작하는 경우 (상대 경로)
+    else if (src && src.startsWith('/api')) {
+      // 프로덕션에서는 절대 경로로 변환
+      imageUrl = `${baseUrl}${src}`;
     }
     // artistName과 trackName이 있는 경우
     else if (artistName && trackName) {
+      // album-image-smart를 사용 (Smart Resolver 활용)
       imageUrl = `${baseUrl}/api/album-image-smart/${encodeURIComponent(artistName)}/${encodeURIComponent(trackName)}`;
     }
     // src가 상대 경로인 경우
@@ -74,6 +75,7 @@ const ImageWithFallback: React.FC<ImageWithFallbackProps> = ({
   };
 
   const handleError = () => {
+    console.log('Image load error:', currentSrc);
     setCurrentSrc(DEFAULT_PLACEHOLDER);
     setHasError(true);
     setIsLoading(false);
