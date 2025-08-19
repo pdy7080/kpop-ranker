@@ -17,7 +17,17 @@ const nextConfig = {
   },
   
   // 페이지 확장자 설정
-  pageExtensions: ['page.tsx', 'page.ts', 'page.jsx', 'page.js', 'tsx', 'ts', 'jsx', 'js']
+  pageExtensions: ['page.tsx', 'page.ts', 'page.jsx', 'page.js', 'tsx', 'ts', 'jsx', 'js'],
+  
+  // API 프록시 설정 추가
+  async rewrites() {
+    return [
+      {
+        source: '/api/:path*',
+        destination: 'http://localhost:5000/api/:path*'
+      }
+    ]
+  }
 }
 
 module.exports = nextConfig

@@ -57,10 +57,49 @@ export const searchAPI = {
     );
   },
   searchUnified: async (query: string) => {
-    return safeApiCall(
+    const response = await safeApiCall(
       () => api.get('/api/search', { params: { q: query } }),
-      { artists: [], tracks: [] }
+      { results: [] }
     );
+    
+    // results를 artists와 tracks로 분리
+    const artistsMap = new Map<string, any>();
+    const tracks: any[] = [];
+    
+    if (response.results && Array.isArray(response.results)) {
+      response.results.forEach((item: any) => {
+        // 트랙 추가
+        if (item.track) {
+          tracks.push({
+            artist: item.artist,
+            artist_normalized: item.artist_normalized || item.artist,
+            title: item.track,
+            track: item.track,
+            album_image: item.album_image || `/api/album-image-smart/${encodeURIComponent(item.artist)}/${encodeURIComponent(item.track)}`,
+            charts: item.charts || {},
+            trend_score: item.trend_score || item.score || 0
+          });
+          
+          // 트랙에서 아티스트 정보 추출
+          const artistKey = item.artist_normalized || item.artist;
+          if (!artistsMap.has(artistKey)) {
+            artistsMap.set(artistKey, {
+              name: item.artist,
+              normalized: item.artist_normalized || item.artist,
+              track_count: 1
+            });
+          } else {
+            const artist = artistsMap.get(artistKey);
+            artist.track_count++;
+          }
+        }
+      });
+    }
+    
+    // 아티스트 배열로 변환
+    const artists = Array.from(artistsMap.values());
+    
+    return { artists: artists, tracks: tracks };
   },
   autocomplete: async (query: string, limit = 10) => {
     return safeApiCall(
@@ -107,26 +146,41 @@ export const trendingApi = {
     if (response.trending && Array.isArray(response.trending)) {
       // trending 배열을 tracks 형식으로 변환
       return {
-        tracks: response.trending.map((item: any) => ({
-          id: item.id || Math.random(),
-          artist: item.artist || item.unified_artist || 'Unknown Artist',
-          title: item.track || item.unified_track || item.title || 'Unknown Track',
-          name: item.track || item.unified_track || item.title || 'Unknown Track',
-          rank: item.best_ranking || item.best_rank || 1,
-          prev_rank: item.prev_rank,
-          album_image: item.album_image || item.optimized_album_image || 
-            `${API_URL}/api/album-image-smart/${encodeURIComponent(item.artist || item.unified_artist || 'Unknown')}/${encodeURIComponent(item.track || item.unified_track || item.title || 'Unknown')}`,
-          trending_score: item.trend_score || Math.round(item.avg_rank ? (100 - item.avg_rank) : 50),
-          chart_scores: item.chart_scores || {},
-          youtube_views: item.youtube_views,
-          rank_change: item.rank_change,
-        })),
+        tracks: response.trending.map((item: any) => {
+          // album_image URL 수정 - album-image-v2를 album-image-smart로 변경
+          let albumImage = item.album_image || item.optimized_album_image;
+          if (albumImage && albumImage.includes('/api/album-image-v2/')) {
+            albumImage = albumImage.replace('/api/album-image-v2/', '/api/album-image-smart/');
+          }
+          
+          return {
+            id: item.id || Math.random(),
+            artist: item.artist || item.unified_artist || 'Unknown Artist',
+            title: item.track || item.unified_track || item.title || 'Unknown Track',
+            name: item.track || item.unified_track || item.title || 'Unknown Track',
+            rank: item.best_ranking || item.best_rank || 1,
+            prev_rank: item.prev_rank,
+            album_image: albumImage || 
+              `${API_URL}/api/album-image-smart/${encodeURIComponent(item.artist || item.unified_artist || 'Unknown')}/${encodeURIComponent(item.track || item.unified_track || item.title || 'Unknown')}`,
+            trending_score: item.trend_score || Math.round(item.avg_rank ? (100 - item.avg_rank) : 50),
+            chart_scores: item.chart_scores || {},
+            youtube_views: item.youtube_views,
+            rank_change: item.rank_change,
+          };
+        }),
         artists: []
       };
     }
     
     // 이미 tracks 형식인 경우
     if (response.tracks) {
+      // album_image URL 수정
+      response.tracks = response.tracks.map((track: any) => {
+        if (track.album_image && track.album_image.includes('/api/album-image-v2/')) {
+          track.album_image = track.album_image.replace('/api/album-image-v2/', '/api/album-image-smart/');
+        }
+        return track;
+      });
       return response;
     }
     

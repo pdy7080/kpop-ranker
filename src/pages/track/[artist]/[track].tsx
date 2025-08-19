@@ -1,543 +1,989 @@
+/**
+ * 🎯 트랙 상세 페이지 - 네온 테마 v8.1 (수정)
+ * - 8개 차트 실시간 순위 표시
+ * - 포트폴리오 추가/제거 기능
+ * - 아티스트 페이지 이동
+ * - 차트 히스토리 모달
+ * - 다크 테마 통일
+ * - CORS 및 특수문자 문제 해결
+ */
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Head from 'next/head';
 import Layout from '@/components/Layout';
+import ImageWithFallback from '@/components/ImageWithFallback';
+import ChartHistoryModal from '@/components/ChartHistoryModal';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
-  MouseGradient, 
-  ParticleField,
-  WaveVisualizer
-} from '@/components/InteractiveComponents';
-import {
-  TrendingFlame,
-  SparkLine,
-  LiveCounter,
-  HeatMap
-} from '@/components/DataVisualization';
-import { FaPlay, FaSpotify, FaYoutube, FaApple, FaChartLine, FaClock, FaFire, FaGlobeAsia } from 'react-icons/fa';
-import { SiYoutubemusic } from 'react-icons/si';
-import axios from 'axios';
+  FaPlay, FaSpotify, FaYoutube, FaApple, FaChartLine, 
+  FaClock, FaFire, FaGlobeAsia, FaTrophy, FaArrowUp, 
+  FaArrowDown, FaMinus, FaExternalLinkAlt, FaMusic,
+  FaHeart, FaRegHeart, FaUser, FaHistory
+} from 'react-icons/fa';
+import { SiYoutubemusic, SiApplemusic } from 'react-icons/si';
+import toast from 'react-hot-toast';
+import { useAuth } from '@/contexts/AuthContext';
 
-interface TrackData {
-  track_info: {
-    artist: string;
-    title: string;
-    album: string;
-    release_date: string;
-    genre: string;
-    duration?: string;
-  };
-  current_positions: Record<string, number>;
-  history: Array<{
-    date: string;
-    rank: number;
-    change: number;
-  }>;
-  youtube_data?: {
-    views: number;
-    likes: number;
-    comments: number;
-    daily_views: number;
-  };
-  streaming_links?: Record<string, string>;
+// ========================================
+// 타입 정의
+// ========================================
+
+interface ChartData {
+  chart: string;
+  rank: number;
+  views?: string;
+  change?: number;
+  last_updated?: string;
 }
+
+interface TrackInfo {
+  artist: string;
+  artist_normalized?: string;
+  track: string;
+  album?: string;
+  release_date?: string;
+  genre?: string;
+  charts: ChartData[];
+  streaming_links?: {
+    spotify?: string;
+    apple_music?: string;
+    youtube_music?: string;
+    melon?: string;
+    genie?: string;
+    bugs?: string;
+  };
+  trend_score?: number;
+}
+
+// 차트별 설정 데이터 (8개 차트)
+const CHART_CONFIG: Record<string, {
+  name: string;
+  icon: string;
+  color: string;
+  bgColor: string;
+  borderColor: string;
+  gradientFrom: string;
+  gradientTo: string;
+  streamingUrl?: (artist: string, track: string) => string;
+}> = {
+  melon: {
+    name: 'Melon',
+    icon: '🍉',
+    color: '#00CD3C',
+    bgColor: 'bg-green-500/10',
+    borderColor: 'border-green-400/30',
+    gradientFrom: 'from-green-500',
+    gradientTo: 'to-green-600',
+    streamingUrl: (artist, track) => `https://www.melon.com/search/song/index.htm?q=${encodeURIComponent(artist + ' ' + track)}`
+  },
+  genie: {
+    name: 'Genie', 
+    icon: '🧞',
+    color: '#1E40AF',
+    bgColor: 'bg-blue-500/10',
+    borderColor: 'border-blue-400/30',
+    gradientFrom: 'from-blue-500',
+    gradientTo: 'to-blue-600',
+    streamingUrl: (artist, track) => `https://www.genie.co.kr/search/searchMain?query=${encodeURIComponent(artist + ' ' + track)}`
+  },
+  bugs: {
+    name: 'Bugs',
+    icon: '🐛', 
+    color: '#F97316',
+    bgColor: 'bg-orange-500/10',
+    borderColor: 'border-orange-400/30',
+    gradientFrom: 'from-orange-500',
+    gradientTo: 'to-orange-600',
+    streamingUrl: (artist, track) => `https://music.bugs.co.kr/search/integrated?q=${encodeURIComponent(artist + ' ' + track)}`
+  },
+  vibe: {
+    name: 'Vibe',
+    icon: '🎵',
+    color: '#8B5CF6',
+    bgColor: 'bg-purple-500/10',
+    borderColor: 'border-purple-400/30',
+    gradientFrom: 'from-purple-500',
+    gradientTo: 'to-purple-600',
+    streamingUrl: (artist, track) => `https://vibe.naver.com/search?query=${encodeURIComponent(artist + ' ' + track)}`
+  },
+  flo: {
+    name: 'FLO',
+    icon: '🌊',
+    color: '#00A9FF',
+    bgColor: 'bg-cyan-500/10',
+    borderColor: 'border-cyan-400/30',
+    gradientFrom: 'from-cyan-500',
+    gradientTo: 'to-cyan-600',
+    streamingUrl: (artist, track) => `https://www.music-flo.com/search/all?keyword=${encodeURIComponent(artist + ' ' + track)}`
+  },
+  spotify: {
+    name: 'Spotify',
+    icon: '🎧',
+    color: '#1DB954',
+    bgColor: 'bg-green-600/10', 
+    borderColor: 'border-green-500/30',
+    gradientFrom: 'from-green-600',
+    gradientTo: 'to-green-700',
+    streamingUrl: (artist, track) => `https://open.spotify.com/search/${encodeURIComponent(artist + ' ' + track)}`
+  },
+  billboard: {
+    name: 'Billboard',
+    icon: '🏆',
+    color: '#F59E0B',
+    bgColor: 'bg-yellow-500/10',
+    borderColor: 'border-yellow-400/30',
+    gradientFrom: 'from-yellow-500',
+    gradientTo: 'to-yellow-600',
+    streamingUrl: () => 'https://www.billboard.com/charts/hot-100/'
+  },
+  youtube: {
+    name: 'YouTube',
+    icon: '📺',
+    color: '#FF0000',
+    bgColor: 'bg-red-500/10',
+    borderColor: 'border-red-400/30',
+    gradientFrom: 'from-red-500',
+    gradientTo: 'to-red-600',
+    streamingUrl: (artist, track) => `https://www.youtube.com/results?search_query=${encodeURIComponent(artist + ' ' + track)}`
+  }
+};
+
+// 순위 변동 아이콘 표시
+const getRankChangeIcon = (change?: number) => {
+  if (!change || change === 0) return <FaMinus className="text-gray-500" />;
+  if (change > 0) return <FaArrowUp className="text-green-400" />;
+  return <FaArrowDown className="text-red-400" />;
+};
+
+// 순위에 따른 색상 (다크 테마용)
+const getRankColor = (rank: number) => {
+  if (rank <= 3) return 'text-red-400 font-bold';
+  if (rank <= 10) return 'text-orange-400 font-bold';
+  if (rank <= 50) return 'text-blue-400';
+  return 'text-gray-400';
+};
+
+// 트렌드 스코어 계산
+const calculateTrendScore = (charts: ChartData[]) => {
+  if (!charts || charts.length === 0) return 0;
+  
+  let score = 0;
+  charts.forEach(chart => {
+    if (chart.rank) {
+      score += Math.max(0, 101 - chart.rank);
+    }
+  });
+  
+  return Math.round(score / charts.length);
+};
+
+// 아티스트 이름 정리 함수 (특수문자 처리)
+const getSimpleArtistName = (artist: string): string => {
+  // 복잡한 콜라보 아티스트 이름에서 첫 번째 아티스트만 추출
+  // "HUNTR/X & EJAE & ..." => "HUNTR"
+  const cleanedName = artist
+    .split(/[&,\/]/)[0]  // &, ,, / 로 분리하여 첫 번째만
+    .trim()
+    .replace(/[^a-zA-Z0-9가-힣\s]/g, ''); // 특수문자 제거
+  
+  return cleanedName || artist; // 만약 정리 후 빈 문자열이면 원본 반환
+};
+
+// ========================================
+// 메인 컴포넌트
+// ========================================
 
 export default function TrackDetailPage() {
   const router = useRouter();
   const { artist, track } = router.query;
-  const [trackData, setTrackData] = useState<TrackData | null>(null);
+  const { isAuthenticated, user } = useAuth();
+  const [trackInfo, setTrackInfo] = useState<TrackInfo | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'overview' | 'charts' | 'history'>('overview');
-  const [isPlaying, setIsPlaying] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  
+  // 포트폴리오 상태
+  const [isInPortfolio, setIsInPortfolio] = useState(false);
+  const [loadingPortfolio, setLoadingPortfolio] = useState(false);
+  
+  // 히스토리 모달 상태
+  const [historyModalOpen, setHistoryModalOpen] = useState(false);
+  const [selectedChart, setSelectedChart] = useState<string>('');
+  const [selectedChartRank, setSelectedChartRank] = useState<number>(0);
 
   useEffect(() => {
     if (artist && track) {
       fetchTrackData(artist as string, track as string);
+      checkPortfolioStatus();
     }
   }, [artist, track]);
 
+  // 포트폴리오 상태 확인
+  const checkPortfolioStatus = async () => {
+    if (!isAuthenticated) return;
+    
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+      const token = localStorage.getItem('auth_token');
+      
+      const response = await fetch(`${apiUrl}/api/portfolio`, {
+        method: 'GET',
+        headers: {
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        }
+        // credentials: 'include' 제거 (CORS 문제 해결)
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const exists = data.items?.some((item: any) => 
+          item.artist === artist && item.track === track
+        );
+        setIsInPortfolio(exists);
+      }
+    } catch (error) {
+      console.error('포트폴리오 상태 확인 오류:', error);
+    }
+  };
+
+  // 포트폴리오 추가/제거
+  const togglePortfolio = async () => {
+    if (!isAuthenticated) {
+      toast.error('로그인이 필요합니다');
+      return;
+    }
+
+    if (loadingPortfolio) return;
+    
+    setLoadingPortfolio(true);
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+      const token = localStorage.getItem('auth_token');
+      
+      if (isInPortfolio) {
+        // 제거 로직
+        const response = await fetch(`${apiUrl}/api/portfolio`, {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+          },
+          // credentials: 'include' 제거
+          body: JSON.stringify({
+            artist: trackInfo?.artist || artist,
+            track: trackInfo?.track || track
+          })
+        });
+
+        if (response.ok) {
+          toast.success('포트폴리오에서 제거되었습니다');
+          setIsInPortfolio(false);
+        }
+      } else {
+        // 추가 로직
+        const response = await fetch(`${apiUrl}/api/portfolio`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+          },
+          // credentials: 'include' 제거
+          body: JSON.stringify({
+            artist: trackInfo?.artist || artist,
+            track: trackInfo?.track || track
+          })
+        });
+
+        if (response.ok) {
+          toast.success('포트폴리오에 추가되었습니다', {
+            id: 'portfolio-add',
+            duration: 3000
+          });
+          setIsInPortfolio(true);
+        } else {
+          const errorData = await response.json();
+          throw new Error(errorData.error || '포트폴리오 추가 실패');
+        }
+      }
+    } catch (error) {
+      console.error('포트폴리오 토글 오류:', error);
+      toast.error('작업 중 오류가 발생했습니다');
+    } finally {
+      setLoadingPortfolio(false);
+    }
+  };
+
+  // 아티스트 페이지로 이동 (특수문자 처리)
+  const navigateToArtistPage = () => {
+    const simpleArtistName = getSimpleArtistName(trackInfo?.artist || artist as string);
+    router.push(`/artist/${encodeURIComponent(simpleArtistName)}`);
+  };
+
+  // 차트 히스토리 보기 (아티스트 이름 간소화)
+  const openChartHistory = (chartName: string, rank: number) => {
+    setSelectedChart(chartName);
+    setSelectedChartRank(rank);
+    setHistoryModalOpen(true);
+  };
+
   const fetchTrackData = async (artistName: string, trackName: string) => {
     setIsLoading(true);
+    setError(null);
+    
     try {
-      const response = await axios.get(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/track/${encodeURIComponent(artistName)}/${encodeURIComponent(trackName)}`
-      );
-      setTrackData(response.data);
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+      
+      // 여러 API 엔드포인트 시도
+      const endpoints = [
+        `/api/track/${encodeURIComponent(artistName)}/${encodeURIComponent(trackName)}`,
+        `/api/charts/summary/${encodeURIComponent(artistName)}/${encodeURIComponent(trackName)}`,
+        `/api/search2?artist=${encodeURIComponent(artistName)}&track=${encodeURIComponent(trackName)}`
+      ];
+
+      let data = null;
+      let success = false;
+
+      for (const endpoint of endpoints) {
+        try {
+          const response = await fetch(`${apiUrl}${endpoint}`);
+          if (response.ok) {
+            const result = await response.json();
+            
+            // API 응답 형식에 따라 데이터 변환
+            if (result.charts) {
+              // charts/summary 형식
+              data = transformChartsData(result, artistName, trackName);
+              success = true;
+              break;
+            } else if (result.results) {
+              // search2 형식
+              data = transformSearchData(result, artistName, trackName);
+              success = true;
+              break;
+            } else if (result.track_info) {
+              // track API 형식
+              data = transformTrackData(result, artistName, trackName);
+              success = true;
+              break;
+            }
+          }
+        } catch (err) {
+          console.error(`Failed to fetch from ${endpoint}:`, err);
+        }
+      }
+
+      if (!success) {
+        // 모든 API 실패 시 기본 데이터 생성
+        data = createDefaultData(artistName, trackName);
+      }
+
+      setTrackInfo(data);
     } catch (error) {
       console.error('Failed to fetch track data:', error);
-      // Mock data for demo
-      setTrackData({
-        track_info: {
-          artist: artistName,
-          title: trackName,
-          album: trackName,
-          release_date: '2024-01-01',
-          genre: 'K-POP',
-          duration: '3:25'
-        },
-        current_positions: {
-          melon: 1,
-          genie: 2,
-          bugs: 1,
-          spotify: 15,
-          youtube: 8
-        },
-        history: Array.from({ length: 30 }, (_, i) => ({
-          date: new Date(Date.now() - i * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-          rank: Math.floor(Math.random() * 20) + 1,
-          change: Math.floor(Math.random() * 10) - 5
-        })),
-        youtube_data: {
-          views: 120000000,
-          likes: 2500000,
-          comments: 180000,
-          daily_views: 500000
-        }
-      });
+      setError('트랙 정보를 불러올 수 없습니다');
+      setTrackInfo(createDefaultData(artistName, trackName));
     } finally {
       setIsLoading(false);
     }
   };
 
-  const chartIcons: Record<string, JSX.Element> = {
-    melon: <span>🍉</span>,
-    genie: <span>🧞</span>,
-    bugs: <span>🐛</span>,
-    spotify: <FaSpotify />,
-    youtube: <FaYoutube />,
-    vibe: <span>💜</span>,
-    flo: <span>🌊</span>,
-    billboard: <span>📊</span>
+  // charts/summary API 응답 변환
+  const transformChartsData = (data: any, artistName: string, trackName: string): TrackInfo => {
+    const charts: ChartData[] = [];
+    
+    Object.entries(data.charts || {}).forEach(([chartName, chartInfo]: [string, any]) => {
+      if (chartInfo.rank) {
+        charts.push({
+          chart: chartName.charAt(0).toUpperCase() + chartName.slice(1),
+          rank: chartInfo.rank,
+          views: chartInfo.views || chartInfo.views_or_streams,
+          change: chartInfo.change,
+          last_updated: chartInfo.last_update
+        });
+      }
+    });
+
+    return {
+      artist: data.found_artist || data.artist || artistName,
+      artist_normalized: data.artist_normalized,
+      track: data.found_track || data.track || trackName,
+      album: data.album,
+      release_date: data.release_date,
+      genre: 'K-POP',
+      charts,
+      trend_score: calculateTrendScore(charts)
+    };
   };
 
-  const chartColors: Record<string, string> = {
-    melon: 'from-green-500 to-green-600',
-    genie: 'from-blue-500 to-blue-600',
-    bugs: 'from-orange-500 to-orange-600',
-    spotify: 'from-green-400 to-green-500',
-    youtube: 'from-red-500 to-red-600',
-    vibe: 'from-purple-500 to-purple-600',
-    flo: 'from-cyan-500 to-cyan-600',
-    billboard: 'from-yellow-500 to-yellow-600'
+  // search2 API 응답 변환
+  const transformSearchData = (data: any, artistName: string, trackName: string): TrackInfo => {
+    const charts: ChartData[] = [];
+    
+    if (data.results && Array.isArray(data.results)) {
+      data.results.forEach((item: any) => {
+        charts.push({
+          chart: item.chart,
+          rank: item.rank,
+          views: item.views,
+          last_updated: item.created_at
+        });
+      });
+    }
+
+    return {
+      artist: data.artist || artistName,
+      artist_normalized: data.artist_normalized,
+      track: data.track || trackName,
+      charts,
+      trend_score: calculateTrendScore(charts)
+    };
+  };
+
+  // track API 응답 변환
+  const transformTrackData = (data: any, artistName: string, trackName: string): TrackInfo => {
+    const charts: ChartData[] = [];
+    
+    if (data.current_positions) {
+      Object.entries(data.current_positions).forEach(([chartName, rank]) => {
+        charts.push({
+          chart: chartName.charAt(0).toUpperCase() + chartName.slice(1),
+          rank: rank as number
+        });
+      });
+    }
+
+    return {
+      artist: data.track_info?.artist || artistName,
+      track: data.track_info?.title || trackName,
+      album: data.track_info?.album,
+      release_date: data.track_info?.release_date,
+      genre: data.track_info?.genre || 'K-POP',
+      charts,
+      streaming_links: data.streaming_links,
+      trend_score: calculateTrendScore(charts)
+    };
+  };
+
+  // 기본 데이터 생성
+  const createDefaultData = (artistName: string, trackName: string): TrackInfo => {
+    return {
+      artist: artistName,
+      track: trackName,
+      album: 'Unknown Album',
+      release_date: '2024',
+      genre: 'K-POP',
+      charts: [],
+      trend_score: 0
+    };
   };
 
   if (isLoading) {
     return (
       <Layout>
         <div className="min-h-screen bg-[#0A0A0F] flex items-center justify-center">
-          <WaveVisualizer isPlaying={true} />
+          <div className="relative">
+            <div className="absolute inset-0 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full blur-xl opacity-50 animate-pulse" />
+            <div className="relative w-16 h-16 border-3 border-purple-500 border-t-transparent rounded-full animate-spin" />
+          </div>
         </div>
       </Layout>
     );
   }
 
-  if (!trackData) {
+  if (!trackInfo) {
     return (
       <Layout>
         <div className="min-h-screen bg-[#0A0A0F] flex items-center justify-center">
-          <div className="text-white text-xl">트랙을 찾을 수 없습니다</div>
+          <div className="text-center">
+            <h2 className="text-2xl font-bold text-white mb-2">트랙을 찾을 수 없습니다</h2>
+            <button
+              onClick={() => router.back()}
+              className="mt-4 px-6 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg hover:from-purple-600 hover:to-pink-600 transition-all"
+            >
+              돌아가기
+            </button>
+          </div>
         </div>
       </Layout>
     );
   }
 
-  const albumImageUrl = `${process.env.NEXT_PUBLIC_API_URL}/api/album-image-smart/${encodeURIComponent(artist as string)}/${encodeURIComponent(track as string)}`;
+  const artistNormalized = trackInfo.artist_normalized || trackInfo.artist;
+  const simpleArtistForHistory = getSimpleArtistName(trackInfo.artist);
 
   return (
     <Layout>
       <Head>
-        <title>{trackData.track_info.title} - {trackData.track_info.artist} | KPOP Ranker</title>
+        <title>{trackInfo.track} - {trackInfo.artist} | KPOP Ranker</title>
+        <meta name="description" content={`${trackInfo.artist}의 ${trackInfo.track} 실시간 차트 순위`} />
       </Head>
 
-      <MouseGradient>
-        <div className="min-h-screen bg-[#0A0A0F] text-white relative">
-          <ParticleField />
-          
-          {/* Hero Section */}
-          <motion.section 
-            className="relative overflow-hidden"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-          >
-            <div className="absolute inset-0 bg-gradient-to-b from-purple-900/30 via-pink-900/20 to-[#0A0A0F]" />
-            
-            <div className="relative z-10 px-8 py-16">
-              <div className="max-w-7xl mx-auto">
-                <motion.div 
-                  className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center"
-                  initial={{ y: 50, opacity: 0 }}
-                  animate={{ y: 0, opacity: 1 }}
-                >
-                  {/* Album Art */}
-                  <motion.div 
-                    className="relative group"
-                    whileHover={{ scale: 1.02 }}
-                    transition={{ type: "spring", stiffness: 300 }}
-                  >
-                    <div className="relative w-full max-w-md mx-auto">
-                      <div className="aspect-square rounded-2xl overflow-hidden glass-card p-1">
-                        <img 
-                          src={albumImageUrl}
-                          alt={trackData.track_info.title}
-                          className="w-full h-full object-cover rounded-xl"
-                          onError={(e) => {
-                            (e.target as HTMLImageElement).src = '/placeholder.jpg';
-                          }}
-                        />
-                      </div>
-                      
-                      {/* Play Button Overlay */}
-                      <motion.button
-                        className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                        onClick={() => setIsPlaying(!isPlaying)}
-                        whileHover={{ scale: 1.1 }}
-                        whileTap={{ scale: 0.95 }}
-                      >
-                        <div className="w-20 h-20 rounded-full bg-white/20 backdrop-blur-lg flex items-center justify-center">
-                          <FaPlay className="text-3xl text-white ml-1" />
-                        </div>
-                      </motion.button>
-                      
-                      {/* Glow Effect */}
-                      <motion.div 
-                        className="absolute -inset-8 bg-gradient-to-r from-purple-600 to-pink-600 rounded-2xl opacity-30 blur-3xl -z-10"
-                        animate={{ scale: [1, 1.1, 1] }}
-                        transition={{ duration: 4, repeat: Infinity }}
-                      />
-                    </div>
+      <div className="min-h-screen bg-[#0A0A0F] text-white">
+        {/* 헤더 섹션 - 네온 그라디언트 */}
+        <div className="relative bg-gradient-to-b from-purple-900/50 to-transparent backdrop-blur-xl border-b border-white/10">
+          <div className="absolute inset-0 bg-gradient-to-r from-purple-600/20 via-pink-600/20 to-blue-600/20" />
+          <div className="container mx-auto px-4 py-12 relative z-10">
+            <div className="flex flex-col md:flex-row items-center gap-8">
+              {/* 앨범 이미지 */}
+              <motion.div 
+                className="relative w-64 h-64 rounded-2xl overflow-hidden"
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ duration: 0.5 }}
+              >
+                <div className="absolute inset-0 bg-gradient-to-br from-purple-500 to-pink-500 animate-pulse" />
+                <ImageWithFallback
+                  src={`/api/album-image-smart/${encodeURIComponent(artistNormalized)}/${encodeURIComponent(trackInfo.track)}`}
+                  alt={trackInfo.track}
+                  width={256}
+                  height={256}
+                  className="relative z-10 w-full h-full object-cover"
+                  priority
+                />
+                <div className="absolute inset-0 ring-2 ring-white/20 rounded-2xl" />
+              </motion.div>
 
-                    {/* Wave Visualizer */}
-                    {isPlaying && (
-                      <div className="mt-8">
-                        <WaveVisualizer isPlaying={isPlaying} />
-                      </div>
-                    )}
-                  </motion.div>
+              {/* 트랙 정보 */}
+              <motion.div 
+                className="flex-1 text-center md:text-left"
+                initial={{ x: 50, opacity: 0 }}
+                animate={{ x: 0, opacity: 1 }}
+                transition={{ duration: 0.5, delay: 0.2 }}
+              >
+                <h1 className="text-4xl md:text-5xl font-bold mb-3 bg-gradient-to-r from-purple-400 via-pink-400 to-blue-400 bg-clip-text text-transparent">
+                  {trackInfo.track}
+                </h1>
+                <h2 className="text-2xl md:text-3xl text-gray-300 mb-6">
+                  {trackInfo.artist}
+                </h2>
+                
+                <div className="flex flex-wrap gap-4 mb-6 text-gray-400">
+                  {trackInfo.genre && (
+                    <span className="px-3 py-1 bg-white/10 rounded-full text-sm">
+                      🎵 {trackInfo.genre}
+                    </span>
+                  )}
+                  {trackInfo.album && (
+                    <span className="px-3 py-1 bg-white/10 rounded-full text-sm">
+                      💿 {trackInfo.album}
+                    </span>
+                  )}
+                  {trackInfo.release_date && (
+                    <span className="px-3 py-1 bg-white/10 rounded-full text-sm">
+                      📅 {trackInfo.release_date}
+                    </span>
+                  )}
+                </div>
 
-                  {/* Track Info */}
-                  <div>
-                    <motion.h1 
-                      className="text-5xl font-bold mb-4 glitch"
-                      data-text={trackData.track_info.title}
-                      initial={{ x: -50 }}
-                      animate={{ x: 0 }}
-                    >
-                      <span className="neon-text">{trackData.track_info.title}</span>
-                    </motion.h1>
-                    
-                    <motion.h2 
-                      className="text-3xl mb-6 opacity-80 cursor-pointer hover:opacity-100 transition-opacity"
-                      initial={{ x: -50, opacity: 0 }}
-                      animate={{ x: 0, opacity: 0.8 }}
-                      transition={{ delay: 0.1 }}
-                      onClick={() => router.push(`/artist/${trackData.track_info.artist}`)}
-                    >
-                      {trackData.track_info.artist}
-                    </motion.h2>
-
-                    {/* Meta Info */}
-                    <motion.div 
-                      className="flex flex-wrap gap-4 mb-8"
-                      initial={{ y: 20, opacity: 0 }}
-                      animate={{ y: 0, opacity: 1 }}
-                      transition={{ delay: 0.2 }}
-                    >
-                      <span className="px-4 py-2 rounded-full glass-card text-sm">
-                        💿 {trackData.track_info.album}
-                      </span>
-                      <span className="px-4 py-2 rounded-full glass-card text-sm">
-                        <FaClock className="inline mr-2" />
-                        {trackData.track_info.release_date}
-                      </span>
-                      {trackData.track_info.duration && (
-                        <span className="px-4 py-2 rounded-full glass-card text-sm">
-                          ⏱️ {trackData.track_info.duration}
-                        </span>
-                      )}
-                      <span className="px-4 py-2 rounded-full glass-card text-sm">
-                        🎵 {trackData.track_info.genre}
-                      </span>
-                    </motion.div>
-
-                    {/* Stats */}
-                    <motion.div 
-                      className="grid grid-cols-2 gap-4 mb-8"
-                      initial={{ y: 30, opacity: 0 }}
-                      animate={{ y: 0, opacity: 1 }}
-                      transition={{ delay: 0.3 }}
-                    >
-                      {trackData.youtube_data && (
-                        <>
-                          <LiveCounter 
-                            value={trackData.youtube_data.views} 
-                            label="YouTube 조회수" 
-                          />
-                          <LiveCounter 
-                            value={trackData.youtube_data.likes} 
-                            label="좋아요" 
-                          />
-                        </>
-                      )}
-                    </motion.div>
-
-                    {/* Streaming Links */}
-                    <motion.div 
-                      className="flex flex-wrap gap-3"
-                      initial={{ y: 30, opacity: 0 }}
-                      animate={{ y: 0, opacity: 1 }}
-                      transition={{ delay: 0.4 }}
-                    >
-                      <motion.button
-                        className="px-6 py-3 rounded-full bg-green-500 hover:bg-green-600 flex items-center gap-2 transition-colors"
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                      >
-                        <FaSpotify /> Spotify
-                      </motion.button>
-                      <motion.button
-                        className="px-6 py-3 rounded-full bg-red-500 hover:bg-red-600 flex items-center gap-2 transition-colors"
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                      >
-                        <FaYoutube /> YouTube
-                      </motion.button>
-                      <motion.button
-                        className="px-6 py-3 rounded-full bg-gray-700 hover:bg-gray-800 flex items-center gap-2 transition-colors"
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                      >
-                        <FaApple /> Apple Music
-                      </motion.button>
-                      <motion.button
-                        className="px-6 py-3 rounded-full bg-purple-500 hover:bg-purple-600 flex items-center gap-2 transition-colors"
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                      >
-                        <SiYoutubemusic /> YT Music
-                      </motion.button>
-                    </motion.div>
-                  </div>
-                </motion.div>
-              </div>
-            </div>
-          </motion.section>
-
-          {/* Tabs */}
-          <section className="sticky top-0 z-40 bg-[#0A0A0F]/80 backdrop-blur-lg border-y border-white/10">
-            <div className="max-w-7xl mx-auto px-8 py-4">
-              <div className="flex gap-6">
-                {(['overview', 'charts', 'history'] as const).map((tab) => (
+                {/* 액션 버튼들 */}
+                <div className="flex flex-wrap gap-3 mb-4">
+                  {/* 아티스트 페이지 이동 버튼 (특수문자 처리) */}
                   <motion.button
-                    key={tab}
-                    onClick={() => setActiveTab(tab)}
-                    className={`px-6 py-3 rounded-full font-medium transition-all ${
-                      activeTab === tab 
-                        ? 'retro-border neon-glow' 
-                        : 'glass-card hover:scale-105'
+                    onClick={navigateToArtistPage}
+                    className="px-4 py-2 bg-purple-600/20 hover:bg-purple-600/30 border border-purple-500/50 text-purple-400 rounded-full flex items-center gap-2 transition-all"
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <FaUser />
+                    아티스트 페이지
+                  </motion.button>
+
+                  {/* 포트폴리오 추가/제거 버튼 */}
+                  <motion.button
+                    onClick={togglePortfolio}
+                    disabled={loadingPortfolio}
+                    className={`px-4 py-2 rounded-full flex items-center gap-2 transition-all ${
+                      isInPortfolio 
+                        ? 'bg-pink-600/20 hover:bg-pink-600/30 border border-pink-500/50 text-pink-400'
+                        : 'bg-gray-600/20 hover:bg-gray-600/30 border border-gray-500/50 text-gray-400'
                     }`}
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                   >
-                    {tab === 'overview' && '📊 개요'}
-                    {tab === 'charts' && '🏆 차트'}
-                    {tab === 'history' && '📈 히스토리'}
+                    {isInPortfolio ? <FaHeart /> : <FaRegHeart />}
+                    {loadingPortfolio ? '처리 중...' : isInPortfolio ? '포트폴리오에서 제거' : '포트폴리오에 추가'}
                   </motion.button>
-                ))}
-              </div>
+                </div>
+
+                {/* 스트리밍 버튼 */}
+                <div className="flex flex-wrap gap-3">
+                  <motion.button
+                    onClick={() => window.open(CHART_CONFIG.spotify.streamingUrl(trackInfo.artist, trackInfo.track), '_blank')}
+                    className="px-4 py-2 bg-green-500/20 hover:bg-green-500/30 border border-green-500/50 text-green-400 rounded-full flex items-center gap-2 transition-all"
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <FaSpotify />
+                    Spotify
+                  </motion.button>
+                  <motion.button
+                    onClick={() => window.open(CHART_CONFIG.youtube.streamingUrl(trackInfo.artist, trackInfo.track), '_blank')}
+                    className="px-4 py-2 bg-red-500/20 hover:bg-red-500/30 border border-red-500/50 text-red-400 rounded-full flex items-center gap-2 transition-all"
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <FaYoutube />
+                    YouTube
+                  </motion.button>
+                  <motion.button
+                    onClick={() => window.open(`https://music.apple.com/search?term=${encodeURIComponent(trackInfo.artist + ' ' + trackInfo.track)}`, '_blank')}
+                    className="px-4 py-2 bg-gray-500/20 hover:bg-gray-500/30 border border-gray-500/50 text-gray-400 rounded-full flex items-center gap-2 transition-all"
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <FaApple />
+                    Apple Music
+                  </motion.button>
+                  <motion.button
+                    onClick={() => window.open(`https://music.youtube.com/search?q=${encodeURIComponent(trackInfo.artist + ' ' + trackInfo.track)}`, '_blank')}
+                    className="px-4 py-2 bg-red-600/20 hover:bg-red-600/30 border border-red-600/50 text-red-400 rounded-full flex items-center gap-2 transition-all"
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <SiYoutubemusic />
+                    YT Music
+                  </motion.button>
+                </div>
+              </motion.div>
             </div>
-          </section>
+          </div>
+        </div>
 
-          {/* Content */}
-          <section className="px-8 py-16">
-            <div className="max-w-7xl mx-auto">
-              <AnimatePresence mode="wait">
-                {/* Overview Tab */}
-                {activeTab === 'overview' && (
-                  <motion.div
-                    key="overview"
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -20 }}
-                    className="grid grid-cols-1 lg:grid-cols-2 gap-8"
-                  >
-                    {/* Current Chart Positions */}
-                    <div className="glass-card rounded-2xl p-6">
-                      <h2 className="text-2xl font-bold mb-6 neon-text">현재 차트 순위</h2>
-                      <div className="grid grid-cols-2 gap-4">
-                        {Object.entries(trackData.current_positions).map(([chart, rank], idx) => (
+        {/* 탭 메뉴 - 다크 테마 */}
+        <div className="sticky top-16 z-10 bg-black/80 backdrop-blur-xl border-b border-white/10">
+          <div className="container mx-auto px-4">
+            <div className="flex gap-8">
+              <button
+                onClick={() => setActiveTab('overview')}
+                className={`py-4 px-2 border-b-2 font-medium transition-all ${
+                  activeTab === 'overview'
+                    ? 'border-purple-500 text-purple-400'
+                    : 'border-transparent text-gray-500 hover:text-gray-300'
+                }`}
+              >
+                📊 개요
+              </button>
+              <button
+                onClick={() => setActiveTab('charts')}
+                className={`py-4 px-2 border-b-2 font-medium transition-all ${
+                  activeTab === 'charts'
+                    ? 'border-purple-500 text-purple-400'
+                    : 'border-transparent text-gray-500 hover:text-gray-300'
+                }`}
+              >
+                🏆 차트
+              </button>
+              <button
+                onClick={() => setActiveTab('history')}
+                className={`py-4 px-2 border-b-2 font-medium transition-all ${
+                  activeTab === 'history'
+                    ? 'border-purple-500 text-purple-400'
+                    : 'border-transparent text-gray-500 hover:text-gray-300'
+                }`}
+              >
+                📈 히스토리
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* 탭 콘텐츠 */}
+        <div className="container mx-auto px-4 py-8">
+          <AnimatePresence mode="wait">
+            {/* 개요 탭 */}
+            {activeTab === 'overview' && (
+              <motion.div
+                key="overview"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.2 }}
+                className="grid grid-cols-1 lg:grid-cols-2 gap-6"
+              >
+                {/* 현재 차트 순위 */}
+                <div className="glass-card rounded-xl p-6">
+                  <h2 className="text-2xl font-bold mb-6 flex items-center gap-2 text-white">
+                    <FaChartLine className="text-purple-400" />
+                    현재 차트 순위
+                  </h2>
+                  
+                  {trackInfo.charts.length > 0 ? (
+                    <div className="grid grid-cols-2 gap-3">
+                      {Object.entries(CHART_CONFIG).map(([chartKey, config]) => {
+                        const chartData = trackInfo.charts.find(
+                          c => c.chart.toLowerCase() === chartKey.toLowerCase()
+                        );
+                        
+                        return (
                           <motion.div
-                            key={chart}
-                            initial={{ scale: 0 }}
-                            animate={{ scale: 1 }}
-                            transition={{ delay: idx * 0.05, type: "spring" }}
-                            className={`p-4 rounded-xl bg-gradient-to-r ${chartColors[chart] || 'from-gray-500 to-gray-600'} bg-opacity-20`}
+                            key={chartKey}
+                            className={`relative p-3 rounded-lg border ${config.borderColor} ${config.bgColor} group hover:scale-105 transition-all cursor-pointer ${
+                              !chartData && 'opacity-50'
+                            }`}
+                            whileHover={{ scale: 1.02 }}
+                            onClick={() => chartData && openChartHistory(chartKey, chartData.rank)}
                           >
-                            <div className="flex items-center justify-between">
+                            <div className="flex items-center justify-between mb-2">
                               <div className="flex items-center gap-2">
-                                <span className="text-2xl">{chartIcons[chart]}</span>
-                                <span className="font-medium capitalize">{chart}</span>
+                                <span className="text-xl">{config.icon}</span>
+                                <span className="text-xs font-medium text-gray-300">{config.name}</span>
                               </div>
-                              <div className="text-2xl font-bold">
-                                #{rank}
-                              </div>
+                              {chartData && (
+                                <FaHistory className="text-xs text-gray-500 opacity-0 group-hover:opacity-100 transition-opacity" />
+                              )}
                             </div>
-                          </motion.div>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* YouTube Stats */}
-                    {trackData.youtube_data && (
-                      <div className="glass-card rounded-2xl p-6">
-                        <h2 className="text-2xl font-bold mb-6 neon-text">YouTube 통계</h2>
-                        <div className="space-y-4">
-                          <div className="flex justify-between items-center">
-                            <span className="opacity-70">총 조회수</span>
-                            <span className="text-2xl font-bold">
-                              {(trackData.youtube_data.views / 1000000).toFixed(1)}M
-                            </span>
-                          </div>
-                          <div className="flex justify-between items-center">
-                            <span className="opacity-70">좋아요</span>
-                            <span className="text-xl font-bold">
-                              {(trackData.youtube_data.likes / 1000000).toFixed(1)}M
-                            </span>
-                          </div>
-                          <div className="flex justify-between items-center">
-                            <span className="opacity-70">댓글</span>
-                            <span className="text-xl font-bold">
-                              {(trackData.youtube_data.comments / 1000).toFixed(0)}K
-                            </span>
-                          </div>
-                          <div className="flex justify-between items-center">
-                            <span className="opacity-70">일일 조회수</span>
-                            <span className="text-xl font-bold">
-                              {(trackData.youtube_data.daily_views / 1000).toFixed(0)}K
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Trending Score */}
-                    <div className="glass-card rounded-2xl p-6 lg:col-span-2">
-                      <h2 className="text-2xl font-bold mb-6 neon-text">트렌딩 스코어</h2>
-                      <div className="flex items-center justify-center">
-                        <TrendingFlame intensity={85} />
-                        <div className="ml-8">
-                          <div className="text-5xl font-bold neon-text">85°</div>
-                          <div className="text-sm opacity-70 mt-2">매우 뜨거움 🔥</div>
-                        </div>
-                      </div>
-                    </div>
-                  </motion.div>
-                )}
-
-                {/* Charts Tab */}
-                {activeTab === 'charts' && (
-                  <motion.div
-                    key="charts"
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -20 }}
-                  >
-                    <div className="glass-card rounded-2xl p-6">
-                      <h2 className="text-2xl font-bold mb-6 neon-text">차트별 상세 순위</h2>
-                      <div className="space-y-4">
-                        {Object.entries(trackData.current_positions).map(([chart, rank], idx) => (
-                          <motion.div
-                            key={chart}
-                            initial={{ x: -50, opacity: 0 }}
-                            animate={{ x: 0, opacity: 1 }}
-                            transition={{ delay: idx * 0.05 }}
-                            className="p-6 rounded-xl hover:bg-white/5 transition-colors"
-                          >
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-4">
-                                <div className={`w-16 h-16 rounded-xl bg-gradient-to-r ${chartColors[chart]} flex items-center justify-center text-3xl`}>
-                                  {chartIcons[chart]}
+                            
+                            {chartData ? (
+                              <div className="space-y-1">
+                                <div className={`text-xl font-bold ${getRankColor(chartData.rank)}`}>
+                                  #{chartData.rank}
                                 </div>
-                                <div>
-                                  <h3 className="text-xl font-bold capitalize">{chart}</h3>
-                                  <p className="text-sm opacity-70">실시간 차트</p>
-                                </div>
+                                {chartData.change !== undefined && (
+                                  <div className="flex items-center gap-1">
+                                    {getRankChangeIcon(chartData.change)}
+                                    <span className="text-xs text-gray-400">
+                                      {Math.abs(chartData.change || 0)}
+                                    </span>
+                                  </div>
+                                )}
                               </div>
-                              <div className="text-right">
-                                <div className="text-4xl font-bold neon-text">#{rank}</div>
-                                <div className="text-sm opacity-70 mt-1">
-                                  {rank <= 10 ? '🔥 TOP 10' : rank <= 50 ? '📈 상위권' : '📊 차트인'}
-                                </div>
-                              </div>
-                            </div>
-                          </motion.div>
-                        ))}
-                      </div>
-                    </div>
-                  </motion.div>
-                )}
-
-                {/* History Tab */}
-                {activeTab === 'history' && (
-                  <motion.div
-                    key="history"
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -20 }}
-                    className="space-y-8"
-                  >
-                    {/* Rank History Chart */}
-                    <div className="glass-card rounded-2xl p-6">
-                      <h2 className="text-2xl font-bold mb-6 neon-text">순위 변동 히스토리</h2>
-                      <div className="h-64 flex items-end gap-2">
-                        {trackData.history.slice(0, 30).reverse().map((item, idx) => (
-                          <motion.div
-                            key={idx}
-                            className="flex-1 bg-gradient-to-t from-purple-500 to-pink-500 rounded-t-lg relative group"
-                            initial={{ height: 0 }}
-                            animate={{ height: `${100 - (item.rank * 3)}%` }}
-                            transition={{ delay: idx * 0.02 }}
-                          >
-                            <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-black/80 px-2 py-1 rounded text-xs whitespace-nowrap">
-                              #{item.rank} ({item.date})
-                            </div>
-                          </motion.div>
-                        ))}
-                      </div>
-                      <div className="mt-4 text-center text-sm opacity-70">최근 30일 순위 변동</div>
-                    </div>
-
-                    {/* Detailed History */}
-                    <div className="glass-card rounded-2xl p-6">
-                      <h2 className="text-2xl font-bold mb-6 neon-text">상세 히스토리</h2>
-                      <div className="space-y-3 max-h-96 overflow-y-auto">
-                        {trackData.history.map((item, idx) => (
-                          <motion.div
-                            key={idx}
-                            initial={{ opacity: 0, x: -20 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            transition={{ delay: idx * 0.02 }}
-                            className="flex items-center justify-between p-4 rounded-lg hover:bg-white/5 transition-colors"
-                          >
-                            <div className="flex items-center gap-4">
-                              <div className="text-sm opacity-70">{item.date}</div>
-                              <div className="text-2xl font-bold">#{item.rank}</div>
-                            </div>
-                            {item.change !== 0 && (
-                              <div className={`font-bold ${item.change > 0 ? 'text-green-400' : 'text-red-400'}`}>
-                                {item.change > 0 ? '↑' : '↓'} {Math.abs(item.change)}
+                            ) : (
+                              <div className="text-gray-500">
+                                <div className="text-lg">-</div>
+                                <div className="text-xs">차트 아웃</div>
                               </div>
                             )}
                           </motion.div>
-                        ))}
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <div className="text-center py-8 text-gray-400">
+                      현재 차트 데이터가 없습니다
+                    </div>
+                  )}
+                </div>
+
+                {/* 트렌딩 스코어 */}
+                <div className="glass-card rounded-xl p-6">
+                  <h2 className="text-2xl font-bold mb-6 flex items-center gap-2 text-white">
+                    <FaFire className="text-orange-400" />
+                    트렌딩 스코어
+                  </h2>
+                  <div className="flex items-center justify-center">
+                    <div className="relative w-48 h-48">
+                      <svg className="w-full h-full transform -rotate-90">
+                        <circle
+                          cx="96"
+                          cy="96"
+                          r="88"
+                          stroke="rgba(255,255,255,0.1)"
+                          strokeWidth="16"
+                          fill="none"
+                        />
+                        <circle
+                          cx="96"
+                          cy="96"
+                          r="88"
+                          stroke="url(#gradient)"
+                          strokeWidth="16"
+                          fill="none"
+                          strokeDasharray={`${(trackInfo.trend_score || 0) * 5.52} 552`}
+                          strokeLinecap="round"
+                        />
+                        <defs>
+                          <linearGradient id="gradient">
+                            <stop offset="0%" stopColor="#9333EA" />
+                            <stop offset="50%" stopColor="#EC4899" />
+                            <stop offset="100%" stopColor="#3B82F6" />
+                          </linearGradient>
+                        </defs>
+                      </svg>
+                      <div className="absolute inset-0 flex flex-col items-center justify-center">
+                        <div className="text-4xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
+                          {trackInfo.trend_score || 0}°
+                        </div>
+                        <div className="text-sm text-gray-400">
+                          {trackInfo.trend_score && trackInfo.trend_score >= 80 ? '매우 뜨거움 🔥' :
+                           trackInfo.trend_score && trackInfo.trend_score >= 60 ? '뜨거움 🔥' :
+                           trackInfo.trend_score && trackInfo.trend_score >= 40 ? '따뜻함 ☀️' :
+                           trackInfo.trend_score && trackInfo.trend_score >= 20 ? '보통 🌤️' :
+                           '차가움 ❄️'}
+                        </div>
                       </div>
                     </div>
-                  </motion.div>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+
+            {/* 차트 탭 */}
+            {activeTab === 'charts' && (
+              <motion.div
+                key="charts"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.2 }}
+                className="space-y-4"
+              >
+                {trackInfo.charts.length > 0 ? (
+                  trackInfo.charts.map((chart, index) => {
+                    const chartConfig = CHART_CONFIG[chart.chart.toLowerCase()] || {
+                      name: chart.chart,
+                      icon: '📊',
+                      color: '#6B7280',
+                      bgColor: 'bg-gray-800/50',
+                      borderColor: 'border-gray-700',
+                      gradientFrom: 'from-gray-600',
+                      gradientTo: 'to-gray-700'
+                    };
+
+                    return (
+                      <motion.div
+                        key={chart.chart}
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: index * 0.1 }}
+                        className="glass-card rounded-xl p-6 hover:scale-[1.02] transition-all"
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-4">
+                            <div className={`p-3 rounded-lg bg-gradient-to-br ${chartConfig.gradientFrom} ${chartConfig.gradientTo}`}>
+                              <span className="text-3xl">{chartConfig.icon}</span>
+                            </div>
+                            <div>
+                              <h3 className="text-xl font-bold text-white">{chartConfig.name}</h3>
+                              <div className="flex items-center gap-3 mt-2">
+                                <span className={`text-2xl font-bold ${getRankColor(chart.rank)}`}>
+                                  #{chart.rank}
+                                </span>
+                                {chart.change !== undefined && (
+                                  <div className="flex items-center gap-1">
+                                    {getRankChangeIcon(chart.change)}
+                                    <span className="text-sm text-gray-400">
+                                      {Math.abs(chart.change)}
+                                    </span>
+                                  </div>
+                                )}
+                              </div>
+                              {chart.views && (
+                                <div className="text-sm text-gray-400 mt-1">
+                                  조회수: {chart.views}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                          <div className="flex gap-2">
+                            {/* 히스토리 보기 버튼 */}
+                            <motion.button
+                              onClick={() => openChartHistory(chart.chart.toLowerCase(), chart.rank)}
+                              className="px-3 py-2 bg-purple-600/20 hover:bg-purple-600/30 text-purple-400 rounded-lg flex items-center gap-2 transition-all"
+                              whileHover={{ scale: 1.05 }}
+                              whileTap={{ scale: 0.95 }}
+                            >
+                              <FaHistory />
+                              히스토리
+                            </motion.button>
+                            {chartConfig.streamingUrl && (
+                              <motion.button
+                                onClick={() => window.open(
+                                  chartConfig.streamingUrl!(trackInfo.artist, trackInfo.track),
+                                  '_blank'
+                                )}
+                                className="px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg hover:from-purple-600 hover:to-pink-600 flex items-center gap-2 transition-all"
+                                whileHover={{ scale: 1.05 }}
+                                whileTap={{ scale: 0.95 }}
+                              >
+                                <FaPlay />
+                                재생
+                              </motion.button>
+                            )}
+                          </div>
+                        </div>
+                      </motion.div>
+                    );
+                  })
+                ) : (
+                  <div className="glass-card rounded-xl p-12 text-center">
+                    <FaChartLine className="text-6xl text-gray-600 mx-auto mb-4" />
+                    <p className="text-gray-400">현재 차트 데이터가 없습니다</p>
+                  </div>
                 )}
-              </AnimatePresence>
-            </div>
-          </section>
+              </motion.div>
+            )}
+
+            {/* 히스토리 탭 */}
+            {activeTab === 'history' && (
+              <motion.div
+                key="history"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.2 }}
+              >
+                <div className="glass-card rounded-xl p-6">
+                  <h2 className="text-2xl font-bold mb-6 flex items-center gap-2 text-white">
+                    <FaClock className="text-purple-400" />
+                    순위 변동 히스토리
+                  </h2>
+                  {trackInfo.charts.length > 0 ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {trackInfo.charts.map((chart) => {
+                        const chartConfig = CHART_CONFIG[chart.chart.toLowerCase()] || {
+                          name: chart.chart,
+                          icon: '📊',
+                          color: '#6B7280',
+                          bgColor: 'bg-gray-800/50',
+                          borderColor: 'border-gray-700'
+                        };
+
+                        return (
+                          <motion.div
+                            key={chart.chart}
+                            onClick={() => openChartHistory(chart.chart.toLowerCase(), chart.rank)}
+                            className={`p-4 rounded-lg border ${chartConfig.borderColor} ${chartConfig.bgColor} cursor-pointer hover:scale-105 transition-all`}
+                            whileHover={{ scale: 1.05 }}
+                          >
+                            <div className="flex items-center justify-between mb-2">
+                              <div className="flex items-center gap-2">
+                                <span className="text-2xl">{chartConfig.icon}</span>
+                                <span className="font-medium text-white">{chartConfig.name}</span>
+                              </div>
+                              <FaHistory className="text-gray-400" />
+                            </div>
+                            <div className={`text-xl font-bold ${getRankColor(chart.rank)}`}>
+                              #{chart.rank}
+                            </div>
+                            <div className="text-xs text-gray-400 mt-1">
+                              클릭하여 히스토리 보기
+                            </div>
+                          </motion.div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <div className="text-center py-12 text-gray-400">
+                      <FaClock className="text-6xl text-gray-600 mx-auto mb-4" />
+                      <p>차트 데이터가 없어 히스토리를 확인할 수 없습니다</p>
+                    </div>
+                  )}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
-      </MouseGradient>
+
+        {/* 차트 히스토리 모달 (간소화된 아티스트 이름 사용) */}
+        <ChartHistoryModal
+          isOpen={historyModalOpen}
+          onClose={() => setHistoryModalOpen(false)}
+          chart={selectedChart}
+          artist={simpleArtistForHistory}
+          track={trackInfo.track}
+          currentRank={selectedChartRank}
+        />
+      </div>
     </Layout>
   );
 }

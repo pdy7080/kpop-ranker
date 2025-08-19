@@ -76,14 +76,14 @@ export default function Home() {
           
           {/* Hero Section with Glitch Effect */}
           <motion.section 
-            className="relative py-20 px-8"
+            className="relative py-12 md:py-20 px-4 md:px-8"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 1 }}
           >
             <div className="max-w-7xl mx-auto text-center">
               <motion.h1 
-                className="text-7xl font-bold mb-6 glitch"
+                className="text-4xl md:text-6xl lg:text-7xl font-bold mb-6 glitch"
                 data-text="KPOP RANKER"
                 initial={{ y: -50 }}
                 animate={{ y: 0 }}
@@ -93,7 +93,7 @@ export default function Home() {
               </motion.h1>
               
               <motion.p 
-                className="text-xl opacity-80 mb-12"
+                className="text-base md:text-xl opacity-80 mb-8 md:mb-12 px-4"
                 initial={{ y: 50, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 0.3 }}
@@ -115,7 +115,7 @@ export default function Home() {
 
               {/* Live Stats */}
               <motion.div 
-                className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-12"
+                className="grid grid-cols-3 gap-4 md:gap-6 mt-8 md:mt-12"
                 initial={{ y: 100, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 0.7 }}
@@ -128,14 +128,14 @@ export default function Home() {
           </motion.section>
 
           {/* Tab Navigation */}
-          <section className="px-8 mb-8">
+          <section className="px-4 md:px-8 mb-6 md:mb-8">
             <div className="max-w-7xl mx-auto">
-              <div className="flex justify-center gap-4">
+              <div className="flex justify-center gap-2 md:gap-4 flex-wrap">
                 {(['hot', 'rising', 'global'] as const).map((tab) => (
                   <motion.button
                     key={tab}
                     onClick={() => setActiveTab(tab)}
-                    className={`px-8 py-3 rounded-full font-bold transition-all ${
+                    className={`px-4 md:px-8 py-2 md:py-3 rounded-full font-medium md:font-bold transition-all text-sm md:text-base ${
                       activeTab === tab 
                         ? 'retro-border neon-glow' 
                         : 'glass-card hover:scale-105'
@@ -153,8 +153,8 @@ export default function Home() {
           </section>
 
           {/* Main Content Grid */}
-          <section className="px-8 pb-20">
-            <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <section className="px-4 md:px-8 pb-12 md:pb-20">
+            <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8">
               
               {/* Chart Race */}
               <motion.div
@@ -162,7 +162,7 @@ export default function Home() {
                 animate={{ x: 0, opacity: 1 }}
                 transition={{ delay: 0.2 }}
               >
-                <h2 className="text-2xl font-bold mb-6 neon-text">실시간 차트</h2>
+                <h2 className="text-xl md:text-2xl font-bold mb-4 md:mb-6 neon-text">실시간 차트</h2>
                 {isLoading ? (
                   <div className="glass-card rounded-xl p-8 flex items-center justify-center h-96">
                     <WaveVisualizer isPlaying={true} />
@@ -178,7 +178,7 @@ export default function Home() {
                 animate={{ x: 0, opacity: 1 }}
                 transition={{ delay: 0.4 }}
               >
-                <h2 className="text-2xl font-bold mb-6 neon-text">조회수 버블</h2>
+                <h2 className="text-xl md:text-2xl font-bold mb-4 md:mb-6 neon-text">조회수 버블</h2>
                 {!isLoading && bubbleData.length > 0 && (
                   <BubbleChart data={bubbleData} />
                 )}
@@ -191,8 +191,8 @@ export default function Home() {
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 0.6 }}
               >
-                <h2 className="text-2xl font-bold mb-6 neon-text">트렌딩 앨범</h2>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                <h2 className="text-xl md:text-2xl font-bold mb-4 md:mb-6 neon-text">트렌딩 앨범</h2>
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 md:gap-6">
                   {trendingData.slice(0, 8).map((item, idx) => (
                     <motion.div
                       key={item.id}
@@ -227,7 +227,7 @@ export default function Home() {
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 0.8 }}
               >
-                <h2 className="text-2xl font-bold mb-6 neon-text">차트 업데이트 현황</h2>
+                <h2 className="text-xl md:text-2xl font-bold mb-4 md:mb-6 neon-text">차트 업데이트 현황</h2>
                 <div className="glass-card rounded-xl p-6">
                   <ChartUpdateStatus />
                 </div>

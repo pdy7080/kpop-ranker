@@ -1,112 +1,129 @@
 import React, { useEffect, useRef, useState } from 'react';
 import * as d3 from 'd3';
 import { motion } from 'framer-motion';
+import { useRouter } from 'next/router';
 
-// 버블 차트 (조회수 기반)
+// 개선된 버블 차트 (조회수 기반)
 export const BubbleChart: React.FC<{ data: any[] }> = ({ data }) => {
   const svgRef = useRef<SVGSVGElement>(null);
+  const router = useRouter();
+  const [hoveredBubble, setHoveredBubble] = useState<string | null>(null);
   
   useEffect(() => {
     if (!svgRef.current || !data.length) return;
     
     const svg = d3.select(svgRef.current);
+    svg.selectAll('*').remove(); // 기존 요소 제거
+    
     const width = 800;
     const height = 600;
     
     svg.attr('viewBox', `0 0 ${width} ${height}`);
     
-    const simulation = d3.forceSimulation(data)
+    // 데이터 정렬 및 제한 (상위 20개만)
+    const sortedData = [...data]
+      .sort((a, b) => (b.views || 0) - (a.views || 0))
+      .slice(0, 20)
+      .map(d => ({
+        ...d,
+        radius: Math.max(30, Math.min(80, Math.sqrt((d.views || 1000000) / 500000) * 15))
+      }));
+    
+    const simulation = d3.forceSimulation(sortedData)
       .force('x', d3.forceX(width / 2).strength(0.05))
       .force('y', d3.forceY(height / 2).strength(0.05))
-      .force('charge', d3.forceManyBody().strength(-50))
-      .force('collide', d3.forceCollide((d: any) => Math.sqrt(d.views / 1000000) * 5 + 2));
+      .force('charge', d3.forceManyBody().strength(-100))
+      .force('collide', d3.forceCollide((d: any) => d.radius + 5));
     
     const colorScale = d3.scaleSequential()
-      .domain([0, d3.max(data, (d: any) => d.views) || 1])
+      .domain([0, d3.max(sortedData, (d: any) => d.views) || 1])
       .interpolator(d3.interpolateRgb('#9333EA', '#EC4899'));
     
-    const bubbles = svg.selectAll('.bubble')
-      .data(data)
+    const g = svg.append('g');
+    
+    const bubbleGroups = g.selectAll('.bubble')
+      .data(sortedData)
       .enter()
       .append('g')
-      .attr('class', 'bubble');
+      .attr('class', 'bubble cursor-pointer')
+      .on('click', (event, d: any) => {
+        router.push(`/track/${encodeURIComponent(d.artist)}/${encodeURIComponent(d.title)}`);
+      })
+      .on('mouseenter', (event, d: any) => {
+        setHoveredBubble(d.id);
+      })
+      .on('mouseleave', () => {
+        setHoveredBubble(null);
+      });
     
-    bubbles.append('circle')
-      .attr('r', (d: any) => Math.sqrt(d.views / 1000000) * 5)
+    // 원 그리기
+    bubbleGroups.append('circle')
+      .attr('r', (d: any) => d.radius)
       .attr('fill', (d: any) => colorScale(d.views))
-      .attr('fill-opacity', 0.7)
+      .attr('fill-opacity', 0.8)
       .attr('stroke', '#fff')
-      .attr('stroke-width', 2);
+      .attr('stroke-width', 2)
+      .style('filter', 'drop-shadow(0 0 10px rgba(147, 51, 234, 0.5))');
     
-    bubbles.append('text')
+    // 아티스트 이름 (큰 글씨)
+    bubbleGroups.append('text')
       .text((d: any) => d.artist)
       .attr('text-anchor', 'middle')
-      .attr('dy', '0.3em')
+      .attr('dy', '-0.3em')
       .attr('fill', '#fff')
-      .attr('font-size', '12px')
-      .attr('font-weight', 'bold');
+      .attr('font-size', (d: any) => Math.max(12, d.radius / 5))
+      .attr('font-weight', 'bold')
+      .style('pointer-events', 'none');
+    
+    // 트랙 제목 (작은 글씨)
+    bubbleGroups.append('text')
+      .text((d: any) => {
+        const maxLength = Math.floor(d.radius / 4);
+        return d.title.length > maxLength ? d.title.substring(0, maxLength) + '...' : d.title;
+      })
+      .attr('text-anchor', 'middle')
+      .attr('dy', '1em')
+      .attr('fill', '#fff')
+      .attr('font-size', (d: any) => Math.max(10, d.radius / 6))
+      .attr('opacity', 0.8)
+      .style('pointer-events', 'none');
+    
+    // 조회수 표시
+    bubbleGroups.append('text')
+      .text((d: any) => {
+        const views = d.views || 0;
+        if (views > 1000000) return `${(views / 1000000).toFixed(1)}M`;
+        if (views > 1000) return `${(views / 1000).toFixed(0)}K`;
+        return views.toString();
+      })
+      .attr('text-anchor', 'middle')
+      .attr('dy', '2.5em')
+      .attr('fill', '#fbbf24')
+      .attr('font-size', (d: any) => Math.max(10, d.radius / 7))
+      .attr('font-weight', 'bold')
+      .style('pointer-events', 'none');
     
     simulation.on('tick', () => {
-      bubbles.attr('transform', (d: any) => `translate(${d.x},${d.y})`);
+      bubbleGroups.attr('transform', (d: any) => `translate(${d.x},${d.y})`);
     });
+    
+    // 호버 효과
+    bubbleGroups.selectAll('circle')
+      .transition()
+      .duration(200)
+      .attr('transform', (d: any) => hoveredBubble === d.id ? 'scale(1.1)' : 'scale(1)');
     
     return () => {
       simulation.stop();
     };
-  }, [data]);
+  }, [data, hoveredBubble]);
   
   return (
-    <div className="w-full h-[600px] glass-card rounded-xl p-4">
+    <div className="w-full h-[600px] glass-card rounded-xl p-4 relative">
+      <div className="absolute top-4 right-4 text-xs text-gray-400">
+        클릭하여 상세 페이지로 이동
+      </div>
       <svg ref={svgRef} className="w-full h-full" />
-    </div>
-  );
-};
-
-// 히트맵 (시간대별 순위)
-export const HeatMap: React.FC<{ data: any[] }> = ({ data }) => {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  
-  useEffect(() => {
-    if (!canvasRef.current || !data.length) return;
-    
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-    
-    const width = canvas.width;
-    const height = canvas.height;
-    
-    const cellWidth = width / 24;
-    const cellHeight = height / 7;
-    
-    const colorScale = d3.scaleSequential()
-      .domain([100, 1])
-      .interpolator(d3.interpolateRgb('#1A1A2E', '#EC4899'));
-    
-    data.forEach((item) => {
-      const x = item.hour * cellWidth;
-      const y = item.day * cellHeight;
-      
-      ctx.fillStyle = colorScale(item.rank);
-      ctx.fillRect(x, y, cellWidth - 2, cellHeight - 2);
-      
-      ctx.fillStyle = '#fff';
-      ctx.font = '10px Inter';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText(item.rank.toString(), x + cellWidth / 2, y + cellHeight / 2);
-    });
-  }, [data]);
-  
-  return (
-    <div className="glass-card rounded-xl p-4">
-      <h3 className="text-lg font-bold mb-4 neon-text">시간대별 순위 히트맵</h3>
-      <canvas
-        ref={canvasRef}
-        width={768}
-        height={210}
-        className="w-full rounded-lg"
-      />
     </div>
   );
 };
@@ -147,6 +164,48 @@ export const TrendingFlame: React.FC<{ intensity: number }> = ({ intensity }) =>
   );
 };
 
+// 실시간 카운터
+export const LiveCounter: React.FC<{ value: number; label: string }> = ({ value, label }) => {
+  const [displayValue, setDisplayValue] = useState(0);
+  
+  useEffect(() => {
+    const duration = 2000;
+    const steps = 60;
+    const increment = value / steps;
+    let current = 0;
+    
+    const timer = setInterval(() => {
+      current += increment;
+      if (current >= value) {
+        setDisplayValue(value);
+        clearInterval(timer);
+      } else {
+        setDisplayValue(Math.floor(current));
+      }
+    }, duration / steps);
+    
+    return () => clearInterval(timer);
+  }, [value]);
+  
+  return (
+    <motion.div
+      initial={{ scale: 0 }}
+      animate={{ scale: 1 }}
+      transition={{ type: 'spring', stiffness: 100 }}
+      className="glass-card rounded-xl p-4 text-center"
+    >
+      <motion.div
+        className="text-3xl md:text-4xl font-bold neon-text"
+        animate={{ scale: [1, 1.05, 1] }}
+        transition={{ duration: 2, repeat: Infinity }}
+      >
+        {displayValue.toLocaleString()}
+      </motion.div>
+      <div className="text-sm text-gray-400 mt-2">{label}</div>
+    </motion.div>
+  );
+};
+
 // 순위 변동 스파크라인
 export const SparkLine: React.FC<{ data: number[] }> = ({ data }) => {
   const svgRef = useRef<SVGSVGElement>(null);
@@ -155,6 +214,8 @@ export const SparkLine: React.FC<{ data: number[] }> = ({ data }) => {
     if (!svgRef.current || !data.length) return;
     
     const svg = d3.select(svgRef.current);
+    svg.selectAll('*').remove();
+    
     const width = 120;
     const height = 40;
     
@@ -162,7 +223,7 @@ export const SparkLine: React.FC<{ data: number[] }> = ({ data }) => {
     
     const xScale = d3.scaleLinear()
       .domain([0, data.length - 1])
-      .range([0, width]);
+      .range([5, width - 5]);
     
     const yScale = d3.scaleLinear()
       .domain([d3.max(data) || 100, d3.min(data) || 1])
@@ -175,7 +236,7 @@ export const SparkLine: React.FC<{ data: number[] }> = ({ data }) => {
     
     const gradient = svg.append('defs')
       .append('linearGradient')
-      .attr('id', 'spark-gradient')
+      .attr('id', `spark-gradient-${Math.random()}`)
       .attr('x1', '0%')
       .attr('x2', '100%');
     
@@ -194,74 +255,27 @@ export const SparkLine: React.FC<{ data: number[] }> = ({ data }) => {
     svg.append('path')
       .datum(data)
       .attr('fill', 'none')
-      .attr('stroke', 'url(#spark-gradient)')
+      .attr('stroke', `url(#${gradient.attr('id')})`)
       .attr('stroke-width', 2)
       .attr('d', line);
     
+    // 점 추가
     svg.selectAll('.dot')
       .data(data)
-      .enter()
-      .append('circle')
+      .enter().append('circle')
+      .attr('class', 'dot')
       .attr('cx', (_, i) => xScale(i))
       .attr('cy', (d) => yScale(d))
       .attr('r', 2)
       .attr('fill', '#fff');
   }, [data]);
   
-  return <svg ref={svgRef} className="w-30 h-10" />;
-};
-
-// 실시간 카운터
-export const LiveCounter: React.FC<{ value: number; label: string }> = ({ value, label }) => {
-  const [displayValue, setDisplayValue] = useState(0);
-  
-  useEffect(() => {
-    const duration = 2000;
-    const steps = 60;
-    const increment = value / steps;
-    let current = 0;
-    
-    const timer = setInterval(() => {
-      current += increment;
-      if (current >= value) {
-        current = value;
-        clearInterval(timer);
-      }
-      setDisplayValue(Math.floor(current));
-    }, duration / steps);
-    
-    return () => clearInterval(timer);
-  }, [value]);
-  
-  const formatNumber = (num: number) => {
-    if (num >= 1000000000) return `${(num / 1000000000).toFixed(1)}B`;
-    if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`;
-    if (num >= 1000) return `${(num / 1000).toFixed(1)}K`;
-    return num.toString();
-  };
-  
-  return (
-    <motion.div
-      className="glass-card rounded-xl p-6 text-center"
-      whileHover={{ scale: 1.05 }}
-      transition={{ type: 'spring', stiffness: 300 }}
-    >
-      <motion.div
-        className="text-4xl font-bold neon-text mb-2"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-      >
-        {formatNumber(displayValue)}
-      </motion.div>
-      <div className="text-sm opacity-70">{label}</div>
-    </motion.div>
-  );
+  return <svg ref={svgRef} className="w-full h-10" />;
 };
 
 export default {
   BubbleChart,
-  HeatMap,
   TrendingFlame,
-  SparkLine,
   LiveCounter,
+  SparkLine,
 };
