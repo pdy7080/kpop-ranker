@@ -33,20 +33,31 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, onClose }) => {
             onClick={onClose}
           />
 
-          {/* Menu Panel */}
+          {/* Menu Panel - 인라인 스타일로 강제 적용 */}
           <motion.div
             initial={{ x: '100%' }}
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
             transition={{ type: 'tween', duration: 0.3 }}
-            className="fixed right-0 top-0 h-full w-72 bg-white dark:bg-gray-900 shadow-xl z-50 lg:hidden"
+            className="fixed right-0 top-0 h-full w-72 shadow-xl z-50 lg:hidden"
+            style={{ 
+              backgroundColor: '#111827',  // gray-900
+              color: '#ffffff'
+            }}
           >
             {/* Header */}
-            <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
-              <h2 className="text-xl font-bold">메뉴</h2>
+            <div className="flex items-center justify-between p-4" 
+                 style={{ borderBottom: '1px solid #374151' }}>
+              <h2 className="text-xl font-bold" style={{ color: '#ffffff' }}>메뉴</h2>
               <button
                 onClick={onClose}
-                className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                className="p-2 rounded-full transition-colors"
+                style={{ 
+                  color: '#ffffff',
+                  backgroundColor: 'transparent'
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#1f2937'}
+                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
               >
                 <FaTimes className="w-5 h-5" />
               </button>
@@ -64,11 +75,23 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, onClose }) => {
                       <Link
                         href={item.href}
                         onClick={onClose}
-                        className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${
-                          isActive
-                            ? 'bg-primary-500 text-white'
-                            : 'hover:bg-gray-100 dark:hover:bg-gray-800'
-                        }`}
+                        className="flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors"
+                        style={{
+                          backgroundColor: isActive ? '#7c3aed' : 'transparent',
+                          color: isActive ? '#ffffff' : '#d1d5db'
+                        }}
+                        onMouseEnter={(e) => {
+                          if (!isActive) {
+                            e.currentTarget.style.backgroundColor = '#1f2937';
+                            e.currentTarget.style.color = '#ffffff';
+                          }
+                        }}
+                        onMouseLeave={(e) => {
+                          if (!isActive) {
+                            e.currentTarget.style.backgroundColor = 'transparent';
+                            e.currentTarget.style.color = '#d1d5db';
+                          }
+                        }}
                       >
                         <Icon className="w-5 h-5" />
                         <span className="font-medium">{item.label}</span>
@@ -80,9 +103,10 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, onClose }) => {
             </nav>
 
             {/* Footer */}
-            <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200 dark:border-gray-700">
-              <div className="text-center text-sm text-gray-500">
-                <p>KPOP FANfolio v2.0</p>
+            <div className="absolute bottom-0 left-0 right-0 p-4"
+                 style={{ borderTop: '1px solid #374151' }}>
+              <div className="text-center text-sm" style={{ color: '#9ca3af' }}>
+                <p>KPOP Ranker v7.1</p>
                 <p className="mt-1">© 2025 All rights reserved</p>
               </div>
             </div>
