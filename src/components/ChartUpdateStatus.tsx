@@ -159,7 +159,7 @@ export default function ChartUpdateStatus({ className = '' }: ChartUpdateStatusP
 
         {/* 오른쪽: 터미널 스타일 실시간 업데이트 현황 */}
         <div className="bg-black rounded-lg p-2 font-mono text-[10px] overflow-auto relative max-h-[200px]">
-          <div className="text-green-400 mb-1">{t('chart.update.realtime')}</div>
+          <div className="text-green-400 mb-1">[실시간 DB 업데이트 현황 - KST]</div>
           
           {/* 업데이트 로그 */}
           <div className="space-y-0.5">
@@ -195,12 +195,12 @@ export default function ChartUpdateStatus({ className = '' }: ChartUpdateStatusP
                       // "2025년 08월 20일 14시 32분" -> "08.20 14:32"
                       const match = timeStr.match(/(\d{2})월 (\d{2})일 (\d{2})시 (\d{2})분/);
                       if (match) {
-                        return `${match[1]}.${match[2]} ${match[3]}:${match[4]}`;
+                        return `[${match[1]}.${match[2]} ${match[3]}:${match[4]}]`;
                       }
                       // "2025-08-20 14:32:39" -> "08.20 14:32"
                       const isoMatch = timeStr.match(/\d{4}-(\d{2})-(\d{2}) (\d{2}):(\d{2})/);
                       if (isoMatch) {
-                        return `${isoMatch[1]}.${isoMatch[2]} ${isoMatch[3]}:${isoMatch[4]}`;
+                        return `[${isoMatch[1]}.${isoMatch[2]} ${isoMatch[3]}:${isoMatch[4]}]`;
                       }
                       return timeStr;
                     };
@@ -208,15 +208,8 @@ export default function ChartUpdateStatus({ className = '' }: ChartUpdateStatusP
                     const shortTime = formatTime(updateTime);
                     
                     return (
-                      <div key={chartKey} className="space-y-0">
-                        <div className={statusColor}>
-                          {chartName} - {displayStatus} {statusIcon}
-                        </div>
-                        {shortTime && (
-                          <div className="text-[8px] text-gray-500 pl-2">
-                            {shortTime}
-                          </div>
-                        )}
+                      <div key={chartKey} className={statusColor}>
+                        {chartName} - {displayStatus} {statusIcon} {shortTime}
                       </div>
                     );
                   })
