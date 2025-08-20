@@ -14,7 +14,7 @@ import {
   SparkLine
 } from '@/components/DataVisualization';
 import UnifiedSearch from '@/components/UnifiedSearch';
-import { useTranslation } from '@/src/hooks/useTranslation';
+import { useTranslation } from '@/contexts/TranslationContext';
 
 export default function SearchPage() {
   const router = useRouter();

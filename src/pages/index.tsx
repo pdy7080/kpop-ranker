@@ -4,7 +4,7 @@ import { useRouter } from 'next/router';
 import Layout from '@/components/Layout';
 import { motion, AnimatePresence } from 'framer-motion';
 import { trendingApi } from '@/lib/api';
-import { useTranslation } from '@/src/hooks/useTranslation';
+import { useTranslation } from '@/contexts/TranslationContext';
 import { 
   MouseGradient, 
   ParticleField, 

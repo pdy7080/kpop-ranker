@@ -17,7 +17,7 @@ import {
 } from '@/components/DataVisualization';
 import ChartUpdateStatus from '@/components/ChartUpdateStatus';
 import ImageWithFallback from '@/components/ImageWithFallback';
-import { useTranslation } from '@/src/hooks/useTranslation';
+import { useTranslation } from '@/contexts/TranslationContext';
 
 export default function TrendingPage() {
   const router = useRouter();
