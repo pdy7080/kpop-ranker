@@ -6,11 +6,14 @@ import { HiSparkles } from 'react-icons/hi';
 import MobileMenu from './MobileMenu';
 import { useAuth } from '@/contexts/AuthContext';
 import LoginModal from './LoginModal';
+import LanguageSelector from './LanguageSelector';
+import { useTranslation } from '@/contexts/TranslationContext';
 
 const Header: React.FC = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const { user, isAuthenticated, logout } = useAuth();
+  const { t } = useTranslation();
 
   const handleLogout = async () => {
     await logout();
@@ -36,15 +39,15 @@ const Header: React.FC = () => {
                 </div>
                 <div>
                   <h1 className="text-xl font-bold text-white">
-                    KPOP <span className="bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">FANfolio</span>
+                    {t('site.title')}
                   </h1>
-                  <p className="text-xs text-gray-400 hidden sm:block">실시간 차트 모니터링</p>
+                  <p className="text-xs text-gray-400 hidden sm:block">{t('site.tagline')}</p>
                 </div>
               </motion.div>
             </Link>
 
             {/* Desktop Navigation */}
-            <nav className="hidden lg:flex items-center space-x-6">
+            <nav className="hidden md:flex items-center space-x-6">
               <Link href="/portfolio">
                 <motion.div 
                   className="flex items-center space-x-2 text-gray-300 hover:text-white transition-all cursor-pointer group"
@@ -52,7 +55,7 @@ const Header: React.FC = () => {
                 >
                   <FaBriefcase className="w-4 h-4 group-hover:text-purple-400 transition-colors" />
                   <span className="relative">
-                    내 포트폴리오
+                    {t('nav.portfolio')}
                     <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-purple-500 to-pink-500 group-hover:w-full transition-all duration-300" />
                   </span>
                 </motion.div>
@@ -65,7 +68,7 @@ const Header: React.FC = () => {
                 >
                   <FaChartLine className="w-4 h-4 group-hover:text-pink-400 transition-colors" />
                   <span className="relative">
-                    트렌딩
+                    {t('nav.trending')}
                     <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-purple-500 to-pink-500 group-hover:w-full transition-all duration-300" />
                   </span>
                 </motion.div>
@@ -78,11 +81,14 @@ const Header: React.FC = () => {
                 >
                   <FaInfoCircle className="w-4 h-4 group-hover:text-blue-400 transition-colors" />
                   <span className="relative">
-                    소개
+                    {t('nav.about')}
                     <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-purple-500 to-pink-500 group-hover:w-full transition-all duration-300" />
                   </span>
                 </motion.div>
               </Link>
+
+              {/* Language Selector */}
+              <LanguageSelector />
 
               {/* Auth Section */}
               <div className="flex items-center space-x-4 ml-4 pl-4 border-l border-purple-500/20">
@@ -94,7 +100,7 @@ const Header: React.FC = () => {
                       </div>
                       <div className="flex flex-col">
                         <span className="text-sm font-medium text-white">{user?.name || 'K-POP Fan'}</span>
-                        <span className="text-xs text-gray-400">🎵 포트폴리오 관리자</span>
+                        <span className="text-xs text-gray-400">🎵 {t('user.role')}</span>
                       </div>
                     </div>
                     <motion.button
@@ -104,7 +110,7 @@ const Header: React.FC = () => {
                       whileTap={{ scale: 0.95 }}
                     >
                       <FaSignOutAlt className="w-4 h-4" />
-                      <span className="text-sm">로그아웃</span>
+                      <span className="text-sm">{t('button.logout')}</span>
                     </motion.button>
                   </div>
                 ) : (
@@ -115,7 +121,7 @@ const Header: React.FC = () => {
                     whileTap={{ scale: 0.95 }}
                   >
                     <FaSignInAlt className="w-4 h-4" />
-                    <span>로그인</span>
+                    <span>{t('button.login')}</span>
                   </motion.button>
                 )}
               </div>

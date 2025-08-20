@@ -14,9 +14,11 @@ import {
   SparkLine
 } from '@/components/DataVisualization';
 import UnifiedSearch from '@/components/UnifiedSearch';
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 export default function SearchPage() {
   const router = useRouter();
+  const { t } = useTranslation();
   const [searchResults, setSearchResults] = useState<any>({ artists: [], tracks: [] });
   const [isLoading, setIsLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');

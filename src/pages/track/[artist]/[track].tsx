@@ -23,6 +23,7 @@ import {
 import { SiYoutubemusic, SiApplemusic } from 'react-icons/si';
 import toast from 'react-hot-toast';
 import { useAuth } from '@/contexts/AuthContext';
+import { useTranslation } from '@/contexts/TranslationContext';
 
 // ========================================
 // 타입 정의
@@ -197,6 +198,7 @@ export default function TrackDetailPage() {
   const router = useRouter();
   const { artist, track } = router.query;
   const { isAuthenticated, user } = useAuth();
+  const { t } = useTranslation();
   const [trackInfo, setTrackInfo] = useState<TrackInfo | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'overview' | 'charts' | 'history'>('overview');
@@ -585,7 +587,7 @@ export default function TrackDetailPage() {
                     whileTap={{ scale: 0.95 }}
                   >
                     <FaUser />
-                    아티스트 페이지
+                    {t('artist.page')}
                   </motion.button>
 
                   {/* 포트폴리오 추가/제거 버튼 */}
@@ -601,7 +603,7 @@ export default function TrackDetailPage() {
                     whileTap={{ scale: 0.95 }}
                   >
                     {isInPortfolio ? <FaHeart /> : <FaRegHeart />}
-                    {loadingPortfolio ? '처리 중...' : isInPortfolio ? '포트폴리오에서 제거' : '포트폴리오에 추가'}
+                    {loadingPortfolio ? t('message.loading') : isInPortfolio ? '포트폴리오에서 제거' : t('portfolio.add')}
                   </motion.button>
                 </div>
 
@@ -661,7 +663,7 @@ export default function TrackDetailPage() {
                     : 'border-transparent text-gray-500 hover:text-gray-300'
                 }`}
               >
-                📊 개요
+                {t('chart.tabs.overview')}
               </button>
               <button
                 onClick={() => setActiveTab('charts')}
@@ -671,7 +673,7 @@ export default function TrackDetailPage() {
                     : 'border-transparent text-gray-500 hover:text-gray-300'
                 }`}
               >
-                🏆 차트
+                {t('chart.tabs.chart')}
               </button>
               <button
                 onClick={() => setActiveTab('history')}
@@ -681,7 +683,7 @@ export default function TrackDetailPage() {
                     : 'border-transparent text-gray-500 hover:text-gray-300'
                 }`}
               >
-                📈 히스토리
+                {t('chart.tabs.history')}
               </button>
             </div>
           </div>
@@ -704,7 +706,7 @@ export default function TrackDetailPage() {
                 <div className="glass-card rounded-xl p-6">
                   <h2 className="text-2xl font-bold mb-6 flex items-center gap-2 text-white">
                     <FaChartLine className="text-purple-400" />
-                    현재 차트 순위
+                    {t('chart.current.rank')}
                   </h2>
                   
                   {trackInfo.charts.length > 0 ? (
@@ -750,7 +752,7 @@ export default function TrackDetailPage() {
                             ) : (
                               <div className="text-gray-500">
                                 <div className="text-lg">-</div>
-                                <div className="text-xs">차트 아웃</div>
+                                <div className="text-xs">{t('chart.out')}</div>
                               </div>
                             )}
                           </motion.div>
@@ -768,7 +770,7 @@ export default function TrackDetailPage() {
                 <div className="glass-card rounded-xl p-6">
                   <h2 className="text-2xl font-bold mb-6 flex items-center gap-2 text-white">
                     <FaFire className="text-orange-400" />
-                    트렌딩 스코어
+                    {t('chart.trending.score')}
                   </h2>
                   <div className="flex items-center justify-center">
                     <div className="relative w-48 h-48">
@@ -804,11 +806,11 @@ export default function TrackDetailPage() {
                           {trackInfo.trend_score || 0}°
                         </div>
                         <div className="text-sm text-gray-400">
-                          {trackInfo.trend_score && trackInfo.trend_score >= 80 ? '매우 뜨거움 🔥' :
-                           trackInfo.trend_score && trackInfo.trend_score >= 60 ? '뜨거움 🔥' :
-                           trackInfo.trend_score && trackInfo.trend_score >= 40 ? '따뜻함 ☀️' :
-                           trackInfo.trend_score && trackInfo.trend_score >= 20 ? '보통 🌤️' :
-                           '차가움 ❄️'}
+                          {trackInfo.trend_score && trackInfo.trend_score >= 80 ? t('track.temperature.hot') :
+                           trackInfo.trend_score && trackInfo.trend_score >= 60 ? t('track.temperature.warm') :
+                           trackInfo.trend_score && trackInfo.trend_score >= 40 ? t('track.temperature.normal') :
+                           trackInfo.trend_score && trackInfo.trend_score >= 20 ? t('track.temperature.cool') :
+                           t('track.temperature.cool')}
                         </div>
                       </div>
                     </div>
@@ -883,7 +885,7 @@ export default function TrackDetailPage() {
                               whileTap={{ scale: 0.95 }}
                             >
                               <FaHistory />
-                              히스토리
+                              {t('track.tab.history').replace('📈 ', '')}
                             </motion.button>
                             {chartConfig.streamingUrl && (
                               <motion.button
@@ -925,7 +927,7 @@ export default function TrackDetailPage() {
                 <div className="glass-card rounded-xl p-6">
                   <h2 className="text-2xl font-bold mb-6 flex items-center gap-2 text-white">
                     <FaClock className="text-purple-400" />
-                    순위 변동 히스토리
+                    {t('track.history.title')}
                   </h2>
                   {trackInfo.charts.length > 0 ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -956,7 +958,7 @@ export default function TrackDetailPage() {
                               #{chart.rank}
                             </div>
                             <div className="text-xs text-gray-400 mt-1">
-                              클릭하여 히스토리 보기
+                              {t('track.history.clickToView')}
                             </div>
                           </motion.div>
                         );

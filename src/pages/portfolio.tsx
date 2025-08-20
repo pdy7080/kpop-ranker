@@ -1,8 +1,9 @@
 /**
- * 🎯 포트폴리오 페이지 - 완전 복원 버전
+ * 🎯 포트폴리오 페이지 - 다국어 지원 버전
  * - 로그인 체크 및 에러 처리
  * - 포트폴리오 아이템 관리
  * - 차트 데이터 표시
+ * - 다국어 지원 추가
  */
 import React, { useEffect, useState } from 'react';
 import Head from 'next/head';
@@ -17,6 +18,9 @@ import {
 } from 'react-icons/fa';
 import toast from 'react-hot-toast';
 import Link from 'next/link';
+import { useAuth } from '@/contexts/AuthContext';
+import { useTranslation } from '@/contexts/TranslationContext';
+import LoginModal from '@/components/LoginModal';
 
 // ========================================
 // 타입 정의
@@ -48,414 +52,373 @@ interface PortfolioItem {
 }
 
 interface UserInfo {
-  id: string;
-  email: string;
-  name?: string;
+  id: number;
+  name: string;
+  email?: string;
+  role?: string;
+  created_at?: string;
 }
 
 // ========================================
-// 메인 컴포넌트
+// 포트폴리오 페이지 컴포넌트
 // ========================================
 
-export default function PortfolioPage() {
+const PortfolioPage: React.FC = () => {
   const router = useRouter();
-  const [portfolioItems, setPortfolioItems] = useState<PortfolioItem[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const { user, isLoading: authLoading } = useAuth();
+  const { t } = useTranslation();
+  
+  const [items, setItems] = useState<PortfolioItem[]>([]);
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showLoginModal, setShowLoginModal] = useState(false);
+  const [showDemoModal, setShowDemoModal] = useState(false);
 
-  useEffect(() => {
-    checkLoginStatus();
-  }, []);
-
-  // 로그인 상태 확인
-  const checkLoginStatus = async () => {
+  // API 호출
+  const fetchPortfolio = async () => {
     try {
-      // 로컬 스토리지에서 토큰 확인
-      const token = localStorage.getItem('auth_token');
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
       const userId = localStorage.getItem('user_id');
       
-      if (token && userId) {
-        setIsLoggedIn(true);
-        setUserInfo({
-          id: userId,
-          email: localStorage.getItem('user_email') || 'user@example.com',
-          name: localStorage.getItem('user_name') || 'User'
-        });
-        await loadPortfolioData(userId);
-      } else {
-        setIsLoggedIn(false);
+      if (!userId) {
+        setError(t('portfolio.login.required'));
         setIsLoading(false);
+        return;
       }
-    } catch (error) {
-      console.error('로그인 상태 확인 실패:', error);
-      setIsLoggedIn(false);
-      setIsLoading(false);
-    }
-  };
 
-  // 포트폴리오 데이터 로드
-  const loadPortfolioData = async (userId: string) => {
-    try {
-      setIsLoading(true);
-      setError(null);
-      
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
-      const response = await fetch(`${apiUrl}/api/portfolio?user_id=${userId}`, {
+      const response = await fetch(`${apiUrl}/api/portfolio/${userId}`, {
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
-        }
+          'x-user-id': userId,
+        },
       });
-      
-      if (response.ok) {
-        const data = await response.json();
-        setPortfolioItems(data.items || []);
-      } else if (response.status === 401) {
-        // 인증 실패
-        setIsLoggedIn(false);
-        localStorage.clear();
-      } else {
-        // 포트폴리오가 비어있거나 다른 오류
-        setPortfolioItems([]);
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch portfolio');
       }
-    } catch (error) {
-      console.error('포트폴리오 데이터 로드 실패:', error);
-      setError('포트폴리오를 불러오는데 실패했습니다');
-      setPortfolioItems([]);
+
+      const data = await response.json();
+      
+      if (data.status === 'success') {
+        setItems(data.portfolio || []);
+        setUserInfo(data.user);
+      } else {
+        setError(data.message || t('common.error'));
+      }
+    } catch (err) {
+      console.error('포트폴리오 로드 실패:', err);
+      setError(t('common.error'));
     } finally {
       setIsLoading(false);
     }
   };
 
-  // 포트폴리오 아이템 제거
+  // 아이템 삭제
   const handleRemoveItem = async (itemId: number) => {
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
-      const response = await fetch(`${apiUrl}/api/portfolio/${itemId}`, {
+      const userId = localStorage.getItem('user_id');
+      
+      const response = await fetch(`${apiUrl}/api/portfolio/${userId}/${itemId}`, {
         method: 'DELETE',
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
-        }
-      });
-      
-      if (response.ok) {
-        setPortfolioItems(items => items.filter(item => item.id !== itemId));
-        toast.success('포트폴리오에서 제거되었습니다');
-      } else {
-        throw new Error('제거 실패');
-      }
-    } catch (error) {
-      console.error('포트폴리오 아이템 제거 실패:', error);
-      toast.error('제거에 실패했습니다');
-    }
-  };
-
-  // 즐겨찾기 토글
-  const handleToggleFavorite = async (itemId: number) => {
-    try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
-      const item = portfolioItems.find(i => i.id === itemId);
-      
-      const response = await fetch(`${apiUrl}/api/portfolio/${itemId}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+          'x-user-id': userId || '',
         },
-        body: JSON.stringify({
-          is_favorite: !item?.is_favorite
-        })
       });
-      
+
       if (response.ok) {
-        setPortfolioItems(items =>
-          items.map(item =>
-            item.id === itemId
-              ? { ...item, is_favorite: !item.is_favorite }
-              : item
-          )
-        );
-        toast.success(item?.is_favorite ? '즐겨찾기에서 제거되었습니다' : '즐겨찾기에 추가되었습니다');
+        setItems(prev => prev.filter(item => item.id !== itemId));
+        toast.success(t('toast.removed.portfolio'));
+      } else {
+        throw new Error('Failed to remove item');
       }
-    } catch (error) {
-      console.error('즐겨찾기 토글 실패:', error);
-      toast.error('작업에 실패했습니다');
+    } catch (err) {
+      console.error('아이템 삭제 실패:', err);
+      toast.error(t('common.error'));
     }
   };
 
-  // 로딩 상태
-  if (isLoading) {
-    return (
-      <Layout>
-        <div className="min-h-screen flex items-center justify-center">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto"></div>
-            <p className="mt-4 text-gray-600">포트폴리오를 불러오는 중...</p>
-          </div>
-        </div>
-      </Layout>
-    );
-  }
+  // 데모 로그인
+  const handleDemoLogin = async () => {
+    const demoUserId = 'demo_' + Date.now();
+    localStorage.setItem('user_id', demoUserId);
+    localStorage.setItem('user_name', 'Demo User');
+    setUserInfo({
+      id: 0,
+      name: 'Demo User',
+      role: 'demo',
+    });
+    setError(null);
+    setShowDemoModal(false);
+    toast.success(t('login.demo.title'));
+  };
 
-  // 로그인하지 않은 경우
-  if (!isLoggedIn) {
+  useEffect(() => {
+    if (!authLoading) {
+      if (user) {
+        fetchPortfolio();
+      } else {
+        setIsLoading(false);
+      }
+    }
+  }, [user, authLoading]);
+
+  // 로딩 중
+  if (authLoading || isLoading) {
     return (
       <Layout>
         <Head>
-          <title>포트폴리오 - KPOP Ranker</title>
+          <title>{t('portfolio.title')} - KPOP Ranker</title>
         </Head>
-        
-        <div className="min-h-screen bg-gradient-to-b from-purple-50 to-white flex items-center justify-center">
-          <div className="max-w-md w-full mx-auto px-4">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="bg-white rounded-2xl shadow-xl p-8 text-center"
-            >
-              <div className="w-20 h-20 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                <FaLock className="text-3xl text-purple-600" />
-              </div>
-              
-              <h2 className="text-2xl font-bold text-gray-900 mb-3">
-                로그인이 필요합니다
-              </h2>
-              
-              <p className="text-gray-600 mb-8">
-                포트폴리오 기능을 사용하려면 로그인해주세요.
-                <br />
-                나만의 K-POP 차트를 관리할 수 있습니다.
-              </p>
-              
-              <div className="space-y-3">
-                <button
-                  onClick={() => router.push('/auth/login')}
-                  className="w-full px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center justify-center gap-2"
-                >
-                  <FaSignInAlt />
-                  로그인
-                </button>
-                
-                <button
-                  onClick={() => router.push('/auth/register')}
-                  className="w-full px-6 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
-                >
-                  회원가입
-                </button>
-              </div>
-              
-              <div className="mt-8 pt-6 border-t border-gray-200">
-                <p className="text-sm text-gray-500">
-                  Demo 계정으로 체험하기
-                </p>
-                <button
-                  onClick={async () => {
-                    // Demo 로그인 처리
-                    localStorage.setItem('auth_token', 'demo_token');
-                    localStorage.setItem('user_id', 'demo_user');
-                    localStorage.setItem('user_email', 'demo@example.com');
-                    localStorage.setItem('user_name', 'Demo User');
-                    
-                    setIsLoggedIn(true);
-                    setUserInfo({
-                      id: 'demo_user',
-                      email: 'demo@example.com',
-                      name: 'Demo User'
-                    });
-                    
-                    await loadPortfolioData('demo_user');
-                    toast.success('Demo 계정으로 로그인했습니다');
-                  }}
-                  className="mt-2 text-purple-600 hover:text-purple-700 underline text-sm"
-                >
-                  Demo로 시작하기
-                </button>
-              </div>
-            </motion.div>
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
+            <p className="text-gray-400">{t('common.loading')}</p>
           </div>
         </div>
       </Layout>
     );
   }
 
-  // 포트폴리오 메인 화면
-  return (
-    <Layout>
-      <Head>
-        <title>내 포트폴리오 - KPOP Ranker</title>
-        <meta name="description" content="나만의 K-POP 차트 포트폴리오" />
-      </Head>
-
-      <div className="min-h-screen bg-gradient-to-b from-purple-50 to-white">
-        {/* 헤더 */}
-        <div className="bg-gradient-to-r from-purple-600 to-pink-600 text-white">
-          <div className="container mx-auto px-4 py-12">
-            <div className="flex items-center justify-between">
-              <div>
-                <h1 className="text-3xl font-bold mb-2 flex items-center gap-3">
-                  <FaBriefcase />
-                  내 포트폴리오
-                </h1>
-                <p className="opacity-90">
-                  {userInfo?.name || userInfo?.email}님의 K-POP 컬렉션
-                </p>
-              </div>
-              
-              <div className="flex items-center gap-4">
-                <div className="text-center">
-                  <div className="text-2xl font-bold">{portfolioItems.length}</div>
-                  <div className="text-sm opacity-90">트랙</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold">
-                    {portfolioItems.filter(item => item.is_favorite).length}
-                  </div>
-                  <div className="text-sm opacity-90">즐겨찾기</div>
-                </div>
+  // 로그인 필요
+  if (!user) {
+    return (
+      <Layout>
+        <Head>
+          <title>{t('portfolio.title')} - KPOP Ranker</title>
+        </Head>
+        <div className="min-h-screen flex items-center justify-center px-4">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="max-w-md w-full text-center"
+          >
+            <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-8 shadow-2xl">
+              <FaLock className="text-6xl text-purple-500 mx-auto mb-4" />
+              <h2 className="text-2xl font-bold text-white mb-4">
+                {t('portfolio.login.required')}
+              </h2>
+              <p className="text-gray-400 mb-6">
+                {t('portfolio.login.description').split('\n').map((line, i) => (
+                  <React.Fragment key={i}>
+                    {line}
+                    {i === 0 && <br />}
+                  </React.Fragment>
+                ))}
+              </p>
+              <div className="space-y-3">
                 <button
-                  onClick={() => {
-                    localStorage.clear();
-                    setIsLoggedIn(false);
-                    router.push('/');
-                    toast.success('로그아웃되었습니다');
-                  }}
-                  className="px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg transition-colors"
+                  onClick={() => setShowLoginModal(true)}
+                  className="w-full py-3 px-6 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white rounded-lg font-medium transition-all flex items-center justify-center gap-2"
                 >
-                  로그아웃
+                  <FaSignInAlt />
+                  {t('portfolio.login.button')}
                 </button>
+                <button
+                  onClick={() => router.push('/auth/signup')}
+                  className="w-full py-3 px-6 bg-gray-700 hover:bg-gray-600 text-white rounded-lg font-medium transition-all"
+                >
+                  {t('portfolio.signup')}
+                </button>
+                <div className="border-t border-gray-700 pt-3 mt-3">
+                  <p className="text-gray-500 text-sm mb-2">{t('portfolio.demo.text')}</p>
+                  <button
+                    onClick={handleDemoLogin}
+                    className="text-purple-400 hover:text-purple-300 transition-colors text-sm font-medium"
+                  >
+                    {t('portfolio.demo.button')}
+                  </button>
+                </div>
               </div>
+            </div>
+          </motion.div>
+        </div>
+        
+        <LoginModal 
+          isOpen={showLoginModal}
+          onClose={() => setShowLoginModal(false)}
+        />
+      </Layout>
+    );
+  }
+
+  // 포트폴리오 비어있음
+  if (items.length === 0) {
+    return (
+      <Layout>
+        <Head>
+          <title>{t('portfolio.title')} - KPOP Ranker</title>
+        </Head>
+        <div className="container mx-auto px-4 py-8">
+          <div className="flex items-center justify-between mb-8">
+            <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
+              {t('portfolio.title')}
+            </h1>
+            {userInfo && (
+              <div className="flex items-center gap-2 text-gray-400">
+                <FaUser />
+                <span>{userInfo.name}</span>
+              </div>
+            )}
+          </div>
+          
+          <div className="min-h-[60vh] flex items-center justify-center">
+            <div className="text-center">
+              <FaBriefcase className="text-6xl text-gray-600 mx-auto mb-4" />
+              <h2 className="text-xl font-semibold text-gray-400 mb-2">
+                {t('portfolio.empty')}
+              </h2>
+              <p className="text-gray-500 mb-6">
+                {t('portfolio.login.description').split('\n')[1]}
+              </p>
+              <Link
+                href="/trending"
+                className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white rounded-lg font-medium transition-all"
+              >
+                <FaPlus />
+                {t('trending.title')}
+              </Link>
             </div>
           </div>
         </div>
+      </Layout>
+    );
+  }
 
-        {/* 컨텐츠 */}
-        <div className="container mx-auto px-4 py-8">
-          {portfolioItems.length === 0 ? (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="text-center py-20"
-            >
-              <FaMusic className="text-6xl text-gray-300 mx-auto mb-4" />
-              <h2 className="text-2xl font-bold text-gray-700 mb-2">
-                포트폴리오가 비어있습니다
-              </h2>
-              <p className="text-gray-600 mb-6">
-                좋아하는 K-POP 트랙을 추가해보세요!
-              </p>
-              <button
-                onClick={() => router.push('/trending')}
-                className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors inline-flex items-center gap-2"
-              >
-                <FaPlus />
-                트렌딩 차트 보러가기
-              </button>
-            </motion.div>
-          ) : (
-            <div className="space-y-4">
-              <AnimatePresence>
-                {portfolioItems.map((item, index) => (
-                  <motion.div
-                    key={item.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, x: -100 }}
-                    transition={{ delay: index * 0.05 }}
-                    className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow"
-                  >
-                    <div className="p-6">
-                      <div className="flex items-center gap-4">
-                        {/* 앨범 이미지 */}
-                        <div className="w-20 h-20 rounded-lg overflow-hidden flex-shrink-0">
-                          <ImageWithFallback
-                            src={item.album_image || `/api/album-image-smart/${encodeURIComponent(item.artist_normalized || item.artist)}/${encodeURIComponent(item.track)}`}
-                            alt={item.track}
-                            width={80}
-                            height={80}
-                            className="w-full h-full object-cover"
-                          />
-                        </div>
-
-                        {/* 트랙 정보 */}
-                        <div className="flex-1">
-                          <div className="flex items-start justify-between">
-                            <div>
-                              <h3 
-                                className="text-lg font-bold text-gray-900 hover:text-purple-600 cursor-pointer transition-colors"
-                                onClick={() => router.push(`/track/${encodeURIComponent(item.artist)}/${encodeURIComponent(item.track)}`)}
-                              >
-                                {item.track}
-                              </h3>
-                              <p 
-                                className="text-gray-600 hover:text-purple-600 cursor-pointer transition-colors"
-                                onClick={() => router.push(`/artist/${encodeURIComponent(item.artist)}`)}
-                              >
-                                {item.artist}
-                              </p>
-                              <div className="flex items-center gap-4 mt-2 text-sm text-gray-500">
-                                <span>추가일: {new Date(item.added_at).toLocaleDateString('ko-KR')}</span>
-                                {item.best_rank && (
-                                  <span className="flex items-center gap-1">
-                                    <FaTrophy className="text-yellow-500" />
-                                    최고 #{item.best_rank}
-                                  </span>
-                                )}
-                                {item.trend_score && (
-                                  <span className="flex items-center gap-1">
-                                    <FaChartLine className="text-purple-500" />
-                                    {item.trend_score}°
-                                  </span>
-                                )}
-                              </div>
-                            </div>
-
-                            {/* 액션 버튼 */}
-                            <div className="flex items-center gap-2">
-                              <button
-                                onClick={() => handleToggleFavorite(item.id)}
-                                className={`p-2 rounded-lg transition-colors ${
-                                  item.is_favorite
-                                    ? 'text-red-500 bg-red-50 hover:bg-red-100'
-                                    : 'text-gray-400 hover:text-red-500 hover:bg-red-50'
-                                }`}
-                              >
-                                <FaHeart className={item.is_favorite ? 'fill-current' : ''} />
-                              </button>
-                              
-                              <button
-                                onClick={() => router.push(`/track/${encodeURIComponent(item.artist)}/${encodeURIComponent(item.track)}`)}
-                                className="p-2 text-gray-400 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
-                              >
-                                <FaPlay />
-                              </button>
-                              
-                              <button
-                                onClick={() => handleRemoveItem(item.id)}
-                                className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-                              >
-                                <FaTrash />
-                              </button>
-                            </div>
-                          </div>
-
-                          {/* 메모 */}
-                          {item.notes && (
-                            <div className="mt-3 p-3 bg-gray-50 rounded-lg">
-                              <p className="text-sm text-gray-600">{item.notes}</p>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  </motion.div>
-                ))}
-              </AnimatePresence>
+  // 포트폴리오 아이템 표시
+  return (
+    <Layout>
+      <Head>
+        <title>{t('portfolio.title')} - KPOP Ranker</title>
+      </Head>
+      
+      <div className="container mx-auto px-4 py-8">
+        {/* 헤더 */}
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
+              {t('portfolio.title')}
+            </h1>
+            <p className="text-gray-400 mt-2">
+              {items.length} {t('artist.tracks')}
+            </p>
+          </div>
+          {userInfo && (
+            <div className="text-right">
+              <div className="flex items-center gap-2 text-gray-400">
+                <FaUser />
+                <span>{userInfo.name}</span>
+              </div>
+              {userInfo.role && (
+                <p className="text-sm text-gray-500">{userInfo.role}</p>
+              )}
             </div>
           )}
+        </div>
+
+        {/* 포트폴리오 그리드 */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          <AnimatePresence>
+            {items.map((item, index) => (
+              <motion.div
+                key={item.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.9 }}
+                transition={{ delay: index * 0.05 }}
+                className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-xl overflow-hidden hover:shadow-2xl transition-all group"
+              >
+                {/* 앨범 이미지 */}
+                <div className="relative aspect-square">
+                  <ImageWithFallback
+                    src={item.album_image || ''}
+                    alt={`${item.artist} - ${item.track}`}
+                    className="w-full h-full object-cover"
+                  />
+                  
+                  {/* 오버레이 */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="absolute bottom-4 left-4 right-4">
+                      <Link
+                        href={`/track/${encodeURIComponent(item.artist)}/${encodeURIComponent(item.track)}`}
+                        className="flex items-center justify-center gap-2 py-2 px-4 bg-white/20 backdrop-blur-sm rounded-lg text-white hover:bg-white/30 transition-colors"
+                      >
+                        <FaPlay />
+                        <span>{t('button.play')}</span>
+                      </Link>
+                    </div>
+                  </div>
+                  
+                  {/* 베스트 랭크 */}
+                  {item.best_rank && (
+                    <div className="absolute top-2 left-2 bg-gradient-to-r from-yellow-500 to-yellow-600 px-2 py-1 rounded-lg flex items-center gap-1">
+                      <FaCrown className="text-xs" />
+                      <span className="text-xs font-bold">#{item.best_rank}</span>
+                    </div>
+                  )}
+                  
+                  {/* 즐겨찾기 */}
+                  {item.is_favorite && (
+                    <div className="absolute top-2 right-2 bg-red-500 p-1.5 rounded-full">
+                      <FaHeart className="text-xs text-white" />
+                    </div>
+                  )}
+                </div>
+
+                {/* 정보 */}
+                <div className="p-4">
+                  <h3 className="font-semibold text-white truncate">{item.track}</h3>
+                  <p className="text-gray-400 text-sm truncate">{item.artist}</p>
+                  
+                  {/* 차트 정보 */}
+                  {item.total_charts && item.total_charts > 0 && (
+                    <div className="flex items-center gap-2 mt-2 text-xs text-gray-500">
+                      <FaChartLine />
+                      <span>{item.total_charts} charts</span>
+                    </div>
+                  )}
+                  
+                  {/* 트렌드 스코어 */}
+                  {item.trend_score && (
+                    <div className="mt-2">
+                      <div className="flex items-center justify-between text-xs text-gray-500">
+                        <span>{t('trending.score')}</span>
+                        <span className="text-purple-400 font-semibold">
+                          {item.trend_score.toFixed(1)}
+                        </span>
+                      </div>
+                      <div className="w-full bg-gray-700 rounded-full h-1 mt-1">
+                        <div 
+                          className="bg-gradient-to-r from-purple-500 to-pink-500 h-1 rounded-full"
+                          style={{ width: `${Math.min(item.trend_score, 100)}%` }}
+                        />
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* 액션 버튼 */}
+                  <div className="flex items-center justify-between mt-4">
+                    <Link
+                      href={`/track/${encodeURIComponent(item.artist)}/${encodeURIComponent(item.track)}`}
+                      className="text-purple-400 hover:text-purple-300 transition-colors text-sm"
+                    >
+                      <FaExternalLinkAlt />
+                    </Link>
+                    <button
+                      onClick={() => handleRemoveItem(item.id)}
+                      className="text-gray-500 hover:text-red-500 transition-colors"
+                    >
+                      <FaTrash />
+                    </button>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </AnimatePresence>
         </div>
       </div>
     </Layout>
   );
-}
+};
+
+export default PortfolioPage;

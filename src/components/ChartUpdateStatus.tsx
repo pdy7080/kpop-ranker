@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { FaClock, FaSync } from 'react-icons/fa';
 import { chartAPI } from '@/lib/api';
+import { useTranslation } from '@/contexts/TranslationContext';
 
 interface ChartUpdateStatusData {
   chart_name: string;
@@ -34,6 +35,7 @@ const CHART_NAMES: Record<string, string> = {
 export default function ChartUpdateStatus({ className = '' }: ChartUpdateStatusProps) {
   const [updateStatus, setUpdateStatus] = useState<Record<string, ChartUpdateStatusData>>({});
   const [loading, setLoading] = useState(true);
+  const { t, language } = useTranslation();
 
   // 실시간 업데이트 현황 가져오기
   const fetchUpdateStatus = async () => {
@@ -104,6 +106,26 @@ export default function ChartUpdateStatus({ className = '' }: ChartUpdateStatusP
     }
   };
 
+  // 상태 텍스트 번역
+  const getStatusText = (status: string) => {
+    if (language === 'ko') return status;
+    
+    const statusMap: Record<string, string> = {
+      '최신': 'Latest',
+      '정상': 'Normal',
+      '지연': 'Delayed',
+      '오류': 'Error',
+      'success': 'Success',
+      'failed': 'Failed',
+      'pending': 'Pending',
+      'outdated': 'Outdated',
+      'unknown': 'Unknown',
+      'active': 'Active'
+    };
+    
+    return statusMap[status] || status;
+  };
+
   return (
     <div className={`rounded-xl overflow-hidden ${className}`}>
       <div className="grid md:grid-cols-2 gap-4 h-auto max-h-[150px]">
@@ -111,38 +133,38 @@ export default function ChartUpdateStatus({ className = '' }: ChartUpdateStatusP
         <div className="bg-gray-50 dark:bg-gray-800 p-3 rounded-lg">
           <h3 className="font-bold text-xs mb-2 text-gray-700 dark:text-gray-300 flex items-center gap-1">
             <FaClock className="w-3 h-3" />
-            [차트별 업데이트시간]
+            {t('chart.update.schedule')}
           </h3>
           <div className="space-y-0.5 text-[11px]">
             <p className="text-gray-600 dark:text-gray-400">
-              • <span className="font-semibold">한국 3사</span> (멜론, 지니, 벅스) → 하루 4회: 01시 / 07시 / 13시 / 19시
+              • <span className="font-semibold">{t('chart.korea3')}</span> {t('chart.schedule.korea')}
             </p>
             <p className="text-gray-600 dark:text-gray-400">
-              • <span className="font-semibold">Vibe</span> → 하루 2회: 01시 / 13시
+              • <span className="font-semibold">Vibe</span> {t('chart.schedule.vibe')}
             </p>
             <p className="text-gray-600 dark:text-gray-400">
-              • <span className="font-semibold">FLO</span> → 하루 4회: 01시 / 07시 / 13시 / 19시
+              • <span className="font-semibold">FLO</span> {t('chart.schedule.flo')}
             </p>
             <p className="text-gray-600 dark:text-gray-400">
-              • <span className="font-semibold">Spotify</span> → 매일 09:00 KST
+              • <span className="font-semibold">Spotify</span> {t('chart.schedule.spotify')}
             </p>
             <p className="text-gray-600 dark:text-gray-400">
-              • <span className="font-semibold">YouTube</span> → 매일 12:00 KST
+              • <span className="font-semibold">YouTube</span> {t('chart.schedule.youtube')}
             </p>
             <p className="text-gray-600 dark:text-gray-400">
-              • <span className="font-semibold">Billboard</span> → 매주 화요일 14:00 KST 경
+              • <span className="font-semibold">Billboard</span> {t('chart.schedule.billboard')}
             </p>
           </div>
         </div>
 
         {/* 오른쪽: 터미널 스타일 실시간 업데이트 현황 */}
         <div className="bg-black rounded-lg p-2 font-mono text-[10px] overflow-hidden relative">
-          <div className="text-green-400 mb-1">[실시간 DB 업데이트 현황]</div>
+          <div className="text-green-400 mb-1">{t('chart.update.realtime')}</div>
           
           {/* 업데이트 로그 */}
           <div className="space-y-0.5">
             {loading ? (
-              <div className="text-yellow-400">Loading...</div>
+              <div className="text-yellow-400">{t('message.loading')}</div>
             ) : (
               <>
                 {/* 실제 API 데이터로 크롤링 현황 표시 */}
@@ -163,18 +185,21 @@ export default function ChartUpdateStatus({ className = '' }: ChartUpdateStatusP
                     
                     // last_update_korean 우선 사용, 없으면 last_update 사용
                     const updateTime = data.last_update_korean || data.last_update || '-';
+                    const displayStatus = data.track_count ? 
+                      `${data.track_count} ${t('chart.tracks')}` : 
+                      t('chart.nodata');
                     
                     return (
                       <div key={chartKey} className={statusColor}>
-                        {chartName} - {formatSimpleTime(updateTime)} {statusIcon}
+                        {chartName} - {displayStatus} {statusIcon}
                       </div>
                     );
                   })
                 ) : (
                   // API 데이터가 없을 때 기본 표시
                   <>
-                    <div className="text-yellow-400">API 연결 중...</div>
-                    <div className="text-gray-500">실제 크롤링 시간을 불러오는 중입니다</div>
+                    <div className="text-yellow-400">{t('chart.connecting')}</div>
+                    <div className="text-gray-500">{t('chart.loading.crawl')}</div>
                   </>
                 )}
               </>

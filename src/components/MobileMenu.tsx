@@ -3,6 +3,8 @@ import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaBars, FaTimes, FaHome, FaSearch, FaBriefcase, FaChartLine, FaBrain, FaInfoCircle } from 'react-icons/fa';
+import LanguageSelector from './LanguageSelector';
+import { useTranslation } from '@/contexts/TranslationContext';
 
 interface MobileMenuProps {
   isOpen: boolean;
@@ -11,13 +13,14 @@ interface MobileMenuProps {
 
 const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, onClose }) => {
   const router = useRouter();
+  const { t } = useTranslation();
 
   const menuItems = [
-    { href: '/', icon: FaHome, label: '홈' },
-    { href: '/portfolio', icon: FaBriefcase, label: '포트폴리오' },
-    { href: '/trending', icon: FaChartLine, label: '트렌딩' },
-    { href: '/insights', icon: FaBrain, label: 'AI 인사이트' },
-    { href: '/about', icon: FaInfoCircle, label: '소개' },
+    { href: '/', icon: FaHome, label: t('nav.home') },
+    { href: '/portfolio', icon: FaBriefcase, label: t('nav.portfolio') },
+    { href: '/trending', icon: FaChartLine, label: t('nav.trending') },
+    { href: '/insights', icon: FaBrain, label: t('nav.insights') },
+    { href: '/about', icon: FaInfoCircle, label: t('nav.about') },
   ];
 
   return (
@@ -101,6 +104,11 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, onClose }) => {
                 })}
               </ul>
             </nav>
+
+            {/* Language Selector */}
+            <div className="px-4 py-3 mb-4">
+              <LanguageSelector />
+            </div>
 
             {/* Footer */}
             <div className="absolute bottom-0 left-0 right-0 p-4"

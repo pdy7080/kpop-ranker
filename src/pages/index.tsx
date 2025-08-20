@@ -4,6 +4,7 @@ import { useRouter } from 'next/router';
 import Layout from '@/components/Layout';
 import { motion, AnimatePresence } from 'framer-motion';
 import { trendingApi } from '@/lib/api';
+import { useTranslation } from '@/src/hooks/useTranslation';
 import { 
   MouseGradient, 
   ParticleField, 
@@ -22,6 +23,7 @@ import UnifiedSearch from '@/components/UnifiedSearch';
 
 export default function Home() {
   const router = useRouter();
+  const { t } = useTranslation();
   const [trendingData, setTrendingData] = useState<any[]>([]);
   const [bubbleData, setBubbleData] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -98,7 +100,7 @@ export default function Home() {
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 0.3 }}
               >
-                실시간 K-POP 차트 모니터링 플랫폼
+                {t('main.title')}
               </motion.p>
 
               {/* Search Bar with Glassmorphism */}
@@ -120,9 +122,9 @@ export default function Home() {
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 0.7 }}
               >
-                <LiveCounter value={822} label="앨범 이미지" />
-                <LiveCounter value={135} label="아티스트" />
-                <LiveCounter value={8} label="글로벌 차트" />
+                <LiveCounter value={822} label={t('main.stats.albums')} />
+                <LiveCounter value={135} label={t('main.stats.artists')} />
+                <LiveCounter value={8} label={t('main.stats.charts')} />
               </motion.div>
             </div>
           </motion.section>
@@ -143,9 +145,9 @@ export default function Home() {
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                   >
-                    {tab === 'hot' && '🔥 HOT'}
-                    {tab === 'rising' && '🚀 급상승'}
-                    {tab === 'global' && '🌏 글로벌'}
+                    {tab === 'hot' && t('tab.hot')}
+                    {tab === 'rising' && t('tab.rising')}
+                    {tab === 'global' && t('tab.global')}
                   </motion.button>
                 ))}
               </div>
@@ -162,7 +164,7 @@ export default function Home() {
                 animate={{ x: 0, opacity: 1 }}
                 transition={{ delay: 0.2 }}
               >
-                <h2 className="text-xl md:text-2xl font-bold mb-4 md:mb-6 neon-text">실시간 차트</h2>
+                <h2 className="text-xl md:text-2xl font-bold mb-4 md:mb-6 neon-text">{t('section.realtime')}</h2>
                 {isLoading ? (
                   <div className="glass-card rounded-xl p-8 flex items-center justify-center h-96">
                     <WaveVisualizer isPlaying={true} />
@@ -178,7 +180,7 @@ export default function Home() {
                 animate={{ x: 0, opacity: 1 }}
                 transition={{ delay: 0.4 }}
               >
-                <h2 className="text-xl md:text-2xl font-bold mb-4 md:mb-6 neon-text">조회수 버블</h2>
+                <h2 className="text-xl md:text-2xl font-bold mb-4 md:mb-6 neon-text">{t('section.bubble')}</h2>
                 {!isLoading && bubbleData.length > 0 && (
                   <BubbleChart data={bubbleData} />
                 )}
@@ -191,7 +193,7 @@ export default function Home() {
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 0.6 }}
               >
-                <h2 className="text-xl md:text-2xl font-bold mb-4 md:mb-6 neon-text">트렌딩 앨범</h2>
+                <h2 className="text-xl md:text-2xl font-bold mb-4 md:mb-6 neon-text">{t('section.trending')}</h2>
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 md:gap-6">
                   {trendingData.slice(0, 8).map((item, idx) => (
                     <motion.div
@@ -227,7 +229,7 @@ export default function Home() {
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 0.8 }}
               >
-                <h2 className="text-xl md:text-2xl font-bold mb-4 md:mb-6 neon-text">차트 업데이트 현황</h2>
+                <h2 className="text-xl md:text-2xl font-bold mb-4 md:mb-6 neon-text">{t('section.update')}</h2>
                 <div className="glass-card rounded-xl p-6">
                   <ChartUpdateStatus />
                 </div>

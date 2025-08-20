@@ -16,6 +16,7 @@ import { FaTimes, FaChartLine, FaFireAlt, FaTrophy } from 'react-icons/fa';
 import { HiTrendingUp, HiTrendingDown } from 'react-icons/hi';
 import toast from 'react-hot-toast';
 import { chartAPI } from '@/lib/api';
+import { useTranslation } from '@/contexts/TranslationContext';
 
 // Chart.js 등록
 ChartJS.register(
@@ -63,6 +64,7 @@ const ChartHistoryModal: React.FC<ChartHistoryModalProps> = ({
   const [loading, setLoading] = useState(false);
   const [rankChange, setRankChange] = useState(0);
   const [trend, setTrend] = useState<'up' | 'down' | 'stable'>('stable');
+  const { t } = useTranslation();
 
   useEffect(() => {
     if (isOpen && artist && track) {
@@ -245,7 +247,7 @@ const ChartHistoryModal: React.FC<ChartHistoryModalProps> = ({
                 </button>
                 
                 <h2 className="text-2xl font-bold text-white mb-2">
-                  {chart.toUpperCase()} 순위 변화
+                  {chart.toUpperCase()} {t('track.history.rankingChanges')}
                 </h2>
                 <p className="text-white text-opacity-90">
                   {artist} - {track}
@@ -253,7 +255,7 @@ const ChartHistoryModal: React.FC<ChartHistoryModalProps> = ({
                 {currentRank && (
                   <div className="mt-4 flex items-center gap-4">
                     <span className="text-3xl font-bold text-white">
-                      현재 {currentRank}위
+                      {t('track.history.currentRank', undefined, { rank: String(currentRank) })}
                     </span>
                     <div className="flex items-center gap-2">
                       {getTrendIcon()}
@@ -287,10 +289,10 @@ const ChartHistoryModal: React.FC<ChartHistoryModalProps> = ({
                       >
                         <h3 className="font-bold text-red-700 dark:text-red-400 mb-2 flex items-center gap-2">
                           <FaFireAlt className="w-5 h-5" />
-                          팬덤 화력 집중 필요!
+                          {t('track.history.needSupport')}
                         </h3>
                         <p className="text-sm text-red-600 dark:text-red-300">
-                          최근 순위가 하락하고 있습니다. {chart.toUpperCase()}에서 스트리밍과 검색을 늘려주세요!
+                          {t('track.history.rankDropping', { chart: chart.toUpperCase() })}
                         </p>
                       </motion.div>
                     )}
@@ -303,10 +305,10 @@ const ChartHistoryModal: React.FC<ChartHistoryModalProps> = ({
                       >
                         <h3 className="font-bold text-green-700 dark:text-green-400 mb-2 flex items-center gap-2">
                           <FaTrophy className="w-5 h-5" />
-                          순위 급상승 중!
+                          {t('track.history.rankRising')}
                         </h3>
                         <p className="text-sm text-green-600 dark:text-green-300">
-                          팬덤의 노력이 빛을 발하고 있습니다! 이 기세를 이어가세요!
+                          {t('track.history.keepGoing')}
                         </p>
                       </motion.div>
                     )}
@@ -316,10 +318,10 @@ const ChartHistoryModal: React.FC<ChartHistoryModalProps> = ({
                     <div className="text-center">
                       <FaChartLine className="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
                       <p className="text-gray-500 dark:text-gray-400">
-                        순위 히스토리 데이터가 아직 수집되지 않았습니다.
+                        {t('track.history.noData')}
                       </p>
                       <p className="text-sm text-gray-400 dark:text-gray-500 mt-2">
-                        매일 자동으로 순위를 수집하고 있습니다.
+                        {t('track.history.collecting')}
                       </p>
                     </div>
                   </div>

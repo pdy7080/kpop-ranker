@@ -2,11 +2,13 @@ import React, { useEffect, useRef, useState } from 'react';
 import * as d3 from 'd3';
 import { motion } from 'framer-motion';
 import { useRouter } from 'next/router';
+import { useTranslation } from '@/contexts/TranslationContext';
 
 // 개선된 버블 차트 (조회수 기반)
 export const BubbleChart: React.FC<{ data: any[] }> = ({ data }) => {
   const svgRef = useRef<SVGSVGElement>(null);
   const router = useRouter();
+  const { t } = useTranslation();
   const [hoveredBubble, setHoveredBubble] = useState<string | null>(null);
   
   useEffect(() => {
@@ -121,7 +123,7 @@ export const BubbleChart: React.FC<{ data: any[] }> = ({ data }) => {
   return (
     <div className="w-full h-[600px] glass-card rounded-xl p-4 relative">
       <div className="absolute top-4 right-4 text-xs text-gray-400">
-        클릭하여 상세 페이지로 이동
+        {t('click.navigate')}
       </div>
       <svg ref={svgRef} className="w-full h-full" />
     </div>

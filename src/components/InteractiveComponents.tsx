@@ -2,6 +2,7 @@ import React, { useRef, useEffect, useState } from 'react';
 import { motion, useMotionValue, useTransform, useSpring } from 'framer-motion';
 import ImageWithFallback from './ImageWithFallback';
 import { useRouter } from 'next/router';
+import { useTranslation } from '@/contexts/TranslationContext';
 
 // 3D 앨범 아트 컴포넌트
 export const Album3D: React.FC<{ src: string; artist: string; title: string }> = ({ src, artist, title }) => {
@@ -75,6 +76,7 @@ export const Album3D: React.FC<{ src: string; artist: string; title: string }> =
 // 개선된 차트 레이스 애니메이션
 export const ChartRace: React.FC<{ data: any[] }> = ({ data }) => {
   const router = useRouter();
+  const { t } = useTranslation();
 
   const handleTrackClick = (artist: string, title: string) => {
     router.push(`/track/${encodeURIComponent(artist)}/${encodeURIComponent(title)}`);
@@ -148,7 +150,7 @@ export const ChartRace: React.FC<{ data: any[] }> = ({ data }) => {
             {/* 트렌드 스코어 */}
             {item.trendingScore && (
               <div className="text-right">
-                <div className="text-xs text-gray-500">스코어</div>
+                <div className="text-xs text-gray-500">{t('chart.score')}</div>
                 <div className="text-lg font-bold text-purple-400">
                   {item.trendingScore}
                 </div>

@@ -37,6 +37,9 @@ const AdminDashboard = () => {
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
   const [schedulerStatus, setSchedulerStatus] = useState<SchedulerStatus | null>(null);
   const [adminToken, setAdminToken] = useState<string>('');
+  const [translationStats, setTranslationStats] = useState<any>(null);
+  const [translationLoading, setTranslationLoading] = useState(false);
+  const [translationResult, setTranslationResult] = useState<any>(null);
 
   const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
@@ -46,6 +49,8 @@ const AdminDashboard = () => {
     if (savedToken) {
       setAdminToken(savedToken);
       setIsAdmin(true);
+      // 번역 통계 로드
+      loadTranslationStats();
     }
   }, []);
 
@@ -77,6 +82,7 @@ const AdminDashboard = () => {
         setTimeout(() => {
           loadDashboard(token);
           loadSchedulerStatus(token);
+          loadTranslationStats();
         }, 100);
       } else {
         toast.error('비밀번호가 일치하지 않습니다');
@@ -97,6 +103,54 @@ const AdminDashboard = () => {
     setDashboardData(null);
     setSchedulerStatus(null);
     toast.success('로그아웃되었습니다');
+  };
+
+  // 번역 통계 로드
+  const loadTranslationStats = async () => {
+    try {
+      const response = await fetch(`${API_URL}/api/translation/cache-status`);
+      const data = await response.json();
+      if (data.status === 'success') {
+        setTranslationStats({
+          artists: data.data.total_artists,
+          tracks: data.data.total_tracks,
+          lastUpdate: data.data.last_check ? 
+            new Date(data.data.last_check).toLocaleString('ko-KR') : 
+            '없음'
+        });
+      }
+    } catch (error) {
+      console.error('Translation stats error:', error);
+    }
+  };
+
+  // 새 항목 확인 및 번역
+  const checkNewTranslations = async () => {
+    setTranslationLoading(true);
+    try {
+      const response = await fetch(`${API_URL}/api/translation/check-new`);
+      const data = await response.json();
+      
+      if (data.status === 'success') {
+        setTranslationResult(data.data);
+        toast.success(`${data.data.total_processed}개 항목 번역 완료`);
+        
+        // 통계 리로드
+        await loadTranslationStats();
+      } else {
+        toast.error('번역 실행 실패');
+      }
+    } catch (error) {
+      console.error('Translation error:', error);
+      toast.error('번역 API 오류');
+    } finally {
+      setTranslationLoading(false);
+    }
+  };
+
+  // 번역 캐시 보기
+  const viewTranslationCache = () => {
+    window.open(`${API_URL}/api/translation/cache-status`, '_blank');
   };
 
   // 대시보드 데이터 로드
@@ -418,6 +472,71 @@ const AdminDashboard = () => {
                 </p>
               </div>
             </div>
+          </div>
+        </div>
+
+        {/* 자동 번역 섹션 */}
+        <div className="bg-white rounded-lg shadow p-6 mb-6">
+          <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+            🌐 자동 번역 시스템
+          </h2>
+          
+          <div className="space-y-4">
+            {/* 번역 상태 */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="bg-blue-50 p-4 rounded-lg">
+                <p className="text-sm text-gray-600">번역된 아티스트</p>
+                <p className="text-2xl font-bold text-blue-600">
+                  {translationStats?.artists || 0}개
+                </p>
+              </div>
+              <div className="bg-green-50 p-4 rounded-lg">
+                <p className="text-sm text-gray-600">번역된 트랙</p>
+                <p className="text-2xl font-bold text-green-600">
+                  {translationStats?.tracks || 0}개
+                </p>
+              </div>
+              <div className="bg-purple-50 p-4 rounded-lg">
+                <p className="text-sm text-gray-600">마지막 업데이트</p>
+                <p className="text-sm font-bold text-purple-600">
+                  {translationStats?.lastUpdate || '확인중...'}
+                </p>
+              </div>
+            </div>
+
+            {/* 번역 실행 버튼 */}
+            <div className="flex gap-3">
+              <button
+                onClick={checkNewTranslations}
+                disabled={translationLoading}
+                className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 disabled:opacity-50 flex items-center gap-2"
+              >
+                {translationLoading ? (
+                  <span className="animate-spin">⏳</span>
+                ) : (
+                  <span>🔍</span>
+                )}
+                새 항목 확인 및 번역
+              </button>
+              <button
+                onClick={viewTranslationCache}
+                className="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 flex items-center gap-2"
+              >
+                📋 번역 캐시 보기
+              </button>
+            </div>
+
+            {/* 번역 결과 */}
+            {translationResult && (
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <p className="font-semibold mb-2">번역 결과:</p>
+                <div className="text-sm space-y-1">
+                  <p>✅ 새 아티스트: {translationResult.new_artists?.length || 0}개</p>
+                  <p>✅ 새 트랙: {translationResult.new_tracks?.length || 0}개</p>
+                  <p>✅ 총 처리: {translationResult.total_processed || 0}개</p>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 

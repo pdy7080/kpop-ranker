@@ -17,9 +17,11 @@ import {
 } from '@/components/DataVisualization';
 import ChartUpdateStatus from '@/components/ChartUpdateStatus';
 import ImageWithFallback from '@/components/ImageWithFallback';
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 export default function TrendingPage() {
   const router = useRouter();
+  const { t } = useTranslation();
   const [trendingData, setTrendingData] = useState<any[]>([]);
   const [chartData, setChartData] = useState<any>({});
   const [selectedChart, setSelectedChart] = useState<string>('all');
@@ -27,12 +29,12 @@ export default function TrendingPage() {
   const [isLoading, setIsLoading] = useState(true);
 
   const charts = [
-    { id: 'all', name: '통합', emoji: '🌏' },
-    { id: 'melon', name: '멜론', emoji: '🍉' },
-    { id: 'genie', name: '지니', emoji: '🧞' },
-    { id: 'bugs', name: '벅스', emoji: '🐛' },
-    { id: 'spotify', name: '스포티파이', emoji: '🎵' },
-    { id: 'youtube', name: '유튜브', emoji: '📺' }
+    { id: 'all', name: t('trending.filter.integrated'), emoji: '🌏' },
+    { id: 'melon', name: 'Melon', emoji: '🍉' },
+    { id: 'genie', name: 'Genie', emoji: '🧞' },
+    { id: 'bugs', name: 'Bugs', emoji: '🐛' },
+    { id: 'spotify', name: 'Spotify', emoji: '🎵' },
+    { id: 'youtube', name: 'YouTube', emoji: '📺' }
   ];
 
   useEffect(() => {
@@ -143,7 +145,7 @@ export default function TrendingPage() {
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.2 }}
               >
-                실시간 인기 차트 & 트렌드 분석
+                {t('trending.subtitle')}
               </motion.p>
 
               {/* Stats */}
@@ -153,9 +155,9 @@ export default function TrendingPage() {
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 0.3 }}
               >
-                <LiveCounter value={stats.totalTracks} label="차트 진입곡" />
-                <LiveCounter value={stats.avgViews} label="평균 조회수" />
-                <LiveCounter value={8} label="모니터링 차트" />
+                <LiveCounter value={stats.totalTracks} label={t('trending.newTracks')} />
+                <LiveCounter value={stats.avgViews} label={t('trending.avgViews')} />
+                <LiveCounter value={8} label={t('trending.monitoringCharts')} />
               </motion.div>
 
               {/* Chart Selector */}
@@ -202,9 +204,9 @@ export default function TrendingPage() {
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                   >
-                    {range === 'today' && '오늘'}
-                    {range === 'week' && '주간'}
-                    {range === 'month' && '월간'}
+                    {range === 'today' && t('trending.timeRange.today')}
+                    {range === 'week' && t('trending.timeRange.weekly')}
+                    {range === 'month' && t('trending.timeRange.monthly')}
                   </motion.button>
                 ))}
               </motion.div>
@@ -227,7 +229,7 @@ export default function TrendingPage() {
                     className="lg:col-span-2"
                   >
                     <h2 className="text-2xl font-bold mb-6 text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400">
-                      {selectedChart === 'all' ? '통합' : charts.find(c => c.id === selectedChart)?.name} TOP 10
+                      {selectedChart === 'all' ? t('trending.sections.integrated') : charts.find(c => c.id === selectedChart)?.name} TOP 10
                     </h2>
                     <ChartRace data={displayData.slice(0, 10)} />
                   </motion.div>
@@ -240,7 +242,7 @@ export default function TrendingPage() {
                     className="lg:col-span-2"
                   >
                     <h2 className="text-2xl font-bold mb-6 text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400">
-                      조회수 분포
+                      {t('trending.sections.viewDistribution')}
                     </h2>
                     <BubbleChart data={displayData.slice(0, 20).map((d: any) => ({
                       ...d,
@@ -257,7 +259,7 @@ export default function TrendingPage() {
                     transition={{ delay: 0.4 }}
                   >
                     <h2 className="text-2xl font-bold mb-6 text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400">
-                      전체 순위
+                      {t('trending.sections.fullRankings')}
                     </h2>
                     <div className="glass-card rounded-xl p-6">
                       <div className="space-y-3">
@@ -309,7 +311,7 @@ export default function TrendingPage() {
                                 </div>
                               )}
                               <div className="text-right">
-                                <div className="text-xs text-gray-500">스코어</div>
+                                <div className="text-xs text-gray-500">{t('trending.score')}</div>
                                 <div className="text-lg font-bold text-purple-400">
                                   {item.trendingScore}
                                 </div>
@@ -333,7 +335,7 @@ export default function TrendingPage() {
                     transition={{ delay: 0.5 }}
                   >
                     <h2 className="text-2xl font-bold mb-6 text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400">
-                      차트 업데이트 현황
+                      {t('trending.sections.chartUpdateStatus')}
                     </h2>
                     <div className="glass-card rounded-xl p-6">
                       <ChartUpdateStatus />

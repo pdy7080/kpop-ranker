@@ -4,6 +4,7 @@ import { FaSearch, FaMusic, FaUser } from 'react-icons/fa';
 import { useRouter } from 'next/router';
 import debounce from 'lodash/debounce';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useTranslation } from '@/contexts/TranslationContext';
 
 interface Suggestion {
   id: string;
@@ -28,6 +29,7 @@ interface UnifiedSearchProps {
 
 export default function UnifiedSearch({ initialQuery = '' }: UnifiedSearchProps) {
   const router = useRouter();
+  const { t } = useTranslation();
   const [query, setQuery] = useState(initialQuery);
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -270,7 +272,7 @@ export default function UnifiedSearch({ initialQuery = '' }: UnifiedSearchProps)
           onChange={handleInputChange}
           onKeyDown={handleKeyDown}
           onFocus={() => setShowSuggestions(true)}
-          placeholder="아티스트, 트랙 검색..."
+          placeholder={t('search.placeholder')}
           className="w-full px-6 py-4 pr-12 bg-white/10 backdrop-blur-lg border border-white/20 rounded-2xl 
                      text-white placeholder-white/50 outline-none focus:border-purple-400 transition-all
                      hover:bg-white/15"
@@ -383,7 +385,7 @@ export default function UnifiedSearch({ initialQuery = '' }: UnifiedSearchProps)
                   </div>
                   {suggestion.chart_count && (
                     <div style={{ fontSize: '12px', color: 'rgba(255, 255, 255, 0.6)', marginTop: '4px' }}>
-                      {suggestion.chart_count}개 트랙
+                      {suggestion.chart_count} {t('chart.tracks')}
                     </div>
                   )}
                 </div>
@@ -394,7 +396,7 @@ export default function UnifiedSearch({ initialQuery = '' }: UnifiedSearchProps)
                     borderRadius: '9999px',
                     background: 'linear-gradient(135deg, #f59e0b, #ea580c)'
                   }}>
-                    인기
+                    {t('tab.hot')}
                   </span>
                 )}
               </motion.div>

@@ -4,6 +4,7 @@ import { FaSearch, FaTimes, FaInfoCircle } from 'react-icons/fa';
 import { useDebounce } from '@/hooks/useDebounce';
 import { searchApi } from '@/lib/api';
 import { useRouter } from 'next/router';
+import { useTranslation } from '@/contexts/TranslationContext';
 import toast from 'react-hot-toast';
 
 interface SearchSuggestion {
@@ -22,11 +23,12 @@ interface SmartSearchBoxProps {
 
 const SmartSearchBox: React.FC<SmartSearchBoxProps> = ({ 
   onSearch = null, 
-  placeholder = "아티스트와 곡명을 아무렇게나 입력하세요 (예: 뉴진스 하입보이, 방탄 버터)",
+  placeholder = null,
   className = "",
   size = 'normal'
 }) => {
   const router = useRouter();
+  const { t } = useTranslation();
   const [query, setQuery] = useState('');
   const [suggestions, setSuggestions] = useState<SearchSuggestion[]>([]);
   const [isLoading, setIsLoading] = useState(false);

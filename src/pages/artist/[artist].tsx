@@ -17,6 +17,7 @@ import {
 } from 'react-icons/fa';
 import { SiYoutubemusic } from 'react-icons/si';
 import toast from 'react-hot-toast';
+import { useTranslation } from '@/contexts/TranslationContext';
 
 // ========================================
 // 타입 정의
@@ -281,6 +282,7 @@ function transformResponseToArtistData(response: any): ArtistData {
 export default function ArtistDetailPage() {
   const router = useRouter();
   const { artist } = router.query;
+  const { t } = useTranslation();
   const [artistData, setArtistData] = useState<ArtistData | null>(null);
   const [newsData, setNewsData] = useState<NewsItem[]>([]);
   const [goodsData, setGoodsData] = useState<GoodsItem[]>([]);
@@ -459,7 +461,7 @@ export default function ArtistDetailPage() {
                     className="text-center"
                   >
                     <div className="text-3xl font-bold text-purple-400">{artistData.stats.total_tracks}</div>
-                    <div className="text-sm text-gray-400">트랙</div>
+                    <div className="text-sm text-gray-400">{t('artist.stats.tracks')}</div>
                   </motion.div>
                   <motion.div 
                     initial={{ scale: 0 }}
@@ -468,7 +470,7 @@ export default function ArtistDetailPage() {
                     className="text-center"
                   >
                     <div className="text-3xl font-bold text-pink-400">{Object.keys(artistData.stats.chart_presence).length}</div>
-                    <div className="text-sm text-gray-400">차트</div>
+                    <div className="text-sm text-gray-400">{t('artist.stats.charts')}</div>
                   </motion.div>
                   <motion.div 
                     initial={{ scale: 0 }}
@@ -479,7 +481,7 @@ export default function ArtistDetailPage() {
                     <div className="text-3xl font-bold text-yellow-400">
                       {artistData.stats.best_overall_rank ? `#${artistData.stats.best_overall_rank}` : '-'}
                     </div>
-                    <div className="text-sm text-gray-400">최고 순위</div>
+                    <div className="text-sm text-gray-400">{t('artist.stats.peak')}</div>
                   </motion.div>
                   <motion.div 
                     initial={{ scale: 0 }}
@@ -488,7 +490,7 @@ export default function ArtistDetailPage() {
                     className="text-center"
                   >
                     <div className="text-3xl font-bold text-cyan-400">{artistData.stats.global_popularity_score}%</div>
-                    <div className="text-sm text-gray-400">인기도</div>
+                    <div className="text-sm text-gray-400">{t('artist.stats.popularity')}</div>
                   </motion.div>
                 </div>
               </div>
@@ -509,7 +511,7 @@ export default function ArtistDetailPage() {
                 }`}
               >
                 <FaChartLine className="inline mr-2" />
-                차트 순위
+                {t('artist.tabs.charts')}
               </button>
               <button
                 onClick={() => setActiveTab('news')}
@@ -520,7 +522,7 @@ export default function ArtistDetailPage() {
                 }`}
               >
                 <FaNewspaper className="inline mr-2" />
-                뉴스
+                {t('artist.tabs.news')}
               </button>
               <button
                 onClick={() => setActiveTab('goods')}
@@ -531,7 +533,7 @@ export default function ArtistDetailPage() {
                 }`}
               >
                 <FaShoppingBag className="inline mr-2" />
-                굿즈
+                {t('artist.tabs.goods')}
               </button>
             </div>
           </div>
@@ -576,14 +578,14 @@ export default function ArtistDetailPage() {
                             <div className="flex items-center gap-3 mb-3">
                               <div className="flex items-center gap-1 text-sm">
                                 <FaFire className="text-orange-500" />
-                                <span className="text-orange-400">트렌드 스코어: {track.trend_score}</span>
+                                <span className="text-orange-400">{t('artist.trendScore')}: {track.trend_score}</span>
                               </div>
                             </div>
                             <button
                               onClick={() => router.push(`/track/${encodeURIComponent(artistData.artist)}/${encodeURIComponent(track.name)}`)}
                               className="px-4 py-1.5 bg-gradient-to-r from-purple-600 to-pink-600 text-white text-sm rounded-full hover:from-purple-700 hover:to-pink-700 transition-all"
                             >
-                              상세보기
+                              {t('artist.viewDetails')}
                             </button>
                           </div>
                         </div>

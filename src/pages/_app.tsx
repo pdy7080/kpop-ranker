@@ -3,6 +3,7 @@ import type { AppProps } from 'next/app';
 import { useEffect } from 'react';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider } from '@/contexts/AuthContext';
+import { TranslationProvider } from '@/contexts/TranslationContext';
 
 // 개발 환경에서만 디버그 툴 로드
 if (process.env.NODE_ENV === 'development') {
@@ -19,19 +20,21 @@ export default function App({ Component, pageProps }: AppProps) {
   }, []);
 
   return (
-    <AuthProvider>
-      <Component {...pageProps} />
-      <Toaster
-        position="top-right"
-        toastOptions={{
-          duration: 3000,
-          style: {
-            background: 'var(--background)',
-            color: 'var(--foreground)',
-            border: '1px solid var(--border)',
-          },
-        }}
-      />
-    </AuthProvider>
+    <TranslationProvider>
+      <AuthProvider>
+        <Component {...pageProps} />
+        <Toaster
+          position="top-right"
+          toastOptions={{
+            duration: 3000,
+            style: {
+              background: 'var(--background)',
+              color: 'var(--foreground)',
+              border: '1px solid var(--border)',
+            },
+          }}
+        />
+      </AuthProvider>
+    </TranslationProvider>
   );
 }
