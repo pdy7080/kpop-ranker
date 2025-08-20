@@ -128,7 +128,7 @@ export default function ChartUpdateStatus({ className = '' }: ChartUpdateStatusP
 
   return (
     <div className={`rounded-xl overflow-hidden ${className}`}>
-      <div className="grid md:grid-cols-2 gap-4 h-auto max-h-[150px]">
+      <div className="grid md:grid-cols-2 gap-4 h-auto">
         {/* 왼쪽: 고정된 업데이트 시간 */}
         <div className="bg-gray-50 dark:bg-gray-800 p-3 rounded-lg">
           <h3 className="font-bold text-xs mb-2 text-gray-700 dark:text-gray-300 flex items-center gap-1">
@@ -158,7 +158,7 @@ export default function ChartUpdateStatus({ className = '' }: ChartUpdateStatusP
         </div>
 
         {/* 오른쪽: 터미널 스타일 실시간 업데이트 현황 */}
-        <div className="bg-black rounded-lg p-2 font-mono text-[10px] overflow-hidden relative">
+        <div className="bg-black rounded-lg p-2 font-mono text-[10px] overflow-auto relative max-h-[200px]">
           <div className="text-green-400 mb-1">{t('chart.update.realtime')}</div>
           
           {/* 업데이트 로그 */}
@@ -189,9 +189,34 @@ export default function ChartUpdateStatus({ className = '' }: ChartUpdateStatusP
                       `${data.track_count} ${t('chart.tracks')}` : 
                       t('chart.nodata');
                     
+                    // 시간 포맷 간단하게 처리 (월.일 시:분)
+                    const formatTime = (timeStr: string) => {
+                      if (!timeStr) return '';
+                      // "2025년 08월 20일 14시 32분" -> "08.20 14:32"
+                      const match = timeStr.match(/(\d{2})월 (\d{2})일 (\d{2})시 (\d{2})분/);
+                      if (match) {
+                        return `${match[1]}.${match[2]} ${match[3]}:${match[4]}`;
+                      }
+                      // "2025-08-20 14:32:39" -> "08.20 14:32"
+                      const isoMatch = timeStr.match(/\d{4}-(\d{2})-(\d{2}) (\d{2}):(\d{2})/);
+                      if (isoMatch) {
+                        return `${isoMatch[1]}.${isoMatch[2]} ${isoMatch[3]}:${isoMatch[4]}`;
+                      }
+                      return timeStr;
+                    };
+                    
+                    const shortTime = formatTime(updateTime);
+                    
                     return (
-                      <div key={chartKey} className={statusColor}>
-                        {chartName} - {displayStatus} {statusIcon}
+                      <div key={chartKey} className="space-y-0">
+                        <div className={statusColor}>
+                          {chartName} - {displayStatus} {statusIcon}
+                        </div>
+                        {shortTime && (
+                          <div className="text-[8px] text-gray-500 pl-2">
+                            {shortTime}
+                          </div>
+                        )}
                       </div>
                     );
                   })
