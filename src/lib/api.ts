@@ -12,10 +12,17 @@ const api = axios.create({
     'Content-Type': 'application/json',
     'Accept': 'application/json',
   },
+  withCredentials: true  // 세션 쿠키 전송을 위해 필요
 });
 
-// API 호출 로깅
+// API 호출 로깅 및 인증 헤더 추가
 api.interceptors.request.use((config) => {
+  // 인증 토큰 추가
+  const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
+  if (token && token !== 'session_only') {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  
   console.log(`🔍 API Request: ${config.method?.toUpperCase()} ${config.baseURL}${config.url}`);
   return config;
 });
