@@ -39,35 +39,42 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
   const handleSocialLogin = async (provider: string) => {
     setIsLoading(true);
     try {
-      // 직접 OAuth URL 생성 (서버 API가 없을 경우 폴백)
+      // OAuth URL을 서버에서 가져오기 (보안상 권장)
+      let oauthUrl = '';
+      
       if (provider === 'google') {
-        // Google OAuth URL 직접 생성
-        const params = new URLSearchParams({
-          client_id: '665193635993-1m7ijedftmshe6ih769g2jkiuluti32m.apps.googleusercontent.com',
-          redirect_uri: 'https://kpop-ranker.vercel.app/auth/callback',
-          scope: 'openid email profile',
-          response_type: 'code',
-          access_type: 'offline',
-          prompt: 'consent'
-        });
-        
-        localStorage.setItem('oauth_provider', 'google');
-        window.location.href = `https://accounts.google.com/o/oauth2/auth?${params.toString()}`;
+        // 서버에서 Google OAuth URL 가져오기
+        const response = await authApi.getGoogleOAuthUrl();
+        if (response?.url) {
+          oauthUrl = response.url;
+        } else if (!response?.configured) {
+          console.log('Google OAuth가 설정되지 않았습니다. 데모 로그인을 사용하세요.');
+          toast.info('Google 로그인이 설정되지 않았습니다. 데모 로그인을 사용해주세요.');
+          return;
+        }
       } else if (provider === 'kakao') {
-        // Kakao OAuth URL 직접 생성
-        const params = new URLSearchParams({
-          client_id: 'fd87bbda53a9c6c6186a0a1544bbae66',
-          redirect_uri: 'https://kpop-ranker.vercel.app/auth/callback',
-          response_type: 'code',
-          scope: 'profile_nickname profile_image account_email'
-        });
-        
-        localStorage.setItem('oauth_provider', 'kakao');
-        window.location.href = `https://kauth.kakao.com/oauth/authorize?${params.toString()}`;
+        // 서버에서 Kakao OAuth URL 가져오기
+        const response = await authApi.getKakaoOAuthUrl();
+        if (response?.url) {
+          oauthUrl = response.url;
+        } else if (!response?.configured) {
+          console.log('Kakao OAuth가 설정되지 않았습니다. 데모 로그인을 사용하세요.');
+          toast.info('카카오 로그인이 설정되지 않았습니다. 데모 로그인을 사용해주세요.');
+          return;
+        }
+      }
+      
+      if (oauthUrl) {
+        // provider 정보 저장 (콜백에서 사용)
+        localStorage.setItem('oauth_provider', provider);
+        // OAuth 페이지로 리다이렉트
+        window.location.href = oauthUrl;
+      } else {
+        toast.error(`${provider === 'google' ? 'Google' : '카카오'} 로그인 URL을 가져올 수 없습니다.`);
       }
     } catch (error) {
       console.error(`${provider} 로그인 오류:`, error);
-      toast.error(`${provider === 'google' ? 'Google' : 'Kakao'} 로그인 중 오류가 발생했습니다.`);
+      toast.error(`${provider === 'google' ? 'Google' : '카카오'} 로그인 중 오류가 발생했습니다.`);
     } finally {
       setIsLoading(false);
     }

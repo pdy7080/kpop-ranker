@@ -31,13 +31,15 @@ const AuthCallbackPage: React.FC = () => {
       // 처리 시작
       setIsProcessing(true);
       
-      // 디버깅 로그 추가
-      console.log('🔵 OAuth Callback Parameters:', {
-        code: code ? `${String(code).substring(0, 10)}...` : 'NO_CODE',
-        state: state,
-        error: error,
-        fullUrl: window.location.href
-      });
+      // 디버깅 로그 추가 (프로덕션에서는 비활성화 권장)
+      if (process.env.NODE_ENV === 'development') {
+        console.log('🔵 OAuth Callback Parameters:', {
+          code: code ? `${String(code).substring(0, 10)}...` : 'NO_CODE',
+          state: state,
+          error: error,
+          provider: 'detected'
+        });
+      }
       
       if (error) {
         console.error('🔴 OAuth Error:', error);
@@ -73,7 +75,9 @@ const AuthCallbackPage: React.FC = () => {
         localStorage.removeItem('oauth_provider');
 
         // OAuth 콜백 처리
-        console.log(`🟢 Calling ${provider} OAuth callback API...`);
+        if (process.env.NODE_ENV === 'development') {
+          console.log(`🟢 Calling ${provider} OAuth callback API...`);
+        }
         
         let response;
         if (provider === 'google') {
@@ -82,13 +86,14 @@ const AuthCallbackPage: React.FC = () => {
           response = await authApi.kakaoCallback(code as string);
         }
         
-        // 디버깅 로그 - API 응답
-        console.log('🟡 OAuth API Response:', {
-          success: response?.data?.success,
-          hasToken: !!response?.data?.token,
-          hasUser: !!response?.data?.user,
-          fullResponse: response?.data
-        });
+        // 디버깅 로그 - API 응답 (프로덕션에서는 비활성화)
+        if (process.env.NODE_ENV === 'development') {
+          console.log('🟡 OAuth API Response:', {
+            success: response?.data?.success,
+            hasToken: !!response?.data?.token,
+            hasUser: !!response?.data?.user
+          });
+        }
 
         if (response?.data?.success && response?.data?.token) {
           // 토큰 저장
