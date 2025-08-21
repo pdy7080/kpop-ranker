@@ -223,11 +223,32 @@ export const authApi = {
     );
   },
 
+  // OAuth URL 가져오기
+  getGoogleOAuthUrl: async (): Promise<any> => {
+    try {
+      const response = await api.get('/api/auth/oauth/google/url');
+      return response;
+    } catch (error) {
+      console.error('Google OAuth URL error:', error);
+      return { data: { success: false, url: '', configured: false } };
+    }
+  },
+
+  getKakaoOAuthUrl: async (): Promise<any> => {
+    try {
+      const response = await api.get('/api/auth/oauth/kakao/url');
+      return response;
+    } catch (error) {
+      console.error('Kakao OAuth URL error:', error);
+      return { data: { success: false, url: '', configured: false } };
+    }
+  },
+
   // OAuth 콜백 처리
   googleCallback: async (code: string): Promise<any> => {
     try {
       console.log('🟢 Calling google OAuth callback API...');
-      const response = await api.post('/api/auth/oauth/google', { code });
+      const response = await api.post('/api/auth/oauth/google/callback', { code });
       console.log('🟡 OAuth API Response:', {
         success: response?.data?.success,
         hasToken: !!response?.data?.token,
@@ -244,7 +265,7 @@ export const authApi = {
   kakaoCallback: async (code: string): Promise<any> => {
     try {
       console.log('🟢 Calling kakao OAuth callback API...');
-      const response = await api.post('/api/auth/oauth/kakao', { code });
+      const response = await api.post('/api/auth/oauth/kakao/callback', { code });
       console.log('🟡 OAuth API Response:', {
         success: response?.data?.success,
         hasToken: !!response?.data?.token,
