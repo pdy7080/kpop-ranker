@@ -19,6 +19,26 @@ import ChartUpdateStatus from '@/components/ChartUpdateStatus';
 import ImageWithFallback from '@/components/ImageWithFallback';
 import { useTranslation } from '@/contexts/TranslationContext';
 
+// 조회수 포맷팅 함수
+const formatViews = (views: string | number | undefined): string => {
+  if (!views || views === '0' || views === '') return '';
+  
+  try {
+    const num = typeof views === 'string' ? parseInt(views) : views;
+    if (isNaN(num)) return '';
+    
+    if (num >= 1000000000) return `${(num / 1000000000).toFixed(1)}B`;
+    if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`;
+    if (num >= 1000) return `${(num / 1000).toFixed(0)}K`;
+    return num.toLocaleString();
+  } catch {
+    return '';
+  }
+};
+
+// 정렬 옵션
+type SortOption = 'rank' | 'views' | 'artist' | 'title';
+
 export default function TrendingPage() {
   const router = useRouter();
   const { t } = useTranslation();
@@ -26,6 +46,7 @@ export default function TrendingPage() {
   const [chartData, setChartData] = useState<any>({});
   const [selectedChart, setSelectedChart] = useState<string>('all');
   const [timeRange, setTimeRange] = useState<'today' | 'week' | 'month'>('today');
+  const [sortBy, setSortBy] = useState<SortOption>('rank');
   const [isLoading, setIsLoading] = useState(true);
 
   const charts = [
@@ -35,6 +56,14 @@ export default function TrendingPage() {
     { id: 'bugs', name: 'Bugs', emoji: '🐛' },
     { id: 'spotify', name: 'Spotify', emoji: '🎵' },
     { id: 'youtube', name: 'YouTube', emoji: '📺' }
+  ];
+
+  // 정렬 옵션 (YouTube 조회수 포함)
+  const sortOptions = [
+    { value: 'rank', label: '차트 순위' },
+    { value: 'views', label: 'YouTube 조회수' },
+    { value: 'artist', label: '아티스트명' },
+    { value: 'title', label: '곡명' }
   ];
 
   useEffect(() => {
@@ -53,11 +82,11 @@ export default function TrendingPage() {
         const formattedData = tracks.map((track: any, idx: number) => ({
           id: track.id || idx,
           rank: idx + 1,
-          artist: track.artist,
-          title: track.title || track.track || track.name,
-          albumImage: track.album_image,
+          artist: track.artist || track.unified_artist,
+          title: track.title || track.track || track.unified_track || track.name,
+          albumImage: track.album_image || track.optimized_album_image,
           change: track.rank_change || 0,
-          views: track.youtube_views || track.views || Math.floor(Math.random() * 10000000),
+          views: track.views_or_streams || track.youtube_views || track.views || 0,
           trendingScore: track.trending_score || track.trend_score || Math.floor(Math.random() * 100),
           chartPositions: track.chart_scores || track.charts || {},
           sparkData: Array.from({ length: 30 }, () => Math.floor(Math.random() * 100) + 1)
@@ -102,261 +131,176 @@ export default function TrendingPage() {
     }
   };
 
-  const displayData = selectedChart === 'all' ? trendingData : (chartData[selectedChart] || []);
-
-  const stats = {
-    totalTracks: displayData.length,
-    avgViews: displayData.length > 0 
-      ? Math.floor(displayData.reduce((acc: number, t: any) => acc + (t.views || 0), 0) / displayData.length)
-      : 0,
-    topGenre: 'K-POP'
-  };
+  // 정렬 함수
+  const sortedData = React.useMemo(() => {
+    const data = selectedChart === 'all' ? trendingData : (chartData[selectedChart] || []);
+    
+    return [...data].sort((a, b) => {
+      switch (sortBy) {
+        case 'views':
+          const viewsA = typeof a.views === 'string' ? parseInt(a.views) || 0 : a.views || 0;
+          const viewsB = typeof b.views === 'string' ? parseInt(b.views) || 0 : b.views || 0;
+          return viewsB - viewsA;
+        case 'artist':
+          return (a.artist || '').localeCompare(b.artist || '');
+        case 'title':
+          return (a.title || '').localeCompare(b.title || '');
+        case 'rank':
+        default:
+          return a.rank - b.rank;
+      }
+    });
+  }, [trendingData, chartData, selectedChart, sortBy]);
 
   return (
     <Layout>
       <Head>
-        <title>트렌딩 - KPOP Ranker</title>
+        <title>{t('trending.title')} - KPOP Ranker</title>
+        <meta name="description" content={t('trending.description')} />
       </Head>
 
-      <MouseGradient>
-        <div className="min-h-screen bg-[#0A0A0F] text-white relative">
-          <ParticleField />
-          
-          {/* Header */}
-          <motion.section 
-            className="relative py-12 md:py-16 px-4 md:px-8"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
+      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-pink-900 to-red-900 relative overflow-hidden">
+        <ParticleField />
+        <MouseGradient />
+
+        <div className="container mx-auto px-4 py-8 relative z-10">
+          {/* 헤더 */}
+          <motion.div
+            initial={{ opacity: 0, y: -50 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-center mb-12"
           >
-            <div className="max-w-7xl mx-auto">
-              <motion.h1 
-                className="text-4xl md:text-6xl font-bold mb-4 text-center"
-                initial={{ y: -50 }}
-                animate={{ y: 0 }}
-              >
-                <span className="bg-gradient-to-r from-purple-400 via-pink-400 to-blue-400 bg-clip-text text-transparent">
-                  TRENDING
-                </span>
-              </motion.h1>
-              
-              <motion.p 
-                className="text-base md:text-xl text-center text-gray-400 mb-8 md:mb-12"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.2 }}
-              >
-                {t('trending.subtitle')}
-              </motion.p>
+            <h1 className="text-6xl font-bold text-white mb-4 neon-text">
+              {t('trending.header.realTime')}
+            </h1>
+            <p className="text-xl text-pink-200">
+              {t('trending.header.subtitle')}
+            </p>
+          </motion.div>
 
-              {/* Stats */}
-              <motion.div 
-                className="grid grid-cols-3 gap-4 md:gap-6 mb-8 md:mb-12"
-                initial={{ y: 50, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.3 }}
-              >
-                <LiveCounter value={stats.totalTracks} label={t('trending.newTracks')} />
-                <LiveCounter value={stats.avgViews} label={t('trending.avgViews')} />
-                <LiveCounter value={8} label={t('trending.monitoringCharts')} />
-              </motion.div>
+          {/* 차트 업데이트 현황 */}
+          <ChartUpdateStatus />
 
-              {/* Chart Selector */}
-              <motion.div 
-                className="flex justify-center gap-2 md:gap-3 flex-wrap mb-6 md:mb-8"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.4 }}
-              >
-                {charts.map((chart) => (
-                  <motion.button
-                    key={chart.id}
-                    onClick={() => setSelectedChart(chart.id)}
-                    className={`px-3 md:px-6 py-2 md:py-3 rounded-full font-medium text-sm md:text-base transition-all ${
-                      selectedChart === chart.id 
-                        ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg shadow-purple-500/30' 
-                        : 'glass-card hover:bg-white/10'
-                    }`}
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                  >
-                    <span className="mr-1 md:mr-2">{chart.emoji}</span>
-                    {chart.name}
-                  </motion.button>
-                ))}
-              </motion.div>
-
-              {/* Time Range Selector */}
-              <motion.div 
-                className="flex justify-center gap-4"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.5 }}
-              >
-                {(['today', 'week', 'month'] as const).map((range) => (
-                  <motion.button
-                    key={range}
-                    onClick={() => setTimeRange(range)}
-                    className={`px-4 py-2 rounded-lg text-sm transition-all ${
-                      timeRange === range 
-                        ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white' 
-                        : 'glass-card hover:bg-white/10'
-                    }`}
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                  >
-                    {range === 'today' && t('trending.timeRange.today')}
-                    {range === 'week' && t('trending.timeRange.weekly')}
-                    {range === 'month' && t('trending.timeRange.monthly')}
-                  </motion.button>
-                ))}
-              </motion.div>
+          {/* 필터 & 정렬 옵션 */}
+          <div className="flex flex-wrap justify-center gap-4 mb-8">
+            {/* 차트 필터 */}
+            <div className="flex gap-2">
+              {charts.map((chart) => (
+                <motion.button
+                  key={chart.id}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setSelectedChart(chart.id)}
+                  className={`px-4 py-2 rounded-full backdrop-blur-md transition-all ${
+                    selectedChart === chart.id
+                      ? 'bg-white/30 text-white shadow-neon'
+                      : 'bg-white/10 text-white/70 hover:bg-white/20'
+                  }`}
+                >
+                  <span className="mr-1">{chart.emoji}</span>
+                  {chart.name}
+                </motion.button>
+              ))}
             </div>
-          </motion.section>
 
-          {/* Main Content */}
-          <section className="px-4 md:px-8 pb-20">
-            <div className="max-w-7xl mx-auto">
-              {isLoading ? (
-                <div className="flex justify-center items-center h-96">
-                  <WaveVisualizer isPlaying={true} />
-                </div>
-              ) : displayData.length > 0 ? (
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                  {/* Top 10 Chart Race */}
-                  <motion.div
-                    initial={{ x: -100, opacity: 0 }}
-                    animate={{ x: 0, opacity: 1 }}
-                    className="lg:col-span-2"
-                  >
-                    <h2 className="text-2xl font-bold mb-6 text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400">
-                      {selectedChart === 'all' ? t('trending.sections.integrated') : charts.find(c => c.id === selectedChart)?.name} TOP 10
-                    </h2>
-                    <ChartRace data={displayData.slice(0, 10)} />
-                  </motion.div>
+            {/* 정렬 옵션 */}
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as SortOption)}
+              className="px-4 py-2 rounded-full bg-white/20 text-white backdrop-blur-md border border-white/30 focus:outline-none focus:ring-2 focus:ring-pink-500"
+            >
+              {sortOptions.map(option => (
+                <option key={option.value} value={option.value} className="bg-gray-800">
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </div>
 
-                  {/* Bubble Chart */}
+          {/* 트렌딩 리스트 */}
+          <AnimatePresence mode="wait">
+            {isLoading ? (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="text-center py-20"
+              >
+                <div className="inline-block animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-pink-500"></div>
+              </motion.div>
+            ) : (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="grid gap-4"
+              >
+                {sortedData.map((track, index) => (
                   <motion.div
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: 0.2 }}
-                    className="lg:col-span-2"
+                    key={track.id}
+                    initial={{ opacity: 0, x: -50 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: index * 0.02 }}
+                    whileHover={{ scale: 1.02 }}
+                    onClick={() => router.push(`/track/${encodeURIComponent(track.artist)}/${encodeURIComponent(track.title)}`)}
+                    className="bg-white/10 backdrop-blur-md rounded-2xl p-4 hover:bg-white/20 transition-all cursor-pointer border border-white/20"
                   >
-                    <h2 className="text-2xl font-bold mb-6 text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400">
-                      {t('trending.sections.viewDistribution')}
-                    </h2>
-                    <BubbleChart data={displayData.slice(0, 20).map((d: any) => ({
-                      ...d,
-                      x: Math.random() * 800,
-                      y: Math.random() * 600
-                    }))} />
-                  </motion.div>
+                    <div className="flex items-center gap-4">
+                      {/* 순위 */}
+                      <div className="text-3xl font-bold text-white/90 w-12 text-center">
+                        {sortBy === 'rank' ? track.rank : index + 1}
+                      </div>
 
-                  {/* Full Ranking List */}
-                  <motion.div
-                    className="lg:col-span-2"
-                    initial={{ y: 100, opacity: 0 }}
-                    animate={{ y: 0, opacity: 1 }}
-                    transition={{ delay: 0.4 }}
-                  >
-                    <h2 className="text-2xl font-bold mb-6 text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400">
-                      {t('trending.sections.fullRankings')}
-                    </h2>
-                    <div className="glass-card rounded-xl p-6">
-                      <div className="space-y-3">
-                        {displayData.map((item: any, idx: number) => (
-                          <motion.div
-                            key={item.id}
-                            initial={{ x: -50, opacity: 0 }}
-                            animate={{ x: 0, opacity: 1 }}
-                            transition={{ delay: Math.min(idx * 0.02, 0.5) }}
-                            className="flex items-center gap-4 p-4 rounded-lg bg-white/5 hover:bg-white/10 cursor-pointer transition-all group border border-white/10 hover:border-purple-500/50"
-                            onClick={() => router.push(`/track/${encodeURIComponent(item.artist)}/${encodeURIComponent(item.title)}`)}
-                            whileHover={{ x: 5 }}
-                          >
-                            <div className={`text-2xl font-bold min-w-[3rem] ${
-                              idx === 0 ? 'text-yellow-400' :
-                              idx === 1 ? 'text-gray-300' :
-                              idx === 2 ? 'text-orange-400' :
-                              'text-purple-400'
-                            }`}>
-                              #{item.rank}
-                            </div>
-                            
-                            <div className="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0">
-                              <ImageWithFallback
-                                src={item.albumImage || `/api/album-image-smart/${encodeURIComponent(item.artist)}/${encodeURIComponent(item.title)}`}
-                                alt={`${item.artist} - ${item.title}`}
-                                artistName={item.artist}
-                                trackName={item.title}
-                                className="w-full h-full object-cover"
-                                width={64}
-                                height={64}
-                              />
-                            </div>
-                            
-                            <div className="flex-1 min-w-0">
-                              <h3 className="font-bold text-lg text-white truncate group-hover:text-purple-400 transition-colors">
-                                {item.title}
-                              </h3>
-                              <p className="text-gray-400 truncate">{item.artist}</p>
-                            </div>
-                            
-                            <div className="flex items-center gap-4">
-                              {item.change !== 0 && (
-                                <div className={`font-bold flex items-center gap-1 ${
-                                  item.change > 0 ? 'text-green-400' : 'text-red-400'
-                                }`}>
-                                  {item.change > 0 ? '↑' : '↓'} 
-                                  <span>{Math.abs(item.change)}</span>
-                                </div>
-                              )}
-                              <div className="text-right">
-                                <div className="text-xs text-gray-500">{t('trending.score')}</div>
-                                <div className="text-lg font-bold text-purple-400">
-                                  {item.trendingScore}
-                                </div>
-                              </div>
-                            </div>
-                            
-                            <div className="opacity-0 group-hover:opacity-100 transition-opacity text-purple-400">
-                              →
-                            </div>
-                          </motion.div>
-                        ))}
+                      {/* 앨범 이미지 */}
+                      <ImageWithFallback
+                        src={track.albumImage}
+                        alt={`${track.artist} - ${track.title}`}
+                        width={80}
+                        height={80}
+                        className="rounded-lg shadow-lg"
+                      />
+
+                      {/* 트랙 정보 */}
+                      <div className="flex-grow">
+                        <h3 className="text-xl font-semibold text-white">
+                          {track.title}
+                        </h3>
+                        <p className="text-pink-200">
+                          {track.artist}
+                        </p>
+                        
+                        {/* YouTube 조회수 표시 */}
+                        {track.views && track.views !== '0' && (
+                          <div className="flex items-center gap-2 mt-2">
+                            <svg className="w-5 h-5 text-red-400" viewBox="0 0 24 24" fill="currentColor">
+                              <path d="M10 15l5.19-3L10 9v6m11.56-7.83c.13.47.22 1.1.28 1.9.07.8.1 1.49.1 2.09L22 12c0 2.19-.16 3.8-.44 4.83-.25.9-.83 1.48-1.73 1.73-.47.13-1.33.22-2.65.28-1.3.07-2.49.1-3.59.1L12 19c-4.19 0-6.8-.16-7.83-.44-.9-.25-1.48-.83-1.73-1.73-.13-.47-.22-1.1-.28-1.9-.07-.8-.1-1.49-.1-2.09L2 12c0-2.19.16-3.8.44-4.83.25-.9.83-1.48 1.73-1.73.47-.13 1.33-.22 2.65-.28 1.3-.07 2.49-.1 3.59-.1L12 5c4.19 0 6.8.16 7.83.44.9.25 1.48.83 1.73 1.73z"/>
+                            </svg>
+                            <span className="text-sm text-white/80">
+                              {formatViews(track.views)} views
+                            </span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* 변동 표시 */}
+                      <div className="text-right">
+                        {track.change !== 0 && (
+                          <div className={`flex items-center gap-1 ${
+                            track.change > 0 ? 'text-green-400' : 'text-red-400'
+                          }`}>
+                            {track.change > 0 ? '▲' : '▼'}
+                            <span className="font-semibold">{Math.abs(track.change)}</span>
+                          </div>
+                        )}
                       </div>
                     </div>
                   </motion.div>
-
-                  {/* Chart Update Status */}
-                  <motion.div
-                    className="lg:col-span-2"
-                    initial={{ y: 50, opacity: 0 }}
-                    animate={{ y: 0, opacity: 1 }}
-                    transition={{ delay: 0.5 }}
-                  >
-                    <h2 className="text-2xl font-bold mb-6 text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400">
-                      {t('trending.sections.chartUpdateStatus')}
-                    </h2>
-                    <div className="glass-card rounded-xl p-6">
-                      <ChartUpdateStatus />
-                    </div>
-                  </motion.div>
-                </div>
-              ) : (
-                <div className="text-center py-20">
-                  <p className="text-gray-500 text-xl">데이터를 불러올 수 없습니다.</p>
-                  <button 
-                    onClick={fetchTrendingData}
-                    className="mt-4 px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg hover:from-purple-700 hover:to-pink-700 transition-all"
-                  >
-                    다시 시도
-                  </button>
-                </div>
-              )}
-            </div>
-          </section>
+                ))}
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
-      </MouseGradient>
+      </div>
     </Layout>
   );
 }
