@@ -12,14 +12,19 @@ const api = axios.create({
     'Content-Type': 'application/json',
     'Accept': 'application/json',
   },
-  withCredentials: true  // 세션 쿠키 전송을 위해 필요
+  withCredentials: false  // CORS 문제 해결을 위해 false로 변경
 });
 
 // API 호출 로깅 및 인증 헤더 추가
 api.interceptors.request.use((config) => {
-  // 인증 토큰 추가
+  // 인증 토큰 추가 (포트폴리오, 인증 관련 API만)
   const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
-  if (token && token !== 'session_only') {
+  
+  // 포트폴리오, 인증 관련 API에만 토큰 추가
+  const authRequiredPaths = ['/api/portfolio', '/api/auth/user', '/api/auth/status', '/api/auth/logout'];
+  const requiresAuth = authRequiredPaths.some(path => config.url?.includes(path));
+  
+  if (token && token !== 'session_only' && requiresAuth) {
     config.headers.Authorization = `Bearer ${token}`;
   }
   
