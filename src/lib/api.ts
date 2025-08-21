@@ -1,4 +1,6 @@
-import axios from 'axios';
+import axios, { AxiosInstance } from 'axios';
+
+
 
 // API URL 설정 - 백엔드 (포트 5000)
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
@@ -281,88 +283,32 @@ export const authAPI = {
   // OAuth URLs
   getGoogleOAuthUrl: async () => {
     return safeApiCall(
-      () => api.get('/api/auth/google/url'),
+      () => api.get('/api/auth/oauth/google/url'),
       { url: null, configured: false }
     );
   },
   getKakaoOAuthUrl: async () => {
     return safeApiCall(
-      () => api.get('/api/auth/kakao/url'),
+      () => api.get('/api/auth/oauth/kakao/url'),
       { url: null, configured: false }
     );
   },
   // OAuth Callbacks
   googleCallback: async (code: string) => {
     return safeApiCall(
-      () => api.post('/api/auth/google/callback', { code }),
+      () => api.post('/api/auth/oauth/google/callback', { code }),
       { success: false }
     );
   },
   kakaoCallback: async (code: string) => {
     return safeApiCall(
-      () => api.post('/api/auth/kakao/callback', { code }),
+      () => api.post('/api/auth/oauth/kakao/callback', { code }),
       { success: false }
     );
   },
 };
 
-// 인사이트 API
-export const insightsAPI = {
-  getDaily: async () => {
-    return safeApiCall(
-      () => api.get('/api/insights/daily'),
-      { 
-        trends: [],
-        market_analysis: '',
-        recommendations: []
-      }
-    );
-  },
-  getDailyInsights: async () => {
-    return safeApiCall(
-      () => api.get('/api/insights/daily'),
-      { 
-        trends: [],
-        market_analysis: '',
-        recommendations: []
-      }
-    );
-  },
-  getRecommendations: async () => {
-    return safeApiCall(
-      () => api.get('/api/insights/recommendations'),
-      { 
-        artists_to_watch: [],
-        trending_genres: [],
-        investment_tips: []
-      }
-    );
-  },
-  getMarketPulse: async () => {
-    return safeApiCall(
-      () => api.get('/api/insights/market-pulse'),
-      { 
-        timestamp: new Date().toISOString(),
-        active_artists: 0,
-        trending_tracks: 0,
-        market_sentiment: '',
-        hot_topics: []
-      }
-    );
-  },
-  getArtistInsights: async (name: string) => {
-    return safeApiCall(
-      () => api.get(`/api/insights/artist/${encodeURIComponent(name)}`),
-      { insights: null }
-    );
-  },
-  getArtistInsight: async (name: string) => {
-    return safeApiCall(
-      () => api.get(`/api/insights/artist/${encodeURIComponent(name)}`),
-      { insights: null }
-    );
-  },
-};
+
 
 // 이미지 API
 export const imageAPI = {
@@ -438,6 +384,82 @@ export const schedulerAPI = {
   },
 };
 
+// Insights API
+export const insightsAPI = {
+  getDaily: async () => {
+    return safeApiCall(
+      () => api.get('/api/insights/daily'),
+      { 
+        insights: {
+          new_entries: [],
+          big_movers: [],
+          chart_leaders: [],
+          summary: { total_new_entries: 0, total_movers: 0, active_charts: 0 }
+        }
+      }
+    );
+  },
+  getMarketPulse: async () => {
+    return safeApiCall(
+      () => api.get('/api/insights/market-pulse'),
+      {
+        market_pulse: {
+          genre_distribution: {},
+          label_distribution: [],
+          weekly_trend: [],
+          market_summary: {}
+        }
+      }
+    );
+  },
+  getRecommendations: async () => {
+    return safeApiCall(
+      () => api.get('/api/insights/recommendations'),
+      {
+        recommendations: {
+          artists_to_watch: [],
+          hidden_gems: [],
+          comeback_predictions: [],
+          recommendation_summary: {}
+        }
+      }
+    );
+  },
+  // AI 분석 기능 (OpenAI GPT-4)
+  getAIAnalysis: async (type: 'general' | 'market' | 'prediction' = 'general', days: number = 7) => {
+    return safeApiCall(
+      () => api.post('/api/insights/ai-analysis', { type, days }),
+      {
+        ai_analysis: null,
+        model: null,
+        timestamp: null
+      }
+    );
+  },
+  getAIMarketPrediction: async () => {
+    return safeApiCall(
+      () => api.get('/api/insights/ai-market-prediction'),
+      {
+        prediction: null,
+        confidence: 'medium',
+        timestamp: null
+      }
+    );
+  },
+  getAIRecommendations: async (preferences?: string) => {
+    return safeApiCall(
+      () => api.get('/api/insights/ai-recommendations', { 
+        params: preferences ? { preferences } : {} 
+      }),
+      {
+        recommendations: [],
+        ai_powered: false,
+        timestamp: null
+      }
+    );
+  },
+};
+
 // 하위 호환성을 위한 alias exports
 export const authApi = authAPI;  
 export const insightsApi = insightsAPI;  
@@ -462,5 +484,8 @@ export const checkAuthStatus = authAPI.status;
 export const getAlbumImageUrl = imageAPI.getAlbumImageUrl;
 export const getSmartImageUrl = imageAPI.getSmartImageUrl;
 export const getUpdateStatus = chartAPI.getUpdateStatus;
+
+// API 객체에 insights 추가
+(api as any).insights = insightsAPI;
 
 export default api;
