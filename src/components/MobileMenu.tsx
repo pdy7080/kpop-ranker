@@ -2,9 +2,11 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FaBars, FaTimes, FaHome, FaSearch, FaBriefcase, FaChartLine, FaBrain, FaInfoCircle } from 'react-icons/fa';
+import { FaBars, FaTimes, FaHome, FaSearch, FaBriefcase, FaChartLine, FaBrain, FaInfoCircle, FaUser, FaSignInAlt, FaSignOutAlt } from 'react-icons/fa';
 import LanguageSelector from './LanguageSelector';
 import { useTranslation } from '@/contexts/TranslationContext';
+import { useAuth } from '@/contexts/AuthContext';
+import LoginModal from './LoginModal';
 
 interface MobileMenuProps {
   isOpen: boolean;
@@ -14,6 +16,18 @@ interface MobileMenuProps {
 const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, onClose }) => {
   const router = useRouter();
   const { t } = useTranslation();
+  const { user, isAuthenticated, logout } = useAuth();
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+
+  const handleLogout = async () => {
+    await logout();
+    onClose();
+  };
+
+  const handleLoginClick = () => {
+    setIsLoginModalOpen(true);
+    onClose();
+  };
 
   const menuItems = [
     { href: '/', icon: FaHome, label: t('nav.home') },
@@ -24,7 +38,8 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, onClose }) => {
   ];
 
   return (
-    <AnimatePresence>
+    <>
+      <AnimatePresence>
       {isOpen && (
         <>
           {/* Backdrop */}
@@ -105,6 +120,40 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, onClose }) => {
               </ul>
             </nav>
 
+            {/* Auth Section */}
+            <div className="px-4 py-3" style={{ borderTop: '1px solid #374151', borderBottom: '1px solid #374151' }}>
+              {isAuthenticated ? (
+                <div className="space-y-3">
+                  {/* User Info */}
+                  <div className="flex items-center space-x-3 px-4 py-2">
+                    <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center text-white font-bold">
+                      {user?.name?.[0]?.toUpperCase() || 'K'}
+                    </div>
+                    <div>
+                      <div className="text-white font-medium">{user?.name || 'K-POP Fan'}</div>
+                      <div className="text-gray-400 text-sm">🎵 {t('user.role')}</div>
+                    </div>
+                  </div>
+                  {/* Logout Button */}
+                  <button
+                    onClick={handleLogout}
+                    className="w-full flex items-center justify-center space-x-2 px-4 py-3 bg-red-600/20 hover:bg-red-600/30 text-red-400 rounded-lg transition-colors"
+                  >
+                    <FaSignOutAlt className="w-5 h-5" />
+                    <span>{t('button.logout')}</span>
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={handleLoginClick}
+                  className="w-full flex items-center justify-center space-x-2 px-4 py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white rounded-lg transition-all"
+                >
+                  <FaSignInAlt className="w-5 h-5" />
+                  <span>{t('button.login')}</span>
+                </button>
+              )}
+            </div>
+
             {/* Language Selector */}
             <div className="px-4 py-3 mb-4">
               <LanguageSelector />
@@ -122,6 +171,13 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, onClose }) => {
         </>
       )}
     </AnimatePresence>
+
+    {/* Login Modal */}
+    <LoginModal
+      isOpen={isLoginModalOpen}
+      onClose={() => setIsLoginModalOpen(false)}
+    />
+    </>
   );
 };
 
