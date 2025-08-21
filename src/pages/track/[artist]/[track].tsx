@@ -525,8 +525,8 @@ export default function TrackDetailPage() {
 
       <div className="min-h-screen bg-[#0A0A0F] text-white">
 
-        <RankingChart artist={artist} track={title} />
-        <YouTubeStats artist={artist} track={title} />
+        <RankingChart artist={artist} track={trackInfo?.track || ''} />
+        <YouTubeStats artist={artist} track={trackInfo?.track || ''} />
 
         {/* 헤더 섹션 - 네온 그라디언트 */}
         <div className="relative bg-gradient-to-b from-purple-900/50 to-transparent backdrop-blur-xl border-b border-white/10">
