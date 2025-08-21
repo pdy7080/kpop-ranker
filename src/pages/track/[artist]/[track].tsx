@@ -1,4 +1,4 @@
-/**
+RankingChart/**
  * 🎯 트랙 상세 페이지 - 네온 테마 v8.1 (수정)
  * - 8개 차트 실시간 순위 표시
  * - 포트폴리오 추가/제거 기능
@@ -24,6 +24,9 @@ import { SiYoutubemusic, SiApplemusic } from 'react-icons/si';
 import toast from 'react-hot-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTranslation } from '@/contexts/TranslationContext';
+
+import RankingChart from '@/components/RankingChart';
+import YouTubeStats from '@/components/YouTubeStats';
 
 // ========================================
 // 타입 정의
@@ -521,6 +524,10 @@ export default function TrackDetailPage() {
       </Head>
 
       <div className="min-h-screen bg-[#0A0A0F] text-white">
+
+        <RankingChart artist={artist} track={title} />
+        <YouTubeStats artist={artist} track={title} />
+
         {/* 헤더 섹션 - 네온 그라디언트 */}
         <div className="relative bg-gradient-to-b from-purple-900/50 to-transparent backdrop-blur-xl border-b border-white/10">
           <div className="absolute inset-0 bg-gradient-to-r from-purple-600/20 via-pink-600/20 to-blue-600/20" />
