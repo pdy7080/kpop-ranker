@@ -48,16 +48,20 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
         response = await authApi.getKakaoOAuthUrl();
       }
 
-      if (response?.data?.success && response?.data?.url) {
+      console.log(`${provider} OAuth response:`, response?.data);
+      
+      if (response?.data?.url) {
         // provider 정보를 localStorage에 저장 (callback에서 사용)
         localStorage.setItem('oauth_provider', provider);
         
         // OAuth 페이지로 리다이렉트
+        console.log(`Redirecting to ${provider} OAuth:`, response.data.url);
         window.location.href = response.data.url;
-      } else if (!response?.data?.configured) {
+      } else if (response?.data?.configured === false) {
         // OAuth가 설정되지 않은 경우 데모 로그인 안내
         toast.error(`${provider === 'google' ? 'Google' : 'Kakao'} 로그인이 설정되지 않았습니다. 데모 로그인을 사용해주세요.`);
       } else {
+        console.error('OAuth URL response:', response);
         toast.error('로그인 URL을 가져올 수 없습니다.');
       }
     } catch (error) {
