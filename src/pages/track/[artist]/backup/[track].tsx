@@ -112,7 +112,7 @@ const ChangeIndicator = ({ change }: { change: number }) => {
 
 export default function TrackDetailPageV15() {
   const router = useRouter();
-  const { artist, title } = router.query; // title 파라미터 사용
+  const { artist, track } = router.query;
   const { isAuthenticated, user } = useAuth();
   const [trackInfo, setTrackInfo] = useState<TrackInfo | null>(null);
   const [loading, setLoading] = useState(true);
@@ -121,20 +121,20 @@ export default function TrackDetailPageV15() {
   const [apiError, setApiError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (artist && title) {
+    if (artist && track) {
       fetchTrackData();
       checkPortfolioStatus();
     }
-  }, [artist, title]);
+  }, [artist, track]);
 
   const checkPortfolioStatus = async () => {
-    if (!isAuthenticated || !artist || !title) return;
+    if (!isAuthenticated || !artist || !track) return;
     
     try {
       const response = await portfolioAPI.list();
       if (response.portfolio) {
         const isInPortfolio = response.portfolio.some(
-          (item: any) => item.artist === artist && item.track === title
+          (item: any) => item.artist === artist && item.track === track
         );
         setIsFavorite(isInPortfolio);
       }
@@ -148,10 +148,9 @@ export default function TrackDetailPageV15() {
       setLoading(true);
       setApiError(null);
       
-      console.log('Fetching track data for:', artist, title);
+      console.log('Fetching track data for:', artist, track);
       
-      // title 파라미터 사용하여 API 호출
-      const response = await trackAPI.getDetails(String(artist), String(title));
+      const response = await trackAPI.getDetails(String(artist), String(track));
       
       console.log('Track API response:', response);
       
@@ -179,13 +178,13 @@ export default function TrackDetailPageV15() {
       setIsAddingToPortfolio(true);
 
       if (isFavorite) {
-        await portfolioAPI.remove(String(artist), String(title));
+        await portfolioAPI.remove(String(artist), String(track));
         setIsFavorite(false);
         toast.success('포트폴리오에서 제거되었습니다');
       } else {
         await portfolioAPI.add({
           artist: String(artist),
-          track: String(title),
+          track: String(track),
           image_url: trackInfo?.image_url || '',
         });
         setIsFavorite(true);

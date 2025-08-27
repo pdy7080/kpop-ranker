@@ -2,6 +2,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import ImageWithFallback from './ImageWithFallback';
+import { FaPlay, FaEye } from 'react-icons/fa';
 
 interface TrendingCardProps {
   track: {
@@ -12,6 +13,12 @@ interface TrendingCardProps {
     views_or_streams?: string;
     optimized_album_image?: string | null;
     created_at?: string;
+    charts?: {
+      [key: string]: number | string;
+    };
+    chart_count?: number;
+    best_rank?: number;
+    score?: number;
   };
   index: number;
 }
@@ -21,7 +28,8 @@ const formatViews = (views: string | undefined): string => {
   if (!views || views === '0' || views === '') return '';
   
   try {
-    const num = parseInt(views);
+    const cleanViews = views.replace(/,/g, '');
+    const num = parseInt(cleanViews);
     if (isNaN(num)) return '';
     
     if (num >= 1000000000) return `${(num / 1000000000).toFixed(1)}B`;
@@ -33,51 +41,61 @@ const formatViews = (views: string | undefined): string => {
   }
 };
 
-// 차트별 색상
-const getChartColor = (chartName?: string): string => {
-  const colors: Record<string, string> = {
-    melon: 'bg-green-600',
-    genie: 'bg-blue-600',
-    bugs: 'bg-orange-500',
-    vibe: 'bg-purple-600',
-    flo: 'bg-pink-500',
-    spotify: 'bg-green-500',
-    youtube: 'bg-red-500',
-    billboard: 'bg-purple-500'
-  };
-  return colors[chartName?.toLowerCase() || ''] || 'bg-gray-500';
+// 차트별 색상 및 이름
+const CHART_CONFIG: Record<string, { color: string; name: string }> = {
+  melon: { color: 'bg-green-600', name: 'Melon' },
+  genie: { color: 'bg-blue-600', name: 'Genie' },
+  bugs: { color: 'bg-orange-500', name: 'Bugs' },
+  flo: { color: 'bg-purple-500', name: 'FLO' },
+  spotify: { color: 'bg-green-500', name: 'Spotify' },
+  apple_music: { color: 'bg-gray-800', name: 'Apple Music' },
+  youtube: { color: 'bg-red-500', name: 'YouTube' },
+  lastfm: { color: 'bg-red-600', name: 'Last.fm' }
 };
 
 const TrendingCard: React.FC<TrendingCardProps> = ({ track, index }) => {
   const viewsFormatted = formatViews(track.views_or_streams);
+  
+  // 차트 데이터 처리
+  const chartData = track.charts || {};
+  const chartEntries = Object.entries(chartData);
+  
+  // YouTube 조회수와 일반 순위 차트 분리
+  const rankCharts = chartEntries.filter(([chart, value]) => 
+    chart !== 'youtube' && typeof value === 'number' && value > 0
+  );
+  const youtubeData = chartEntries.find(([chart]) => chart === 'youtube');
   
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay: index * 0.05 }}
-      className="bg-white dark:bg-gray-800 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden"
+      className="bg-white dark:bg-gray-800 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-200 dark:border-gray-700"
     >
       <Link href={`/track/${encodeURIComponent(track.unified_artist)}/${encodeURIComponent(track.unified_track)}`}>
         <div className="flex p-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-          {/* 순위 */}
-          {track.rank_position && (
-            <div className="flex-shrink-0 w-12 h-12 flex items-center justify-center mr-4">
-              <span className="text-2xl font-bold text-gray-700 dark:text-gray-300">
-                {track.rank_position}
-              </span>
-            </div>
-          )}
+          {/* 순위 표시 */}
+          <div className="flex-shrink-0 w-12 flex items-center justify-center mr-4">
+            {track.best_rank && (
+              <div className="text-center">
+                <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">
+                  #{track.best_rank}
+                </div>
+                <div className="text-xs text-gray-500">최고</div>
+              </div>
+            )}
+          </div>
           
           {/* 앨범 이미지 */}
           <div className="flex-shrink-0 mr-4">
-            <ImageWithFallback
-              src={track.optimized_album_image}
-              alt={`${track.unified_artist} - ${track.unified_track}`}
-              width={80}
-              height={80}
-              className="rounded-lg shadow-md"
-            />
+            <div className="w-16 h-16 rounded-lg overflow-hidden shadow-md bg-gradient-to-br from-purple-500 to-pink-500">
+              <ImageWithFallback
+                artist={track.unified_artist}
+                track={track.unified_track}
+                className="w-full h-full object-cover"
+              />
+            </div>
           </div>
           
           {/* 트랙 정보 */}
@@ -85,26 +103,47 @@ const TrendingCard: React.FC<TrendingCardProps> = ({ track, index }) => {
             <h3 className="font-semibold text-lg text-gray-900 dark:text-white truncate">
               {track.unified_track}
             </h3>
-            <p className="text-gray-600 dark:text-gray-400 truncate">
+            <p className="text-gray-600 dark:text-gray-400 truncate mb-2">
               {track.unified_artist}
             </p>
             
-            {/* 차트 배지 및 조회수 */}
-            <div className="flex items-center gap-3 mt-2">
-              {/* 차트 배지 */}
-              {track.chart_name && (
-                <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium text-white ${getChartColor(track.chart_name)}`}>
-                  {track.chart_name.toUpperCase()}
-                </span>
+            {/* 차트 순위 표시 */}
+            <div className="space-y-1">
+              {rankCharts.length > 0 && (
+                <div className="flex items-center gap-2 flex-wrap">
+                  {rankCharts.slice(0, 4).map(([chart, rank]) => {
+                    const config = CHART_CONFIG[chart] || { color: 'bg-gray-500', name: chart };
+                    return (
+                      <span
+                        key={chart}
+                        className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium text-white ${config.color}`}
+                      >
+                        {config.name} #{rank}
+                      </span>
+                    );
+                  })}
+                  {rankCharts.length > 4 && (
+                    <span className="text-xs text-gray-500">
+                      +{rankCharts.length - 4}개 더
+                    </span>
+                  )}
+                </div>
               )}
               
               {/* YouTube 조회수 */}
-              {viewsFormatted && (
-                <div className="flex items-center gap-1 text-sm text-gray-500 dark:text-gray-400">
-                  <svg className="w-4 h-4 text-red-500" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M10 15l5.19-3L10 9v6m11.56-7.83c.13.47.22 1.1.28 1.9.07.8.1 1.49.1 2.09L22 12c0 2.19-.16 3.8-.44 4.83-.25.9-.83 1.48-1.73 1.73-.47.13-1.33.22-2.65.28-1.3.07-2.49.1-3.59.1L12 19c-4.19 0-6.8-.16-7.83-.44-.9-.25-1.48-.83-1.73-1.73-.13-.47-.22-1.1-.28-1.9-.07-.8-.1-1.49-.1-2.09L2 12c0-2.19.16-3.8.44-4.83.25-.9.83-1.48 1.73-1.73.47-.13 1.33-.22 2.65-.28 1.3-.07 2.49-.1 3.59-.1L12 5c4.19 0 6.8.16 7.83.44.9.25 1.48.83 1.73 1.73z"/>
-                  </svg>
-                  <span className="font-medium">{viewsFormatted} views</span>
+              {youtubeData && youtubeData[1] && (
+                <div className="flex items-center gap-1 text-sm text-gray-600 dark:text-gray-400">
+                  <FaPlay className="text-red-500 text-xs" />
+                  <span className="font-medium">
+                    {formatViews(String(youtubeData[1]))} views
+                  </span>
+                </div>
+              )}
+              
+              {/* 차트 개수 표시 */}
+              {track.chart_count && track.chart_count > 1 && (
+                <div className="text-xs text-purple-600 dark:text-purple-400 font-medium">
+                  {track.chart_count}개 차트 진입
                 </div>
               )}
             </div>

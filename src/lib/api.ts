@@ -45,11 +45,11 @@ api.interceptors.response.use(
   }
 );
 
-// Trending API
+// Trending API v16 - 차트 독립성 및 실시간 데이터
 export const trendingApi = {
   getTrending: async (type = 'hot', limit = 20) => {
     try {
-      const response = await api.get('/api/trending', {
+      const response = await api.get('/api/trending/v16', {
         params: { type, limit }
       });
       return response.data;
@@ -75,19 +75,19 @@ export const searchAPI = {
   }
 };
 
-// Artist API  
+// Artist API v16 - 차트 독립성 및 AI 인사이트
 export const artistAPI = {
   getDetails: async (name: string) => {
-    const response = await api.get(`/api/artist/${encodeURIComponent(name)}/complete`);
+    const response = await api.get(`/api/artist/v16/${encodeURIComponent(name)}/complete`);
     return response.data;
   }
 };
 
-// Track API
+// Track API v15 - 차트 독립성 지원
 export const trackAPI = {
   getDetails: async (artist: string, title: string) => {
     const response = await api.get(
-      `/api/track/${encodeURIComponent(artist)}/${encodeURIComponent(title)}`
+      `/api/track/v15/${encodeURIComponent(artist)}/${encodeURIComponent(title)}`
     );
     return response.data;
   },
@@ -102,6 +102,16 @@ export const trackAPI = {
 
 // Portfolio API
 export const portfolioAPI = {
+  list: async () => {
+    try {
+      const response = await api.get('/api/portfolio');
+      return response.data;
+    } catch (error) {
+      console.error('Portfolio get error:', error);
+      return { success: false, portfolio: [], requireAuth: true };
+    }
+  },
+  
   get: async () => {
     try {
       const response = await api.get('/api/portfolio');
@@ -112,13 +122,15 @@ export const portfolioAPI = {
     }
   },
   
-  add: async (artist: string, track: string) => {
-    const response = await api.post('/api/portfolio', { artist, track });
+  add: async (item: { artist: string; track: string; image_url?: string }) => {
+    const response = await api.post('/api/portfolio', item);
     return response.data;
   },
   
-  remove: async (id: string) => {
-    const response = await api.delete(`/api/portfolio/${id}`);
+  remove: async (artist: string, track: string) => {
+    const response = await api.delete('/api/portfolio', { 
+      data: { artist, track }
+    });
     return response.data;
   },
   

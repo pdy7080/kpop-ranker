@@ -3,9 +3,9 @@ import { useRouter } from 'next/router';
 import Head from 'next/head';
 import Layout from '@/components/Layout';
 import ImageWithFallback from '@/components/ImageWithFallback';
+import ChartRankDisplay from '@/components/ChartRankDisplay';
 import { motion, AnimatePresence } from 'framer-motion';
 import { artistAPI } from '@/lib/api';
-import { ChartLogos, getChartLogo } from '@/utils/chartLogos';
 import ArtistTop10Stats from '@/components/ArtistTop10Stats';
 import NewsTab from '@/components/NewsTab';
 import GoodsTab from '@/components/GoodsTab';
@@ -25,7 +25,7 @@ interface Track {
   title?: string;
   track?: string;
   unified_track?: string;
-  charts?: Record<string, number>;
+  charts?: Record<string, number | string>;
   best_rank?: number;
   peak_position?: number;
   album_image?: string;
@@ -61,6 +61,38 @@ interface ArtistData {
   ai_data?: any;
 }
 
+// 조회수 포맷팅 함수
+const formatViews = (views: string | number): string => {
+  if (!views) return '';
+  const num = typeof views === 'string' ? parseInt(views.replace(/,/g, '')) : views;
+  if (isNaN(num)) return '';
+  
+  if (num >= 1000000000) return `${(num / 1000000000).toFixed(1)}B`;
+  if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`;
+  if (num >= 1000) return `${(num / 1000).toFixed(0)}K`;
+  return num.toLocaleString();
+};
+
+// 차트 로고 정보
+const getChartInfo = (chartName: string) => {
+  const chartConfig: Record<string, { icon: string; name: string; bgColor: string }> = {
+    melon: { icon: '🍈', name: 'Melon', bgColor: 'bg-green-600' },
+    genie: { icon: '🧞', name: 'Genie', bgColor: 'bg-blue-600' },
+    bugs: { icon: '🐛', name: 'Bugs', bgColor: 'bg-orange-500' },
+    flo: { icon: '🌊', name: 'FLO', bgColor: 'bg-purple-500' },
+    spotify: { icon: '🎧', name: 'Spotify', bgColor: 'bg-green-500' },
+    apple_music: { icon: '🍎', name: 'Apple Music', bgColor: 'bg-gray-800' },
+    youtube: { icon: '▶️', name: 'YouTube', bgColor: 'bg-red-500' },
+    lastfm: { icon: '🎼', name: 'Last.fm', bgColor: 'bg-red-600' }
+  };
+  
+  return chartConfig[chartName.toLowerCase()] || { 
+    icon: '🎵', 
+    name: chartName, 
+    bgColor: 'bg-gray-600' 
+  };
+};
+
 export default function ArtistDetailPage() {
   const router = useRouter();
   const { name } = router.query;
@@ -84,7 +116,7 @@ export default function ArtistDetailPage() {
       const response = await artistAPI.getDetails(artistName);
       setArtistData(response);
       
-      // 종합 정보는 선택적으로 로드 (없어도 에러 무시)
+      // 종합 정보는 선택적으로 로드
       try {
         const comprehensiveResponse = await fetch(`${API_URL}/api/artist/${encodeURIComponent(artistName)}/comprehensive`);
         if (comprehensiveResponse.ok) {
@@ -92,7 +124,7 @@ export default function ArtistDetailPage() {
           setComprehensiveData(compData);
         }
       } catch (e) {
-        // comprehensive API는 optional
+        console.log('Comprehensive data not available');
       }
       
     } catch (err) {
@@ -165,15 +197,51 @@ export default function ArtistDetailPage() {
     chart_diversity: 0
   };
 
-  // Chart dominance with real data
-  const chartDominance = ['melon', 'genie', 'bugs', 'spotify', 'youtube', 'vibe', 'flo'].map(chart => {
+  // Chart dominance with real data - 새로운 차트 포함
+  const chartDominance = ['melon', 'genie', 'bugs', 'flo', 'spotify', 'apple_music', 'youtube', 'lastfm'].map(chart => {
     const count = tracks.filter(t => t.charts && t.charts[chart] !== undefined).length;
     return {
       name: chart,
       count,
-      percentage: tracks.length > 0 ? Math.round((count / tracks.length) * 100) : 0
+      percentage: tracks.length > 0 ? Math.round((count / tracks.length) * 100) : 0,
+      info: getChartInfo(chart)
     };
   }).filter(c => c.count > 0);
+
+  // 차트 정보 렌더링 함수
+  const renderChartInfo = (charts: Record<string, number | string>) => {
+    const entries = Object.entries(charts);
+    const rankCharts = entries.filter(([chart, value]) => 
+      chart !== 'youtube' && typeof value === 'number' && value > 0
+    );
+    const youtubeData = entries.find(([chart]) => chart === 'youtube');
+
+    return (
+      <div className="flex flex-wrap gap-1">
+        {/* 순위 차트들 */}
+        {rankCharts.slice(0, 3).map(([chart, rank]) => (
+          <ChartRankDisplay
+            key={chart}
+            chartName={chart}
+            rank={rank as number}
+            displayType="badge"
+          />
+        ))}
+        
+        {/* YouTube 조회수 */}
+        {youtubeData && youtubeData[1] && (
+          <div className="px-2 py-1 bg-red-500 text-white text-xs rounded-full flex items-center gap-1">
+            <Play className="w-3 h-3" />
+            {formatViews(youtubeData[1])}
+          </div>
+        )}
+        
+        {rankCharts.length > 3 && (
+          <span className="text-xs text-gray-400">+{rankCharts.length - 3}</span>
+        )}
+      </div>
+    );
+  };
 
   if (loading) {
     return (
@@ -199,7 +267,7 @@ export default function ArtistDetailPage() {
             <h1 className="text-2xl text-white mb-4">아티스트를 찾을 수 없습니다</h1>
             <button 
               onClick={() => router.push('/')}
-              className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
+              className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
             >
               홈으로 돌아가기
             </button>
@@ -213,6 +281,7 @@ export default function ArtistDetailPage() {
     <Layout>
       <Head>
         <title>{artistInfo.name} - KPOP Ranker</title>
+        <meta name="description" content={`${artistInfo.name}의 차트 순위 및 트랙 정보 - K-POP 아티스트 상세 페이지`} />
       </Head>
 
       <div className="min-h-screen bg-[#0A0A0F] text-white">
@@ -227,7 +296,7 @@ export default function ArtistDetailPage() {
             <div className="relative mb-8 rounded-2xl overflow-hidden bg-gradient-to-br from-purple-900/50 to-pink-900/50 p-8">
               <div className="absolute inset-0 bg-gradient-to-br from-purple-600/20 to-pink-600/20" />
               
-              <div className="relative flex items-center gap-6">
+              <div className="relative flex flex-col md:flex-row items-center gap-6">
                 <motion.div 
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
@@ -237,9 +306,9 @@ export default function ArtistDetailPage() {
                   <Mic className="w-16 h-16 text-white" />
                 </motion.div>
                 
-                <div className="flex-grow">
-                  <h1 className="text-4xl md:text-5xl font-bold mb-2">{artistInfo.name}</h1>
-                  <div className="flex flex-wrap items-center gap-4 text-gray-300">
+                <div className="flex-grow text-center md:text-left">
+                  <h1 className="text-4xl md:text-5xl font-bold mb-4">{artistInfo.name}</h1>
+                  <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 text-gray-300">
                     <span className="flex items-center gap-1">
                       <Music className="w-4 h-4" />
                       {stats.total_tracks} 트랙
@@ -250,8 +319,14 @@ export default function ArtistDetailPage() {
                     </span>
                     {stats.best_peak && stats.best_peak <= 10 && (
                       <span className="flex items-center gap-1">
-                        <Award className="w-4 h-4 text-yellow-500" />
+                        <Trophy className="w-4 h-4 text-yellow-500" />
                         최고 {stats.best_peak}위
+                      </span>
+                    )}
+                    {stats.top10_hits && stats.top10_hits > 0 && (
+                      <span className="flex items-center gap-1">
+                        <Star className="w-4 h-4 text-yellow-400" />
+                        TOP 10 {stats.top10_hits}회
                       </span>
                     )}
                   </div>
@@ -259,26 +334,38 @@ export default function ArtistDetailPage() {
               </div>
             </div>
 
-            {/* Tabs - 뉴스/굿즈 탭 분리 */}
+            {/* Tabs */}
             <div className="flex gap-2 mb-6 overflow-x-auto">
-              {(['overview', 'tracks', 'news', 'goods', 'insights'] as const).map(tab => (
-                <button
-                  key={tab}
-                  onClick={() => setActiveTab(tab)}
-                  className={`px-6 py-2 rounded-lg transition-all whitespace-nowrap ${
-                    activeTab === tab 
-                      ? 'bg-purple-600 text-white' 
-                      : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+              {([
+                { key: 'overview', label: 'Overview', icon: BarChart3 },
+                { key: 'tracks', label: `Tracks (${tracks.length})`, icon: Music },
+                { key: 'news', label: '뉴스', icon: Newspaper },
+                { key: 'goods', label: '굿즈', icon: ShoppingBag },
+                { key: 'insights', label: 'Insights', icon: Zap }
+              ] as const).map(tab => (
+                <motion.button
+                  key={tab.key}
+                  onClick={() => setActiveTab(tab.key as any)}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  className={`relative px-6 py-3 rounded-xl transition-all whitespace-nowrap font-medium ${
+                    activeTab === tab.key 
+                      ? 'text-white' 
+                      : 'text-gray-400 hover:text-white'
                   }`}
                 >
-                  <span className="flex items-center gap-2">
-                    {tab === 'overview' && <>Overview</>}
-                    {tab === 'tracks' && <><Music className="w-4 h-4" />Tracks ({tracks.length})</>}
-                    {tab === 'news' && <><Newspaper className="w-4 h-4" />뉴스</>}
-                    {tab === 'goods' && <><ShoppingBag className="w-4 h-4" />굿즈</>}
-                    {tab === 'insights' && <>Insights</>}
+                  {activeTab === tab.key && (
+                    <motion.div
+                      layoutId="activeArtistTab"
+                      className="absolute inset-0 bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl"
+                      transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                    />
+                  )}
+                  <span className="relative flex items-center gap-2">
+                    <tab.icon className="w-4 h-4" />
+                    {tab.label}
                   </span>
-                </button>
+                </motion.button>
               ))}
             </div>
           </motion.div>
@@ -293,40 +380,61 @@ export default function ArtistDetailPage() {
                 exit={{ opacity: 0, y: -20 }}
                 className="space-y-6"
               >
-                {/* TOP 10 진입 통계 컴포넌트 추가 */}
+                {/* 통계 카드들 */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+                  {[
+                    { label: '총 트랙 수', value: stats.total_tracks, icon: Music, color: 'from-blue-500 to-blue-600' },
+                    { label: 'TOP 10 진입', value: `${stats.top10_hits}회`, icon: Trophy, color: 'from-yellow-500 to-yellow-600' },
+                    { label: '차트 다양성', value: `${stats.chart_diversity}개`, icon: Globe, color: 'from-green-500 to-green-600' },
+                    { label: '성공률', value: `${stats.success_rate}%`, icon: Target, color: 'from-purple-500 to-purple-600' }
+                  ].map((stat, idx) => (
+                    <motion.div
+                      key={idx}
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ delay: idx * 0.1 }}
+                      className="bg-gray-800/50 rounded-xl p-4 text-center border border-gray-700"
+                    >
+                      <div className={`inline-flex p-3 rounded-lg bg-gradient-to-r ${stat.color} mb-2`}>
+                        <stat.icon className="w-5 h-5 text-white" />
+                      </div>
+                      <div className="text-xl font-bold text-white">{stat.value}</div>
+                      <div className="text-sm text-gray-400">{stat.label}</div>
+                    </motion.div>
+                  ))}
+                </div>
+
+                {/* TOP 10 진입 통계 컴포넌트 */}
                 <ArtistTop10Stats artistName={artistInfo.name} />
 
                 {/* Chart Performance */}
                 <div className="bg-gray-800/30 rounded-xl p-6 border border-gray-700">
                   <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
                     <BarChart3 className="w-5 h-5 text-blue-400" />
-                    차트별 성과
+                    차트별 성과 분석
                   </h3>
                   <div className="space-y-4">
-                    {chartDominance.map(chart => {
-                      const logo = getChartLogo(chart.name);
-                      return (
-                        <div key={chart.name}>
-                          <div className="flex justify-between mb-1">
-                            <span className="text-sm capitalize flex items-center gap-2">
-                              <span>{logo.icon}</span>
-                              {chart.name}
-                            </span>
-                            <span className="text-sm text-gray-400">
-                              {chart.count}곡 ({chart.percentage}%)
-                            </span>
-                          </div>
-                          <div className="w-full bg-gray-700 rounded-full h-2">
-                            <motion.div 
-                              initial={{ width: 0 }}
-                              animate={{ width: `${chart.percentage}%` }}
-                              transition={{ duration: 1, ease: "easeOut" }}
-                              className="bg-gradient-to-r from-purple-500 to-pink-500 h-2 rounded-full"
-                            />
-                          </div>
+                    {chartDominance.map(chart => (
+                      <div key={chart.name}>
+                        <div className="flex justify-between mb-2">
+                          <span className="text-sm flex items-center gap-2">
+                            <span className="text-lg">{chart.info.icon}</span>
+                            <span className="font-medium">{chart.info.name}</span>
+                          </span>
+                          <span className="text-sm text-gray-400">
+                            {chart.count}곡 ({chart.percentage}%)
+                          </span>
                         </div>
-                      );
-                    })}
+                        <div className="w-full bg-gray-700 rounded-full h-3">
+                          <motion.div 
+                            initial={{ width: 0 }}
+                            animate={{ width: `${chart.percentage}%` }}
+                            transition={{ duration: 1, ease: "easeOut" }}
+                            className={`${chart.info.bgColor} h-3 rounded-full`}
+                          />
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </div>
               </motion.div>
@@ -340,12 +448,12 @@ export default function ArtistDetailPage() {
                 exit={{ opacity: 0, y: -20 }}
               >
                 {/* Sort Options */}
-                <div className="flex justify-between mb-4">
-                  <h2 className="text-xl font-bold">All Tracks</h2>
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+                  <h2 className="text-2xl font-bold">전체 트랙</h2>
                   <select
                     value={sortBy}
                     onChange={(e) => setSortBy(e.target.value as any)}
-                    className="px-4 py-2 rounded-lg bg-gray-800 text-white border border-gray-700"
+                    className="px-4 py-2 rounded-lg bg-gray-800 text-white border border-gray-600 focus:border-purple-500 focus:outline-none"
                   >
                     <option value="trend">트렌드 순</option>
                     <option value="rank">최고 순위</option>
@@ -354,71 +462,79 @@ export default function ArtistDetailPage() {
                   </select>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {sortedTracks.map((track, idx) => (
                     <motion.div
-                      key={idx}
+                      key={`${track.title}-${idx}`}
                       initial={{ opacity: 0, scale: 0.9 }}
                       animate={{ opacity: 1, scale: 1 }}
                       transition={{ delay: idx * 0.02 }}
-                      whileHover={{ scale: 1.02 }}
+                      whileHover={{ scale: 1.02, y: -5 }}
                       onClick={() => router.push(`/track/${encodeURIComponent(artistInfo.name)}/${encodeURIComponent(track.title)}`)}
-                      className="bg-gray-800/50 backdrop-blur rounded-xl p-4 hover:bg-gray-800/70 transition-all cursor-pointer border border-gray-700 hover:border-purple-500"
+                      className="group bg-gray-800/50 backdrop-blur rounded-xl p-4 hover:bg-gray-800/70 transition-all cursor-pointer border border-gray-700 hover:border-purple-500"
                     >
-                      <div className="flex gap-4">
-                        <ImageWithFallback
-                          src={track.album_image}
-                          alt={track.title}
-                          width={80}
-                          height={80}
-                          className="rounded-lg"
-                        />
-                        <div className="flex-grow">
-                          <h3 className="font-semibold mb-1 flex items-center gap-2">
-                            {track.title}
+                      <div className="flex gap-4 mb-4">
+                        <div className="flex-shrink-0">
+                          <div className="w-20 h-20 rounded-lg overflow-hidden bg-gradient-to-br from-purple-500 to-pink-500">
+                            <ImageWithFallback
+                              artist={artistInfo.name}
+                              track={track.title}
+                              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                            />
+                          </div>
+                        </div>
+                        <div className="flex-grow min-w-0">
+                          <h3 className="font-semibold text-white mb-1 flex items-center gap-2 group-hover:text-purple-300 transition-colors">
+                            <span className="truncate">{track.title}</span>
                             {track.is_new && (
-                              <Sparkles className="w-4 h-4 text-blue-400" />
+                              <Sparkles className="w-4 h-4 text-blue-400 flex-shrink-0" />
                             )}
                           </h3>
                           <div className="space-y-1">
-                            <div className="flex items-center gap-2 text-xs">
+                            <div className="flex items-center gap-2 text-xs text-gray-400">
                               {track.peak_position && (
-                                <span className="text-purple-400">
-                                  Peak #{track.peak_position}
+                                <span className="text-yellow-400 font-medium">
+                                  최고 #{track.peak_position}
                                 </span>
                               )}
                               {track.days_on_chart && track.days_on_chart > 0 && (
-                                <span className="text-gray-400">
-                                  {track.days_on_chart}일
+                                <span>
+                                  {track.days_on_chart}일간
                                 </span>
                               )}
                             </div>
-                            {Object.entries(track.charts).slice(0, 3).map(([chart, rank]) => {
-                              const logo = getChartLogo(chart);
-                              return (
-                                <div key={chart} className="flex items-center justify-between text-xs">
-                                  <span className="flex items-center gap-1">
-                                    <span>{logo.icon}</span>
-                                    <span className="capitalize">{chart}</span>
-                                  </span>
-                                  <span className="text-purple-400">#{rank}</span>
-                                </div>
-                              );
-                            })}
                           </div>
                         </div>
                       </div>
+                      
+                      {/* Chart Ranks */}
+                      {track.charts && Object.keys(track.charts).length > 0 && (
+                        <div className="mb-3">
+                          {renderChartInfo(track.charts)}
+                        </div>
+                      )}
+
+                      {/* Score */}
                       {track.trend_score && (
-                        <div className="mt-3 pt-3 border-t border-gray-700">
+                        <div className="pt-3 border-t border-gray-700">
                           <div className="flex justify-between items-center">
-                            <span className="text-xs text-gray-400">Score</span>
-                            <span className="text-lg font-bold text-purple-400">{track.trend_score}</span>
+                            <span className="text-xs text-gray-400">트렌드 스코어</span>
+                            <span className="text-lg font-bold text-purple-400">
+                              {Math.round(track.trend_score)}
+                            </span>
                           </div>
                         </div>
                       )}
                     </motion.div>
                   ))}
                 </div>
+
+                {tracks.length === 0 && (
+                  <div className="text-center py-12">
+                    <Music className="w-16 h-16 text-gray-600 mx-auto mb-4" />
+                    <p className="text-gray-400">이 아티스트의 트랙 정보가 없습니다.</p>
+                  </div>
+                )}
               </motion.div>
             )}
 
@@ -454,28 +570,43 @@ export default function ArtistDetailPage() {
                 exit={{ opacity: 0, y: -20 }}
                 className="space-y-6"
               >
-                {/* Real Performance Metrics */}
+                {/* Performance Metrics & AI Insights */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="bg-gray-800/30 rounded-xl p-6 border border-gray-700">
-                    <h3 className="text-lg font-bold mb-4">Performance Metrics</h3>
+                    <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
+                      <Trophy className="w-5 h-5 text-yellow-400" />
+                      성과 지표
+                    </h3>
                     <div className="space-y-3">
                       <div className="flex justify-between">
-                        <span className="text-gray-400">최고 성과</span>
-                        <span className="font-bold">
+                        <span className="text-gray-400">대표곡</span>
+                        <span className="font-bold text-right max-w-[60%] truncate">
                           {stats.most_successful_track || '-'}
                         </span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-gray-400">최고 순위</span>
-                        <span className="font-bold">#{stats.best_peak || '-'}</span>
+                        <span className="font-bold text-yellow-400">
+                          #{stats.best_peak || '-'}
+                        </span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-gray-400">TOP 10 진입</span>
-                        <span className="font-bold">{stats.top10_hits || 0}회</span>
+                        <span className="font-bold text-purple-400">
+                          {stats.top10_hits || 0}회
+                        </span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-gray-400">성공률</span>
-                        <span className="font-bold">{stats.success_rate || 0}%</span>
+                        <span className="text-gray-400">차트 성공률</span>
+                        <span className="font-bold text-green-400">
+                          {stats.success_rate || 0}%
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-400">최장 차트인</span>
+                        <span className="font-bold">
+                          {stats.longest_charting || 0}일
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -488,21 +619,21 @@ export default function ArtistDetailPage() {
 
                 {/* Chart Performance Summary */}
                 <div className="bg-gray-800/30 rounded-xl p-6 border border-gray-700">
-                  <h3 className="text-lg font-bold mb-4">차트별 활동 현황</h3>
+                  <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
+                    <BarChart3 className="w-5 h-5 text-blue-400" />
+                    차트별 활동 현황
+                  </h3>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    {chartDominance.map(chart => {
-                      const logo = getChartLogo(chart.name);
-                      return (
-                        <div key={chart.name} className="text-center">
-                          <div className={`text-3xl mb-2 ${logo.bgColor} rounded-lg p-3 inline-block`}>
-                            {logo.icon}
-                          </div>
-                          <p className="text-2xl font-bold">{chart.count}</p>
-                          <p className="text-xs text-gray-400 capitalize">{chart.name}</p>
-                          <p className="text-xs text-purple-400">{chart.percentage}%</p>
+                    {chartDominance.map(chart => (
+                      <div key={chart.name} className="text-center">
+                        <div className={`text-3xl mb-2 ${chart.info.bgColor} rounded-lg p-3 inline-block`}>
+                          {chart.info.icon}
                         </div>
-                      );
-                    })}
+                        <p className="text-2xl font-bold text-white">{chart.count}</p>
+                        <p className="text-sm font-medium text-gray-300">{chart.info.name}</p>
+                        <p className="text-xs text-purple-400">{chart.percentage}%</p>
+                      </div>
+                    ))}
                   </div>
                 </div>
 
