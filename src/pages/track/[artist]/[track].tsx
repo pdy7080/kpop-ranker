@@ -528,7 +528,7 @@ export default function TrackDetailPage() {
         <RankingChart artist={artist} track={trackInfo?.track || ''} />
         <YouTubeStats artist={artist} track={trackInfo?.track || ''} />
 
-        {/* 헤더 섹션 - 네온 그라디언트 */}
+        {/* 헤더 섹션 - 네온 그라디언트 수정 */}
         <div className="relative bg-gradient-to-b from-purple-900/50 to-transparent backdrop-blur-xl border-b border-white/10">
           <div className="absolute inset-0 bg-gradient-to-r from-purple-600/20 via-pink-600/20 to-blue-600/20" />
           <div className="container mx-auto px-4 py-12 relative z-10">
