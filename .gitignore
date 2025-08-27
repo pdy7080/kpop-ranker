@@ -37,6 +37,15 @@ BACKUP_TEMP/
 *.backup
 *.bak
 *_BACKUP.*
+*_bak.*
+*_old.*
+*_new.*
+*_improved.*
+*_backup.*
+index_*
+search_*
+trending_*
+*/_backup_*
 
 # TypeScript
 *.tsbuildinfo

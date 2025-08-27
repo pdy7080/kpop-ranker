@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/router';
 import Head from 'next/head';
 import Layout from '@/components/Layout';
@@ -313,6 +313,8 @@ export default function TrendingPageV16() {
                             artist={track.artist}
                             track={track.track}
                             className="w-full h-full object-cover"
+                            priority={index < 6}  // 첫 6개 이미지만 우선 로드
+                            lazy={index >= 6}     // 7번째부터 지연 로드
                           />
                         </div>
                         
@@ -399,6 +401,8 @@ export default function TrendingPageV16() {
                             artist={track.artist}
                             track={track.track}
                             className="w-full h-full object-cover"
+                            priority={index < 10}  // 첫 10개 이미지만 우선 로드
+                            lazy={index >= 10}     // 11번째부터 지연 로드
                           />
                         </div>
                       </div>

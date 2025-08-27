@@ -225,4 +225,30 @@ export const chartStatusAPI = {
   }
 };
 
+// Statistics API - 정제된 통계 데이터
+export const statisticsAPI = {
+  getStatistics: async () => {
+    try {
+      const response = await api.get('/api/statistics');
+      return response.data;
+    } catch (error) {
+      console.error('Statistics API error:', error);
+      return {
+        success: false,
+        statistics: {
+          summary: {
+            unique_artists: 297,
+            unique_tracks: 545,
+            total_records: 0,
+            active_charts: 8,
+            last_update: new Date().toISOString(),
+            generated_at: new Date().toISOString()
+          },
+          error: 'API call failed, showing fallback data'
+        }
+      };
+    }
+  }
+};
+
 export default api;

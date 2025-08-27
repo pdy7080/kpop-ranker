@@ -6,7 +6,7 @@ import ImageWithFallback from '@/components/ImageWithFallback';
 import { useAuth } from '@/contexts/AuthContext';
 import { portfolioAPI, trackAPI } from '@/lib/api';
 import toast from 'react-hot-toast';
-import { FaPlus, FaMusic, FaClock, FaChartLine, FaHeart, FaEye, FaPlay, FaArrowUp, FaArrowDown, FaMinus, FaInfoCircle } from 'react-icons/fa';
+import { FaPlus, FaMusic, FaClock, FaChartLine, FaHeart, FaEye, FaPlay, FaArrowUp, FaArrowDown, FaMinus, FaInfoCircle, FaUser, FaExternalLinkAlt } from 'react-icons/fa';
 
 interface ChartData {
   chart: string;
@@ -263,7 +263,17 @@ export default function TrackDetailPageV15() {
                 <div className="flex flex-col lg:flex-row lg:items-start justify-between">
                   <div className="mb-6 lg:mb-0">
                     <h1 className="text-4xl font-bold text-gray-900 mb-2">{trackInfo.track}</h1>
-                    <h2 className="text-2xl text-gray-600 mb-4">{trackInfo.artist}</h2>
+                    <div className="flex items-center gap-4 mb-4">
+                      <h2 className="text-2xl text-gray-600">{trackInfo.artist}</h2>
+                      <button
+                        onClick={() => router.push(`/artist/${encodeURIComponent(trackInfo.artist)}`)}
+                        className="flex items-center px-3 py-1 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-full text-sm transition-colors"
+                      >
+                        <FaUser className="mr-1" />
+                        아티스트 페이지
+                        <FaExternalLinkAlt className="ml-1 text-xs" />
+                      </button>
+                    </div>
                     
                     {trackInfo.album && trackInfo.album !== 'K-POP Album' && (
                       <p className="text-gray-500 mb-2">

@@ -67,6 +67,7 @@ const TopChampionsSection: React.FC<TopChampionsSectionProps> = ({
                 artist={track.artist}
                 track={track.track}
                 className={`${index === 0 ? 'w-48 h-48' : 'w-40 h-40'} rounded-xl shadow-lg mx-auto object-cover transition-transform duration-300 group-hover:scale-105`}
+                priority={true}  // TOP 3는 항상 우선 로드
               />
               
               {/* Simple Rank Number */}

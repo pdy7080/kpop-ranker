@@ -3,7 +3,7 @@ import Head from 'next/head';
 import { useRouter } from 'next/router';
 import Layout from '@/components/Layout';
 import { motion } from 'framer-motion';
-import { trendingApi, chartStatusAPI } from '@/lib/api';
+import { trendingApi, chartStatusAPI, statisticsAPI } from '@/lib/api';
 import ImageWithFallback from '@/components/ImageWithFallback';
 import UnifiedSearch from '@/components/UnifiedSearch';
 import ChartRankDisplay from '@/components/ChartRankDisplay';
@@ -111,35 +111,45 @@ export default function Home() {
 
   const fetchStats = async () => {
     try {
-      console.log('🔍 API Request:', `${API_URL}/api/chart/update-status`);
+      console.log('📊 Fetching statistics...');
       
-      const response = await fetch(`${API_URL}/api/chart/update-status`);
-      if (response.ok) {
-        const data = await response.json();
-        console.log('✅ API Response:', data);
-        
-        // 고유 아티스트 수 계산 (추정)
-        const estimatedArtists = Math.floor((data.total_tracks || 0) / 5); // 1인당 평균 5곡
+      // 새로운 Statistics API 사용
+      const response = await statisticsAPI.getStatistics();
+      console.log('✅ Statistics API Response:', response);
+      
+      if (response.success) {
+        const summary = response.statistics.summary;
         
         setStats({
-          totalTracks: data.total_tracks || 992,
-          totalArtists: estimatedArtists || 200,
-          activeCharts: data.charts?.length || 8,
-          lastUpdate: data.last_updated || new Date().toISOString()
+          totalTracks: summary.unique_tracks || 545,
+          totalArtists: summary.unique_artists || 297,
+          activeCharts: summary.active_charts || 8,
+          lastUpdate: summary.last_update || new Date().toISOString()
         });
         
         console.log('✅ Stats updated:', {
-          totalTracks: data.total_tracks,
-          totalArtists: estimatedArtists,
-          activeCharts: data.charts?.length
+          totalTracks: summary.unique_tracks,
+          totalArtists: summary.unique_artists,
+          activeCharts: summary.active_charts
         });
+      } else {
+        // 폴백 데이터 사용
+        const summary = response.statistics.summary;
+        setStats({
+          totalTracks: summary.unique_tracks,
+          totalArtists: summary.unique_artists,
+          activeCharts: summary.active_charts,
+          lastUpdate: summary.last_update
+        });
+        console.log('⚠️ Using fallback statistics data');
       }
+      
     } catch (error) {
-      console.error('❌ Failed to fetch stats:', error);
-      // 폴백 데이터
+      console.error('❌ Failed to fetch statistics:', error);
+      // 최종 폴백 데이터
       setStats({
-        totalTracks: 992,
-        totalArtists: 200,
+        totalTracks: 545,
+        totalArtists: 297,
         activeCharts: 8,
         lastUpdate: new Date().toISOString()
       });

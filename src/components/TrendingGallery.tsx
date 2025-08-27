@@ -65,6 +65,7 @@ const TrendingGallery: React.FC<TrendingGalleryProps> = ({ trendingTracks }) => 
                     artist={track.artist}
                     track={track.track}
                     className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                    priority={index < 8}    // 첫 8개만 우선 로드
                   />
                   
                   {/* Simple Rank Badge */}
