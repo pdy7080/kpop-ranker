@@ -1,0 +1,106 @@
+{
+  "site": {
+    "title": "KPOP Ranker",
+    "description": "Real-time K-POP Chart Monitoring Platform",
+    "tagline": "Global K-POP Charts at a Glance"
+  },
+  "nav": {
+    "home": "Home",
+    "trending": "Trending",
+    "search": "Search",
+    "portfolio": "Portfolio",
+    "insights": "Insights",
+    "login": "Login",
+    "logout": "Logout",
+    "profile": "Profile"
+  },
+  "search": {
+    "placeholder": "Search artists, tracks, albums...",
+    "noResults": "No results found",
+    "searching": "Searching...",
+    "recentSearches": "Recent Searches",
+    "popularSearches": "Popular Searches",
+    "clearHistory": "Clear History"
+  },
+  "chart": {
+    "rank": "Rank",
+    "artist": "Artist",
+    "track": "Track",
+    "album": "Album",
+    "change": "Change",
+    "new": "NEW",
+    "up": "Up",
+    "down": "Down",
+    "stable": "Stable",
+    "weeks": "Weeks",
+    "peak": "Peak",
+    "debut": "Debut",
+    "reEntry": "Re-Entry"
+  },
+  "trending": {
+    "title": "Trending Now",
+    "hot": "HOT",
+    "rising": "Rising Fast",
+    "viral": "Viral",
+    "viewAll": "View All",
+    "updated": "Updated",
+    "score": "Popularity Score"
+  },
+  "portfolio": {
+    "title": "My Portfolio",
+    "empty": "Your portfolio is empty",
+    "add": "Add to Portfolio",
+    "remove": "Remove from Portfolio",
+    "added": "Added",
+    "removed": "Removed",
+    "totalValue": "Total Value",
+    "change24h": "24h Change"
+  },
+  "button": {
+    "play": "Play",
+    "pause": "Pause",
+    "add": "Add",
+    "remove": "Remove",
+    "share": "Share",
+    "more": "More",
+    "less": "Less",
+    "save": "Save",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "close": "Close",
+    "back": "Back",
+    "next": "Next",
+    "previous": "Previous",
+    "refresh": "Refresh"
+  },
+  "time": {
+    "now": "now",
+    "ago": "ago",
+    "minute": "minute",
+    "minutes": "minutes",
+    "hour": "hour",
+    "hours": "hours",
+    "day": "day",
+    "days": "days",
+    "week": "week",
+    "weeks": "weeks",
+    "month": "month",
+    "months": "months",
+    "year": "year",
+    "years": "years"
+  },
+  "message": {
+    "loading": "Loading...",
+    "error": "An error occurred",
+    "retry": "Try Again",
+    "success": "Successfully completed",
+    "networkError": "Please check your network connection",
+    "serverError": "Server error occurred"
+  },
+  "auth": {
+    "loginRequired": "Login required",
+    "loginSuccess": "Successfully logged in",
+    "logoutSuccess": "Successfully logged out",
+    "invalidCredentials": "Invalid credentials"
+  }
+}

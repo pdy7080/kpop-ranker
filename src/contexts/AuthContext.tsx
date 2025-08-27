@@ -101,45 +101,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       setIsLoading(true);
       
-      // OAuth 로그인 처리
-      if (provider === 'google' && code) {
-        const response = await authAPI.googleCallback(code);
-        if (response && response.success) {
-          if (response.token) {
-            localStorage.setItem('auth_token', response.token);
-          }
-          if (response.user) {
-            setUser(response.user);
-          }
-          return true;
-        }
-      } else if (provider === 'kakao' && code) {
-        const response = await authAPI.kakaoCallback(code);
-        if (response && response.success) {
-          if (response.token) {
-            localStorage.setItem('auth_token', response.token);
-          }
-          if (response.user) {
-            setUser(response.user);
-          }
-          return true;
-        }
-      } else {
-        // 일반 로그인 (데모 로그인 등)
-        const response = await authAPI.login({ provider, code });
-        
-        // 백엔드는 'token'을 반환하고, 'access_token'이 아님
-        if (response && response.success) {
-          if (response.token) {
-            localStorage.setItem('auth_token', response.token);
-          }
-          
-          if (response.user) {
-            setUser(response.user);
-          }
-          return true;
-        }
+      // 데모 로그인 처리
+      if (provider === 'demo') {
+        return await demoLogin();
       }
+      
+      // OAuth 로그인 처리는 실제 구현 시 추가
+      console.warn('OAuth 로그인은 아직 구현되지 않았습니다.');
       return false;
     } catch (error) {
       console.error('Login failed:', error);
@@ -152,22 +120,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const demoLogin = async (name = 'Demo User', email = 'demo@kpopranker.com'): Promise<boolean> => {
     try {
       setIsLoading(true);
-      const response = await authAPI.demoLogin(name, email);
       
-      // 백엔드는 'token'을 반환하고, 'access_token'이 아님
-      if (response && response.success) {
-        if (response.token) {
-          localStorage.setItem('auth_token', response.token);
-        }
-        
-        if (response.user) {
-          setUser(response.user);
-        }
-        
-        console.log('✅ AuthContext: 데모 로그인 성공');
-        return true;
-      }
-      return false;
+      // 클라이언트 사이드에서 데모 로그인 처리
+      const demoUser = {
+        user_id: email,
+        email: email,
+        name: name,
+        provider: 'demo'
+      };
+      
+      // 토큰과 사용자 정보 저장
+      localStorage.setItem('auth_token', 'demo_token');
+      localStorage.setItem('user_info', JSON.stringify(demoUser));
+      localStorage.setItem('user_email', email);
+      
+      // 상태 업데이트
+      setUser(demoUser);
+      
+      console.log('✅ AuthContext: 데모 로그인 성공', demoUser);
+      return true;
     } catch (error) {
       console.error('AuthContext: 데모 로그인 실패:', error);
       return false;

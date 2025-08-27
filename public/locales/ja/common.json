@@ -1,0 +1,106 @@
+{
+  "site": {
+    "title": "KPOP ランカー",
+    "description": "リアルタイムK-POPチャートモニタリングプラットフォーム",
+    "tagline": "世界のK-POPチャートを一目で"
+  },
+  "nav": {
+    "home": "ホーム",
+    "trending": "トレンド",
+    "search": "検索",
+    "portfolio": "ポートフォリオ",
+    "insights": "インサイト",
+    "login": "ログイン",
+    "logout": "ログアウト",
+    "profile": "プロフィール"
+  },
+  "search": {
+    "placeholder": "アーティスト、曲名、アルバムを検索...",
+    "noResults": "検索結果がありません",
+    "searching": "検索中...",
+    "recentSearches": "最近の検索",
+    "popularSearches": "人気の検索",
+    "clearHistory": "履歴をクリア"
+  },
+  "chart": {
+    "rank": "順位",
+    "artist": "アーティスト",
+    "track": "曲名",
+    "album": "アルバム",
+    "change": "変動",
+    "new": "NEW",
+    "up": "上昇",
+    "down": "下降",
+    "stable": "維持",
+    "weeks": "週",
+    "peak": "最高順位",
+    "debut": "初登場",
+    "reEntry": "再登場"
+  },
+  "trending": {
+    "title": "リアルタイムトレンド",
+    "hot": "HOT",
+    "rising": "急上昇",
+    "viral": "話題",
+    "viewAll": "すべて見る",
+    "updated": "更新",
+    "score": "人気スコア"
+  },
+  "portfolio": {
+    "title": "マイポートフォリオ",
+    "empty": "ポートフォリオが空です",
+    "add": "ポートフォリオに追加",
+    "remove": "ポートフォリオから削除",
+    "added": "追加済み",
+    "removed": "削除済み",
+    "totalValue": "合計価値",
+    "change24h": "24時間変動"
+  },
+  "button": {
+    "play": "再生",
+    "pause": "一時停止",
+    "add": "追加",
+    "remove": "削除",
+    "share": "共有",
+    "more": "もっと見る",
+    "less": "閉じる",
+    "save": "保存",
+    "cancel": "キャンセル",
+    "confirm": "確認",
+    "close": "閉じる",
+    "back": "戻る",
+    "next": "次へ",
+    "previous": "前へ",
+    "refresh": "更新"
+  },
+  "time": {
+    "now": "今",
+    "ago": "前",
+    "minute": "分",
+    "minutes": "分",
+    "hour": "時間",
+    "hours": "時間",
+    "day": "日",
+    "days": "日",
+    "week": "週",
+    "weeks": "週",
+    "month": "ヶ月",
+    "months": "ヶ月",
+    "year": "年",
+    "years": "年"
+  },
+  "message": {
+    "loading": "読み込み中...",
+    "error": "エラーが発生しました",
+    "retry": "再試行",
+    "success": "正常に完了しました",
+    "networkError": "ネットワーク接続を確認してください",
+    "serverError": "サーバーエラーが発生しました"
+  },
+  "auth": {
+    "loginRequired": "ログインが必要です",
+    "loginSuccess": "ログインしました",
+    "logoutSuccess": "ログアウトしました",
+    "invalidCredentials": "認証情報が無効です"
+  }
+}

@@ -1,0 +1,158 @@
+{
+  "site": {
+    "title": "KPOP Ranker",
+    "description": "실시간 K-POP 차트 모니터링 플랫폼",
+    "tagline": "전 세계 K-POP 차트를 한눈에"
+  },
+  "nav": {
+    "home": "홈",
+    "trending": "트렌딩",
+    "search": "검색",
+    "portfolio": "포트폴리오",
+    "insights": "인사이트",
+    "login": "로그인",
+    "logout": "로그아웃",
+    "profile": "프로필"
+  },
+  "search": {
+    "placeholder": "아티스트, 곡명, 앨범 검색...",
+    "noResults": "검색 결과가 없습니다",
+    "searching": "검색 중...",
+    "recentSearches": "최근 검색",
+    "popularSearches": "인기 검색어",
+    "clearHistory": "검색 기록 삭제"
+  },
+  "chart": {
+    "rank": "순위",
+    "artist": "아티스트",
+    "track": "곡명",
+    "album": "앨범",
+    "change": "변동",
+    "new": "NEW",
+    "up": "상승",
+    "down": "하락",
+    "stable": "유지",
+    "weeks": "주",
+    "peak": "최고순위",
+    "debut": "진입",
+    "reEntry": "재진입"
+  },
+  "trending": {
+    "title": "실시간 트렌딩",
+    "hot": "HOT",
+    "rising": "급상승",
+    "viral": "화제",
+    "viewAll": "전체보기",
+    "updated": "업데이트",
+    "score": "인기점수"
+  },
+  "portfolio": {
+    "title": "내 포트폴리오",
+    "empty": "포트폴리오가 비어있습니다",
+    "add": "포트폴리오에 추가",
+    "remove": "포트폴리오에서 제거",
+    "added": "추가됨",
+    "removed": "제거됨",
+    "totalValue": "총 가치",
+    "change24h": "24시간 변동"
+  },
+  "button": {
+    "play": "재생",
+    "pause": "일시정지",
+    "add": "추가",
+    "remove": "제거",
+    "share": "공유",
+    "more": "더보기",
+    "less": "접기",
+    "save": "저장",
+    "cancel": "취소",
+    "confirm": "확인",
+    "close": "닫기",
+    "back": "뒤로",
+    "next": "다음",
+    "previous": "이전",
+    "refresh": "새로고침"
+  },
+  "time": {
+    "now": "지금",
+    "ago": "전",
+    "minute": "분",
+    "minutes": "분",
+    "hour": "시간",
+    "hours": "시간",
+    "day": "일",
+    "days": "일",
+    "week": "주",
+    "weeks": "주",
+    "month": "개월",
+    "months": "개월",
+    "year": "년",
+    "years": "년"
+  },
+  "message": {
+    "loading": "로딩 중...",
+    "error": "오류가 발생했습니다",
+    "retry": "다시 시도",
+    "success": "성공적으로 완료되었습니다",
+    "networkError": "네트워크 연결을 확인해주세요",
+    "serverError": "서버 오류가 발생했습니다"
+  },
+  "auth": {
+    "loginRequired": "로그인이 필요합니다",
+    "loginSuccess": "로그인되었습니다",
+    "logoutSuccess": "로그아웃되었습니다",
+    "invalidCredentials": "잘못된 인증 정보입니다"
+  },
+  "login": {
+    "title": "KPOP Ranker 로그인",
+    "subtitle": "팬덤 활동을 시작하세요!",
+    "google": "Google로 로그인",
+    "kakao": "카카오로 로그인",
+    "or": "또는",
+    "demo": {
+      "start": "데모로 시작하기",
+      "title": "데모 로그인",
+      "subtitle": "이름을 입력하고 시작하세요!",
+      "name": "이름 *",
+      "name.placeholder": "닉네임을 입력하세요",
+      "name.required": "이름을 입력해주세요",
+      "email": "이메일 (선택)",
+      "email.placeholder": "example@email.com",
+      "error": "데모 로그인에 실패했습니다"
+    },
+    "back": "뒤로",
+    "start": "시작하기",
+    "loading": "로딩 중...",
+    "error": "로그인 오류가 발생했습니다",
+    "welcome": "환영합니다!",
+    "terms": "로그인하면 서비스 이용약관 및 개인정보 처리방침에 동의하는 것으로 간주됩니다.",
+    "social": {
+      "setup": "OAuth 설정이 필요합니다. 데모 로그인을 사용해주세요."
+    }
+  },
+  "portfolio": {
+    "title": "내 포트폴리오",
+    "empty": "포트폴리오가 비어있습니다",
+    "add": "포트폴리오에 추가",
+    "remove": "포트폴리오에서 제거",
+    "added": "추가됨",
+    "removed": "제거됨",
+    "totalValue": "총 가치",
+    "change24h": "24시간 변동",
+    "addSuccess": "포트폴리오에 추가되었습니다!",
+    "addError": "포트폴리오 추가에 실패했습니다",
+    "loginRequired": "로그인이 필요합니다"
+  },
+  "track": {
+    "addToPortfolio": "포트폴리오에 추가",
+    "chartRanks": "현재 차트 순위",
+    "rankHistory": "순위 히스토리",
+    "moreFromArtist": "더 많은 {artist} 트랙 보기",
+    "viewArtistPage": "{artist} 아티스트 페이지로",
+    "album": "앨범:",
+    "releaseYear": "발매년도:",
+    "genre": "장르:",
+    "chartsEntered": "진출 차트: {count}개",
+    "chartDays": "차트 기간: {days}일"
+  }
+}

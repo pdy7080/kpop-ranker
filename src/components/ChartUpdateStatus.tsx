@@ -1,20 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { FaClock, FaSync } from 'react-icons/fa';
-import { chartAPI } from '@/lib/api';
-import { useTranslation } from '@/contexts/TranslationContext';
+import { Clock, RefreshCw, AlertCircle } from 'lucide-react';
+import { chartStatusAPI } from '@/lib/api';
 
-interface ChartUpdateStatusData {
+interface ChartUpdateData {
   chart_name: string;
   last_update: string;
-  last_update_korean?: string;
-  next_update?: string;
-  status: 'success' | 'failed' | 'pending' | 'outdated' | 'unknown' | '최신' | '정상' | '지연' | '오류' | 'active';
-  tracks_updated?: number;
-  error_message?: string;
   track_count?: number;
-  raw_time?: string;
-  status_color?: string;
+  status?: string;
 }
 
 interface ChartUpdateStatusProps {
@@ -22,31 +15,25 @@ interface ChartUpdateStatusProps {
 }
 
 const CHART_NAMES: Record<string, string> = {
-  melon: 'MELON',
-  genie: 'GENIE',
-  bugs: 'BUGS',
-  vibe: 'VIBE',
-  flo: 'FLO',
-  spotify: 'SPOTIFY',
-  youtube: 'YOUTUBE',
-  billboard: 'BILLBOARD'
+  melon: '멜론',
+  genie: '지니', 
+  bugs: '벅스',
+  vibe: '바이브',
+  flo: '플로',
+  spotify: 'Spotify',
+  youtube: 'YouTube',
+  billboard: 'Billboard'
 };
 
 export default function ChartUpdateStatus({ className = '' }: ChartUpdateStatusProps) {
-  const [updateStatus, setUpdateStatus] = useState<Record<string, ChartUpdateStatusData>>({});
+  const [charts, setCharts] = useState<ChartUpdateData[]>([]);
   const [loading, setLoading] = useState(true);
-  const { t, language } = useTranslation();
 
-  // 실시간 업데이트 현황 가져오기
   const fetchUpdateStatus = async () => {
     try {
-      const data = await chartAPI.getUpdateStatus();
-      // 안전하게 타입 체크
-      if (data && data.charts && typeof data.charts === 'object' && !Array.isArray(data.charts)) {
-        setUpdateStatus(data.charts as Record<string, ChartUpdateStatusData>);
-      } else {
-        // fallback 데이터가 배열인 경우 빈 객체로 처리
-        setUpdateStatus({});
+      const data = await chartStatusAPI.getUpdateStatus();
+      if (data?.charts && Array.isArray(data.charts)) {
+        setCharts(data.charts);
       }
     } catch (error) {
       console.error('차트 업데이트 현황 조회 중 오류:', error);
@@ -57,170 +44,87 @@ export default function ChartUpdateStatus({ className = '' }: ChartUpdateStatusP
 
   useEffect(() => {
     fetchUpdateStatus();
-    
-    // 5분마다 상태 업데이트
-    const interval = setInterval(() => {
-      fetchUpdateStatus();
-    }, 5 * 60 * 1000);
-
-    return () => {
-      clearInterval(interval);
-    };
+    const interval = setInterval(fetchUpdateStatus, 5 * 60 * 1000);
+    return () => clearInterval(interval);
   }, []);
 
-  // 시간 포맷팅 (실제 DB 업데이트 시간 처리)
-  const formatSimpleTime = (timeString: string) => {
+  const formatTime = (timeString: string) => {
     try {
-      // 한국어 형식 처리 "2025년 07월 30일 00시 33분 (KST)"
-      if (timeString && timeString.includes('년')) {
-        // 한국어 형식을 간단한 형식으로 변환
-        const match = timeString.match(/(\d{4})년 (\d{2})월 (\d{2})일 (\d{2})시 (\d{2})분/);
-        if (match) {
-          const [_, year, month, day, hour, minute] = match;
-          return `${year}.${month}.${day} ${hour}:${minute}`;
-        }
-        return timeString;
+      if (!timeString) return '-';
+      
+      // ISO 형식이면 변환
+      if (timeString.includes('T')) {
+        const date = new Date(timeString);
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        const hours = String(date.getHours()).padStart(2, '0');
+        const minutes = String(date.getMinutes()).padStart(2, '0');
+        return `${month}.${day} ${hours}:${minutes}`;
       }
       
-      // "2025.07.21 14:19" 형식으로 받음 (실제 DB 업데이트 시간)
-      if (timeString && timeString.includes('.')) {
-        return timeString; // 이미 포맷된 형식 그대로 사용
-      }
-      
-      // ISO 날짜 형식 처리 (백업용)
-      const date = new Date(timeString);
-      if (!isNaN(date.getTime())) {
-        return date.toLocaleString('ko-KR', {
-          year: 'numeric',
-          month: '2-digit',
-          day: '2-digit',
-          hour: '2-digit',
-          minute: '2-digit',
-          hour12: false,
-          timeZone: 'Asia/Seoul'
-        }).replace(/\. /g, '.').replace(' ', ' ');
-      }
-      return timeString || '-';
+      // 이미 포맷된 경우 그대로 반환
+      return timeString;
     } catch (error) {
       return timeString || '-';
     }
   };
 
-  // 상태 텍스트 번역
-  const getStatusText = (status: string) => {
-    if (language === 'ko') return status;
-    
-    const statusMap: Record<string, string> = {
-      '최신': 'Latest',
-      '정상': 'Normal',
-      '지연': 'Delayed',
-      '오류': 'Error',
-      'success': 'Success',
-      'failed': 'Failed',
-      'pending': 'Pending',
-      'outdated': 'Outdated',
-      'unknown': 'Unknown',
-      'active': 'Active'
-    };
-    
-    return statusMap[status] || status;
-  };
-
   return (
     <div className={`rounded-xl overflow-hidden ${className}`}>
-      <div className="grid md:grid-cols-2 gap-4 h-auto">
-        {/* 왼쪽: 고정된 업데이트 시간 */}
-        <div className="bg-gray-50 dark:bg-gray-800 p-3 rounded-lg">
-          <h3 className="font-bold text-xs mb-2 text-gray-700 dark:text-gray-300 flex items-center gap-1">
-            <FaClock className="w-3 h-3" />
-            {t('chart.update.schedule')}
+      <div className="grid md:grid-cols-2 gap-4">
+        {/* 왼쪽: 차트별 업데이트 시간 */}
+        <div className="glass-card p-4 border border-white/10">
+          <h3 className="font-bold text-sm mb-3 text-white flex items-center gap-2">
+            <Clock className="w-4 h-4" />
+            [차트별 업데이트시간]
           </h3>
-          <div className="space-y-0.5 text-[11px]">
-            <p className="text-gray-600 dark:text-gray-400">
-              • <span className="font-semibold">{t('chart.korea3')}</span> {t('chart.schedule.korea')}
+          <div className="space-y-1 text-xs">
+            <p className="text-gray-400">
+              • <span className="font-semibold text-white">한국 3사</span> (멜론, 지니, 벅스) → 하루 4회: 01시 / 07시 / 13시 / 19시
             </p>
-            <p className="text-gray-600 dark:text-gray-400">
-              • <span className="font-semibold">Vibe</span> {t('chart.schedule.vibe')}
+            <p className="text-gray-400">
+              • <span className="font-semibold text-white">Vibe</span> → 하루 2회: 01시 / 13시
             </p>
-            <p className="text-gray-600 dark:text-gray-400">
-              • <span className="font-semibold">FLO</span> {t('chart.schedule.flo')}
+            <p className="text-gray-400">
+              • <span className="font-semibold text-white">FLO</span> → 하루 4회: 01시 / 07시 / 13시 / 19시
             </p>
-            <p className="text-gray-600 dark:text-gray-400">
-              • <span className="font-semibold">Spotify</span> {t('chart.schedule.spotify')}
+            <p className="text-gray-400">
+              • <span className="font-semibold text-white">Spotify</span> → 매일 09:00 KST
             </p>
-            <p className="text-gray-600 dark:text-gray-400">
-              • <span className="font-semibold">YouTube</span> {t('chart.schedule.youtube')}
+            <p className="text-gray-400">
+              • <span className="font-semibold text-white">YouTube</span> → 매일 12:00 KST
             </p>
-            <p className="text-gray-600 dark:text-gray-400">
-              • <span className="font-semibold">Billboard</span> {t('chart.schedule.billboard')}
+            <p className="text-gray-400">
+              • <span className="font-semibold text-white">Billboard</span> → 매주 화요일 14:00 KST 경
             </p>
           </div>
         </div>
 
-        {/* 오른쪽: 터미널 스타일 실시간 업데이트 현황 */}
-        <div className="bg-black rounded-lg p-2 font-mono text-[10px] overflow-auto relative max-h-[200px]">
-          <div className="text-green-400 mb-1">[실시간 DB 업데이트 현황 - KST]</div>
+        {/* 오른쪽: 실시간 업데이트 현황 */}
+        <div className="bg-black/80 backdrop-blur rounded-lg p-3 font-mono text-xs border border-green-900/50">
+          <div className="text-green-400 mb-2 flex items-center gap-2">
+            <RefreshCw className="w-3 h-3 animate-spin" />
+            [실시간 DB 업데이트 현황]
+          </div>
           
-          {/* 업데이트 로그 */}
-          <div className="space-y-0.5">
+          <div className="space-y-1">
             {loading ? (
-              <div className="text-yellow-400">{t('message.loading')}</div>
+              <div className="text-yellow-400">로딩 중...</div>
+            ) : charts.length > 0 ? (
+              charts.map((chart) => {
+                const chartName = CHART_NAMES[chart.chart_name?.toLowerCase()] || chart.chart_name?.toUpperCase() || 'UNKNOWN';
+                const isActive = chart.status === 'active' || chart.status === '정상';
+                const statusColor = isActive ? 'text-green-400' : 'text-yellow-400';
+                const statusIcon = isActive ? '✓' : '◐';
+                
+                return (
+                  <div key={chart.chart_name} className={statusColor}>
+                    • {chartName} → {formatTime(chart.last_update)} [{chart.track_count || 0}곡] {statusIcon}
+                  </div>
+                );
+              })
             ) : (
-              <>
-                {/* 실제 API 데이터로 크롤링 현황 표시 */}
-                {Object.entries(updateStatus).length > 0 ? (
-                  Object.entries(updateStatus).map(([chartKey, data]) => {
-                    const chartName = CHART_NAMES[chartKey.toLowerCase()] || chartKey.toUpperCase();
-                    // 🔥 상태 처리 개선 - 백엔드에서 오는 한국어 상태 처리
-                    const isOutdated = data.status === '지연' || data.status === 'outdated';
-                    const isActive = data.status === '최신' || data.status === '정상' || data.status === 'active' || data.status === 'success';
-                    const isFailed = data.status === '오류' || data.status === 'failed';
-                    
-                    const statusColor = isActive ? 'text-green-400' : 
-                                      isFailed ? 'text-red-400' : 
-                                      isOutdated ? 'text-yellow-400' : 'text-gray-400';
-                    const statusIcon = isActive ? '✓' : 
-                                     isFailed ? '✗' : 
-                                     isOutdated ? '⚠' : '◐';
-                    
-                    // last_update_korean 우선 사용, 없으면 last_update 사용
-                    const updateTime = data.last_update_korean || data.last_update || '-';
-                    const displayStatus = data.track_count ? 
-                      `${data.track_count} ${t('chart.tracks')}` : 
-                      t('chart.nodata');
-                    
-                    // 시간 포맷 간단하게 처리 (월.일 시:분)
-                    const formatTime = (timeStr: string) => {
-                      if (!timeStr) return '';
-                      // "2025년 08월 20일 14시 32분" -> "08.20 14:32"
-                      const match = timeStr.match(/(\d{2})월 (\d{2})일 (\d{2})시 (\d{2})분/);
-                      if (match) {
-                        return `[${match[1]}.${match[2]} ${match[3]}:${match[4]}]`;
-                      }
-                      // "2025-08-20 14:32:39" -> "08.20 14:32"
-                      const isoMatch = timeStr.match(/\d{4}-(\d{2})-(\d{2}) (\d{2}):(\d{2})/);
-                      if (isoMatch) {
-                        return `[${isoMatch[1]}.${isoMatch[2]} ${isoMatch[3]}:${isoMatch[4]}]`;
-                      }
-                      return timeStr;
-                    };
-                    
-                    const shortTime = formatTime(updateTime);
-                    
-                    return (
-                      <div key={chartKey} className={statusColor}>
-                        {chartName} - {displayStatus} {statusIcon} {shortTime}
-                      </div>
-                    );
-                  })
-                ) : (
-                  // API 데이터가 없을 때 기본 표시
-                  <>
-                    <div className="text-yellow-400">{t('chart.connecting')}</div>
-                    <div className="text-gray-500">{t('chart.loading.crawl')}</div>
-                  </>
-                )}
-              </>
+              <div className="text-gray-500">데이터를 불러오는 중...</div>
             )}
           </div>
         </div>

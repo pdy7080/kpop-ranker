@@ -1,298 +1,424 @@
 import React, { useEffect, useState } from 'react';
-import Head from 'next/head';
 import { useRouter } from 'next/router';
+import Head from 'next/head';
 import Layout from '@/components/Layout';
 import { motion, AnimatePresence } from 'framer-motion';
 import { trendingApi } from '@/lib/api';
-import { 
-  MouseGradient, 
-  ParticleField,
-  ChartRace,
-  WaveVisualizer
-} from '@/components/InteractiveComponents';
-import {
-  BubbleChart,
-  TrendingFlame,
-  LiveCounter
-} from '@/components/DataVisualization';
-import ChartUpdateStatus from '@/components/ChartUpdateStatus';
 import ImageWithFallback from '@/components/ImageWithFallback';
-import { useTranslation } from '@/contexts/TranslationContext';
+import ChartRankDisplay from '@/components/ChartRankDisplay';
+import { TRENDING_TABS } from '@/constants/trendingConfig';
+import { 
+  TrendingUp, TrendingDown, Flame, Award, Clock, BarChart3,
+  Music, Filter, ChevronRight, Sparkles, Star,
+  Zap, Globe, Radio, Activity, Crown, Disc, Minus,
+  Users, Rocket, Trophy
+} from 'lucide-react';
 
-// 조회수 포맷팅 함수
-const formatViews = (views: string | number | undefined): string => {
-  if (!views || views === '0' || views === '') return '';
-  
-  try {
-    const num = typeof views === 'string' ? parseInt(views) : views;
-    if (isNaN(num)) return '';
-    
-    if (num >= 1000000000) return `${(num / 1000000000).toFixed(1)}B`;
-    if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`;
-    if (num >= 1000) return `${(num / 1000).toFixed(0)}K`;
-    return num.toLocaleString();
-  } catch {
-    return '';
-  }
-};
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
-// 정렬 옵션
-type SortOption = 'rank' | 'views' | 'artist' | 'title';
+interface TrendingTrack {
+  artist: string;
+  track: string;
+  score: number;
+  charts: Record<string, number>;
+  best_rank: number;
+  chart_count: number;
+  image_url?: string;
+  trend?: 'up' | 'down' | 'same';
+  change?: number;
+  is_new?: boolean;
+  weeks_on_chart?: number;
+}
 
 export default function TrendingPage() {
   const router = useRouter();
-  const { t } = useTranslation();
-  const [trendingData, setTrendingData] = useState<any[]>([]);
-  const [chartData, setChartData] = useState<any>({});
-  const [selectedChart, setSelectedChart] = useState<string>('all');
-  const [timeRange, setTimeRange] = useState<'today' | 'week' | 'month'>('today');
-  const [sortBy, setSortBy] = useState<SortOption>('rank');
-  const [isLoading, setIsLoading] = useState(true);
-
-  const charts = [
-    { id: 'all', name: t('trending.filter.integrated'), emoji: '🌏' },
-    { id: 'melon', name: 'Melon', emoji: '🍉' },
-    { id: 'genie', name: 'Genie', emoji: '🧞' },
-    { id: 'bugs', name: 'Bugs', emoji: '🐛' },
-    { id: 'spotify', name: 'Spotify', emoji: '🎵' },
-    { id: 'youtube', name: 'YouTube', emoji: '📺' }
-  ];
-
-  // 정렬 옵션 (YouTube 조회수 포함)
-  const sortOptions = [
-    { value: 'rank', label: '차트 순위' },
-    { value: 'views', label: 'YouTube 조회수' },
-    { value: 'artist', label: '아티스트명' },
-    { value: 'title', label: '곡명' }
-  ];
+  const [tracks, setTracks] = useState<TrendingTrack[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState<string>('hot');
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [hoveredCard, setHoveredCard] = useState<number | null>(null);
+  const [stats, setStats] = useState({
+    hotArtist: '',
+    topEntry: '',
+    chartKiller: '',
+    weeklyBest: 0
+  });
 
   useEffect(() => {
-    fetchTrendingData();
-  }, [selectedChart, timeRange]);
+    fetchTrending(filter);
+    fetchStats();
+  }, [filter]);
 
-  const fetchTrendingData = async () => {
-    setIsLoading(true);
+  const fetchTrending = async (type: string) => {
     try {
-      const response = await trendingApi.getTrending('hot', 50);
+      setLoading(true);
       
-      // API 응답 구조 확인 및 처리
-      const tracks = response?.trending || response?.tracks || [];
+      // 탭별 실제 API 호출
+      const response = await fetch(`${API_URL}/api/trending/${type}`);
       
-      if (tracks.length > 0) {
-        const formattedData = tracks.map((track: any, idx: number) => ({
-          id: track.id || idx,
-          rank: idx + 1,
-          artist: track.artist || track.unified_artist,
-          title: track.title || track.track || track.unified_track || track.name,
-          albumImage: track.album_image || track.optimized_album_image,
-          change: track.rank_change || 0,
-          views: track.views_or_streams || track.youtube_views || track.views || 0,
-          trendingScore: track.trending_score || track.trend_score || Math.floor(Math.random() * 100),
-          chartPositions: track.chart_scores || track.charts || {},
-          sparkData: Array.from({ length: 30 }, () => Math.floor(Math.random() * 100) + 1)
-        }));
+      if (response.ok) {
+        const data = await response.json();
         
-        setTrendingData(formattedData);
-        
-        // 차트별 데이터 생성 (실제 차트 데이터가 있을 때만)
-        const chartSpecificData: any = {};
-        charts.forEach(chart => {
-          if (chart.id !== 'all') {
-            // 임시 데이터 생성 (실제 API에서 차트별 데이터가 없을 때)
-            chartSpecificData[chart.id] = formattedData
-              .slice(0, Math.floor(Math.random() * 15) + 5)
-              .map((t: any, idx: number) => ({
-                ...t,
-                rank: idx + 1,
-                chartPositions: { [chart.id]: idx + 1 }
-              }));
-          }
-        });
-        setChartData(chartSpecificData);
+        if (data?.trending) {
+          const processedTracks = data.trending.map((track: any) => {
+            let imageUrl = track.image_url;
+            if (!imageUrl || !track.has_real_image) {
+              imageUrl = `${API_URL}/api/album-image-smart/${encodeURIComponent(track.artist)}/${encodeURIComponent(track.track)}`;
+            }
+            
+            return {
+              ...track,
+              image_url: imageUrl
+            };
+          });
+          
+          setTracks(processedTracks);
+        }
+      } else {
+        console.error('Failed to fetch trending');
       }
     } catch (error) {
-      console.error('Failed to fetch trending data:', error);
-      // 에러 시 더미 데이터 생성
-      const dummyData = Array.from({ length: 20 }, (_, idx) => ({
-        id: idx,
-        rank: idx + 1,
-        artist: `Artist ${idx + 1}`,
-        title: `Song Title ${idx + 1}`,
-        albumImage: null,
-        change: Math.floor(Math.random() * 10) - 5,
-        views: Math.floor(Math.random() * 10000000),
-        trendingScore: Math.floor(Math.random() * 100),
-        chartPositions: {},
-        sparkData: Array.from({ length: 30 }, () => Math.floor(Math.random() * 100) + 1)
-      }));
-      setTrendingData(dummyData);
+      console.error('Failed to fetch trending:', error);
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
 
-  // 정렬 함수
-  const sortedData = React.useMemo(() => {
-    const data = selectedChart === 'all' ? trendingData : (chartData[selectedChart] || []);
-    
-    return [...data].sort((a, b) => {
-      switch (sortBy) {
-        case 'views':
-          const viewsA = typeof a.views === 'string' ? parseInt(a.views) || 0 : a.views || 0;
-          const viewsB = typeof b.views === 'string' ? parseInt(b.views) || 0 : b.views || 0;
-          return viewsB - viewsA;
-        case 'artist':
-          return (a.artist || '').localeCompare(b.artist || '');
-        case 'title':
-          return (a.title || '').localeCompare(b.title || '');
-        case 'rank':
-        default:
-          return a.rank - b.rank;
+  const fetchStats = async () => {
+    try {
+      // 실제 통계 API 호출
+      const response = await fetch(`${API_URL}/api/trending/stats`);
+      
+      if (response.ok) {
+        const data = await response.json();
+        setStats({
+          hotArtist: data.hot_artist_info || data.hot_artist || 'N/A',
+          topEntry: data.top_entry || 'N/A',
+          chartKiller: data.chart_killer || 'N/A',
+          weeklyBest: data.weekly_best || 0
+        });
       }
-    });
-  }, [trendingData, chartData, selectedChart, sortBy]);
+    } catch (error) {
+      console.error('Failed to fetch stats:', error);
+      // 폴백 기본값
+      setStats({
+        hotArtist: 'Loading...',
+        topEntry: 'Loading...',
+        chartKiller: 'Loading...',
+        weeklyBest: 0
+      });
+    }
+  };
+
+  const getTrendIcon = (trend?: string, change?: number) => {
+    if (!trend) return <Minus className="w-4 h-4 text-gray-400" />;
+    
+    if (trend === 'up') {
+      return (
+        <div className="flex items-center gap-1 text-green-400">
+          <TrendingUp className="w-4 h-4" />
+          {change && <span className="text-xs font-bold">+{change}</span>}
+        </div>
+      );
+    } else if (trend === 'down') {
+      return (
+        <div className="flex items-center gap-1 text-red-400">
+          <TrendingDown className="w-4 h-4" />
+          {change && <span className="text-xs font-bold">-{change}</span>}
+        </div>
+      );
+    }
+    return <Minus className="w-4 h-4 text-gray-400" />;
+  };
+
+  const currentTab = Object.values(TRENDING_TABS).find(tab => tab.id === filter) || TRENDING_TABS.HOT;
 
   return (
     <Layout>
       <Head>
-        <title>{t('trending.title')} - KPOP Ranker</title>
-        <meta name="description" content={t('trending.description')} />
+        <title>Trending - KPOP Ranker</title>
       </Head>
 
-      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-pink-900 to-red-900 relative overflow-hidden">
-        <ParticleField />
-        <MouseGradient />
-
-        <div className="container mx-auto px-4 py-8 relative z-10">
-          {/* 헤더 */}
+      <div className="min-h-screen bg-[#0A0A0F]">
+        <div className="container mx-auto px-4 py-8">
+          {/* Header */}
           <motion.div
-            initial={{ opacity: 0, y: -50 }}
+            initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="text-center mb-12"
+            className="mb-8"
           >
-            <h1 className="text-6xl font-bold text-white mb-4 neon-text">
-              {t('trending.header.realTime')}
-            </h1>
-            <p className="text-xl text-pink-200">
-              {t('trending.header.subtitle')}
-            </p>
+            <div className="flex items-center gap-3 mb-2">
+              <div className={`p-3 bg-gradient-to-r ${currentTab.color} rounded-xl`}>
+                <Flame className="w-8 h-8 text-white" />
+              </div>
+              <div>
+                <h1 className="text-4xl font-bold text-white">{currentTab.label}</h1>
+                <p className="text-gray-400">{currentTab.info}</p>
+              </div>
+            </div>
           </motion.div>
 
-          {/* 차트 업데이트 현황 */}
-          <ChartUpdateStatus />
+          {/* 팬 친화적 통계 */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+            <motion.div whileHover={{ scale: 1.02 }} className="glass-card p-6 border border-white/10">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-400 mb-1">오늘 가장 HOT한 🔥</p>
+                  <p className="text-2xl font-bold text-white">{stats.hotArtist}</p>
+                  <p className="text-xs text-gray-500 mt-1">24시간 순위 상승폭</p>
+                </div>
+              </div>
+            </motion.div>
 
-          {/* 필터 & 정렬 옵션 */}
-          <div className="flex flex-wrap justify-center gap-4 mb-8">
-            {/* 차트 필터 */}
+            <motion.div whileHover={{ scale: 1.02 }} className="glass-card p-6 border border-white/10">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-400 mb-1">최고 진입 🚀</p>
+                  <p className="text-2xl font-bold bg-gradient-to-r from-yellow-400 to-orange-400 bg-clip-text text-transparent">
+                    {stats.topEntry}
+                  </p>
+                </div>
+              </div>
+            </motion.div>
+
+            <motion.div whileHover={{ scale: 1.02 }} className="glass-card p-6 border border-white/10">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-400 mb-1">올킬 임박 💯</p>
+                  <p className="text-2xl font-bold text-white">{stats.chartKiller}</p>
+                </div>
+              </div>
+            </motion.div>
+
+            <motion.div whileHover={{ scale: 1.02 }} className="glass-card p-6 border border-white/10">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-400 mb-1">주간 최고점 🏆</p>
+                  <p className="text-2xl font-bold text-white">{stats.weeklyBest}</p>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+
+          {/* Filter Tabs */}
+          <div className="flex flex-wrap items-center justify-between gap-4">
             <div className="flex gap-2">
-              {charts.map((chart) => (
+              {Object.values(TRENDING_TABS).map(tab => (
                 <motion.button
-                  key={chart.id}
+                  key={tab.id}
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
-                  onClick={() => setSelectedChart(chart.id)}
-                  className={`px-4 py-2 rounded-full backdrop-blur-md transition-all ${
-                    selectedChart === chart.id
-                      ? 'bg-white/30 text-white shadow-neon'
-                      : 'bg-white/10 text-white/70 hover:bg-white/20'
+                  onClick={() => setFilter(tab.id)}
+                  className={`relative px-6 py-3 rounded-xl font-medium transition-all ${
+                    filter === tab.id 
+                      ? 'text-white' 
+                      : 'text-gray-400 hover:text-white'
                   }`}
                 >
-                  <span className="mr-1">{chart.emoji}</span>
-                  {chart.name}
+                  {filter === tab.id && (
+                    <motion.div
+                      layoutId="activeFilter"
+                      className={`absolute inset-0 bg-gradient-to-r ${tab.color} rounded-xl`}
+                      transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                    />
+                  )}
+                  <span className="relative">{tab.label}</span>
                 </motion.button>
               ))}
             </div>
 
-            {/* 정렬 옵션 */}
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as SortOption)}
-              className="px-4 py-2 rounded-full bg-white/20 text-white backdrop-blur-md border border-white/30 focus:outline-none focus:ring-2 focus:ring-pink-500"
-            >
-              {sortOptions.map(option => (
-                <option key={option.value} value={option.value} className="bg-gray-800">
-                  {option.label}
-                </option>
-              ))}
-            </select>
+            {/* View Mode Toggle */}
+            <div className="flex gap-2 p-1 glass rounded-lg">
+              <button
+                onClick={() => setViewMode('grid')}
+                className={`p-2 rounded transition-all ${
+                  viewMode === 'grid' 
+                    ? 'bg-white/20 text-white' 
+                    : 'text-gray-400 hover:text-white'
+                }`}
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <rect x="3" y="3" width="7" height="7" strokeWidth="2" strokeLinecap="round" />
+                  <rect x="14" y="3" width="7" height="7" strokeWidth="2" strokeLinecap="round" />
+                  <rect x="3" y="14" width="7" height="7" strokeWidth="2" strokeLinecap="round" />
+                  <rect x="14" y="14" width="7" height="7" strokeWidth="2" strokeLinecap="round" />
+                </svg>
+              </button>
+              <button
+                onClick={() => setViewMode('list')}
+                className={`p-2 rounded transition-all ${
+                  viewMode === 'list' 
+                    ? 'bg-white/20 text-white' 
+                    : 'text-gray-400 hover:text-white'
+                }`}
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <line x1="3" y1="6" x2="21" y2="6" strokeWidth="2" strokeLinecap="round" />
+                  <line x1="3" y1="12" x2="21" y2="12" strokeWidth="2" strokeLinecap="round" />
+                  <line x1="3" y1="18" x2="21" y2="18" strokeWidth="2" strokeLinecap="round" />
+                </svg>
+              </button>
+            </div>
           </div>
 
-          {/* 트렌딩 리스트 */}
+          {/* Content */}
           <AnimatePresence mode="wait">
-            {isLoading ? (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="text-center py-20"
-              >
-                <div className="inline-block animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-pink-500"></div>
+            {loading ? (
+              <motion.div className={viewMode === 'grid' 
+                ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mt-8"
+                : "space-y-4 mt-8"
+              }>
+                {[...Array(8)].map((_, idx) => (
+                  <div key={idx} className="glass-card p-4 animate-pulse">
+                    <div className="w-full aspect-square bg-white/10 rounded-xl mb-4" />
+                    <div className="h-4 bg-white/10 rounded mb-2" />
+                    <div className="h-3 bg-white/10 rounded w-2/3" />
+                  </div>
+                ))}
+              </motion.div>
+            ) : viewMode === 'grid' ? (
+              <motion.div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mt-8">
+                {tracks.map((track, idx) => (
+                  <motion.div
+                    key={idx}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: idx * 0.02 }}
+                    whileHover={{ y: -8 }}
+                    onClick={() => router.push(`/track/${encodeURIComponent(track.artist)}/${encodeURIComponent(track.track)}`)}
+                    className="relative group cursor-pointer"
+                  >
+                    {/* NEW Badge */}
+                    {track.is_new && (
+                      <div className="absolute -top-2 -right-2 z-20 px-3 py-1 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full">
+                        <span className="text-xs font-bold text-white">NEW</span>
+                      </div>
+                    )}
+
+                    <div className="relative glass-card overflow-hidden border border-white/10 hover:border-purple-500/50 transition-all">
+                      {/* Rank Badge */}
+                      <div className="absolute top-4 left-4 z-10">
+                        <div className="flex items-center justify-center w-14 h-14 bg-black/70 backdrop-blur-xl rounded-xl border border-white/20">
+                          <span className="text-xl font-black text-white">#{idx + 1}</span>
+                        </div>
+                      </div>
+
+                      {/* Trend Badge */}
+                      <div className="absolute top-4 right-4 z-10">
+                        <div className="px-3 py-2 bg-black/70 backdrop-blur-xl rounded-lg border border-white/20">
+                          {getTrendIcon(track.trend, track.change)}
+                        </div>
+                      </div>
+
+                      {/* Image */}
+                      <div className="relative aspect-square overflow-hidden bg-gradient-to-br from-purple-900/50 to-pink-900/50">
+                        <ImageWithFallback
+                          src={track.image_url}
+                          alt={track.track}
+                          width={400}
+                          height={400}
+                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-60" />
+                      </div>
+
+                      {/* Info */}
+                      <div className="p-5">
+                        <h3 className="font-bold text-lg text-white mb-1 truncate">{track.track}</h3>
+                        <p className="text-sm text-gray-400 mb-3 truncate">{track.artist}</p>
+                        
+                        {/* Score & Charts */}
+                        <div className="flex items-center justify-between mb-3">
+                          <div className="flex items-center gap-1">
+                            <Star className="w-4 h-4 text-yellow-400 fill-current" />
+                            <span className="text-xl font-bold text-white">{track.score}</span>
+                          </div>
+                          <div className="flex items-center gap-1 text-gray-400">
+                            <BarChart3 className="w-4 h-4" />
+                            <span className="text-sm">{track.chart_count} charts</span>
+                          </div>
+                        </div>
+                        
+                        {/* Chart Pills */}
+                        <div className="flex flex-wrap gap-1">
+                          {Object.entries(track.charts || {}).slice(0, 3).map(([chart, rank]) => (
+                            <ChartRankDisplay 
+                              key={chart}
+                              chartName={chart} 
+                              rank={rank as number} 
+                              displayType="badge"
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </motion.div>
+                ))}
               </motion.div>
             ) : (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="grid gap-4"
-              >
-                {sortedData.map((track, index) => (
+              <motion.div className="space-y-3 mt-8">
+                {tracks.map((track, idx) => (
                   <motion.div
-                    key={track.id}
-                    initial={{ opacity: 0, x: -50 }}
+                    key={idx}
+                    initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: index * 0.02 }}
-                    whileHover={{ scale: 1.02 }}
-                    onClick={() => router.push(`/track/${encodeURIComponent(track.artist)}/${encodeURIComponent(track.title)}`)}
-                    className="bg-white/10 backdrop-blur-md rounded-2xl p-4 hover:bg-white/20 transition-all cursor-pointer border border-white/20"
+                    transition={{ delay: idx * 0.01 }}
+                    whileHover={{ x: 10 }}
+                    onClick={() => router.push(`/track/${encodeURIComponent(track.artist)}/${encodeURIComponent(track.track)}`)}
+                    className="glass-card p-4 border border-white/10 hover:border-purple-500/50 transition-all cursor-pointer group"
                   >
                     <div className="flex items-center gap-4">
-                      {/* 순위 */}
-                      <div className="text-3xl font-bold text-white/90 w-12 text-center">
-                        {sortBy === 'rank' ? track.rank : index + 1}
+                      {/* Rank */}
+                      <div className="flex-shrink-0 w-12 text-center">
+                        <span className="text-2xl font-black bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
+                          {idx + 1}
+                        </span>
                       </div>
 
-                      {/* 앨범 이미지 */}
-                      <ImageWithFallback
-                        src={track.albumImage}
-                        alt={`${track.artist} - ${track.title}`}
-                        width={80}
-                        height={80}
-                        className="rounded-lg shadow-lg"
-                      />
-
-                      {/* 트랙 정보 */}
-                      <div className="flex-grow">
-                        <h3 className="text-xl font-semibold text-white">
-                          {track.title}
-                        </h3>
-                        <p className="text-pink-200">
-                          {track.artist}
-                        </p>
-                        
-                        {/* YouTube 조회수 표시 */}
-                        {track.views && track.views !== '0' && (
-                          <div className="flex items-center gap-2 mt-2">
-                            <svg className="w-5 h-5 text-red-400" viewBox="0 0 24 24" fill="currentColor">
-                              <path d="M10 15l5.19-3L10 9v6m11.56-7.83c.13.47.22 1.1.28 1.9.07.8.1 1.49.1 2.09L22 12c0 2.19-.16 3.8-.44 4.83-.25.9-.83 1.48-1.73 1.73-.47.13-1.33.22-2.65.28-1.3.07-2.49.1-3.59.1L12 19c-4.19 0-6.8-.16-7.83-.44-.9-.25-1.48-.83-1.73-1.73-.13-.47-.22-1.1-.28-1.9-.07-.8-.1-1.49-.1-2.09L2 12c0-2.19.16-3.8.44-4.83.25-.9.83-1.48 1.73-1.73.47-.13 1.33-.22 2.65-.28 1.3-.07 2.49-.1 3.59-.1L12 5c4.19 0 6.8.16 7.83.44.9.25 1.48.83 1.73 1.73z"/>
-                            </svg>
-                            <span className="text-sm text-white/80">
-                              {formatViews(track.views)} views
-                            </span>
-                          </div>
-                        )}
+                      {/* Trend */}
+                      <div className="flex-shrink-0">
+                        {getTrendIcon(track.trend, track.change)}
                       </div>
 
-                      {/* 변동 표시 */}
-                      <div className="text-right">
-                        {track.change !== 0 && (
-                          <div className={`flex items-center gap-1 ${
-                            track.change > 0 ? 'text-green-400' : 'text-red-400'
-                          }`}>
-                            {track.change > 0 ? '▲' : '▼'}
-                            <span className="font-semibold">{Math.abs(track.change)}</span>
-                          </div>
-                        )}
+                      {/* Image */}
+                      <div className="flex-shrink-0">
+                        <ImageWithFallback
+                          src={track.image_url}
+                          alt={track.track}
+                          width={64}
+                          height={64}
+                          className="rounded-lg"
+                        />
                       </div>
+
+                      {/* Info */}
+                      <div className="flex-grow min-w-0">
+                        <h3 className="font-bold text-white truncate">{track.track}</h3>
+                        <p className="text-sm text-gray-400 truncate">{track.artist}</p>
+                      </div>
+
+                      {/* Charts */}
+                      <div className="flex-shrink-0 hidden md:flex gap-2">
+                        {Object.entries(track.charts || {}).slice(0, 4).map(([chart, rank]) => (
+                          <ChartRankDisplay
+                            key={chart}
+                            chartName={chart}
+                            rank={rank as number}
+                            displayType="compact"
+                          />
+                        ))}
+                      </div>
+
+                      {/* Score */}
+                      <div className="flex-shrink-0 text-center">
+                        <div className="flex items-center gap-1">
+                          <Zap className="w-5 h-5 text-yellow-400" />
+                          <span className="text-2xl font-bold text-white">{track.score}</span>
+                        </div>
+                      </div>
+
+                      {/* Arrow */}
+                      <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-white transition-colors" />
                     </div>
                   </motion.div>
                 ))}

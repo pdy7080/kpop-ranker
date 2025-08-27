@@ -3,16 +3,19 @@ import Head from 'next/head';
 import { useRouter } from 'next/router';
 import Layout from '@/components/Layout';
 import { motion, AnimatePresence } from 'framer-motion';
+import { searchApi } from '@/lib/api';
 import { 
   MouseGradient, 
   ParticleField,
+  Album3D
 } from '@/components/InteractiveComponents';
+import {
+  TrendingFlame,
+  SparkLine
+} from '@/components/DataVisualization';
 import UnifiedSearch from '@/components/UnifiedSearch';
 import ImageWithFallback from '@/components/ImageWithFallback';
 import { useTranslation } from '@/contexts/TranslationContext';
-import axios from 'axios';
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
 // 조회수 포맷팅 함수
 const formatViews = (views: string | number | undefined): string => {
@@ -34,7 +37,7 @@ const formatViews = (views: string | number | undefined): string => {
 export default function SearchPage() {
   const router = useRouter();
   const { t } = useTranslation();
-  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [searchResults, setSearchResults] = useState<any>({ artists: [], tracks: [] });
   const [isLoading, setIsLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState<'all' | 'artists' | 'tracks'>('all');
@@ -53,56 +56,60 @@ export default function SearchPage() {
     
     setIsLoading(true);
     try {
-      // 직접 API 호출
-      const response = await axios.get(`${API_URL}/api/search`, {
-        params: { q: query }
-      });
+      console.log('검색 시작:', query);
+      const response = await searchApi.search(query);
+      console.log('검색 결과:', response);
       
-      console.log('🔍 검색 API 응답:', response.data);
-      
-      // results 배열을 바로 사용
-      setSearchResults(response.data.results || []);
+      // v11 응답 구조 처리
+      if (response?.results) {
+        const artists = new Map();
+        const tracks = [];
+        
+        response.results.forEach((item: any) => {
+          // 트랙 추가
+          tracks.push({
+            artist: item.artist,
+            title: item.track || item.title,
+            album_image: item.image_url || item.album_image,
+            charts: item.charts || {},
+            positions: item.positions,
+            trend_score: item.score || 0
+          });
+          
+          // 아티스트 추출 (normalized 필드 추가)
+          if (!artists.has(item.artist)) {
+            artists.set(item.artist, {
+              name: item.artist,
+              artist_normalized: item.artist_normalized || item.artist,
+              track_count: 1
+            });
+          } else {
+            artists.get(item.artist).track_count++;
+          }
+        });
+        
+        console.log('변환된 결과:', { artists: Array.from(artists.values()), tracks });
+        
+        setSearchResults({
+          artists: Array.from(artists.values()),
+          tracks: tracks
+        });
+      } else {
+        console.log('결과 없음');
+        setSearchResults({ artists: [], tracks: [] });
+      }
     } catch (error) {
       console.error('Search failed:', error);
-      setSearchResults([]);
+      setSearchResults({ artists: [], tracks: [] });
     } finally {
       setIsLoading(false);
     }
   };
 
-  // 결과를 아티스트와 트랙으로 분류
-  const artistsMap = new Map<string, any>();
-  const tracks: any[] = [];
-
-  searchResults.forEach((item: any) => {
-    if (item.track) {
-      tracks.push(item);
-      
-      // 아티스트 정보 추출
-      const artistKey = item.artist;
-      if (!artistsMap.has(artistKey)) {
-        artistsMap.set(artistKey, {
-          artist: item.artist,
-          track_count: 1
-        });
-      } else {
-        const artist = artistsMap.get(artistKey);
-        artist.track_count++;
-      }
-    }
-  });
-
-  const artists = Array.from(artistsMap.values());
-
-  // 필터링
-  let filteredTracks = tracks;
-  let filteredArtists = artists;
-
-  if (filterType === 'tracks') {
-    filteredArtists = [];
-  } else if (filterType === 'artists') {
-    filteredTracks = [];
-  }
+  const filteredResults = {
+    artists: filterType === 'tracks' ? [] : searchResults.artists || [],
+    tracks: filterType === 'artists' ? [] : searchResults.tracks || []
+  };
 
   return (
     <Layout>
@@ -166,8 +173,8 @@ export default function SearchPage() {
                   whileTap={{ scale: 0.95 }}
                 >
                   {type === 'all' ? '전체' : type === 'artists' ? '아티스트' : '트랙'}
-                  {type === 'artists' && ` (${artists.length})`}
-                  {type === 'tracks' && ` (${tracks.length})`}
+                  {type === 'artists' && ` (${searchResults.artists?.length || 0})`}
+                  {type === 'tracks' && ` (${searchResults.tracks?.length || 0})`}
                 </motion.button>
               ))}
             </motion.div>
@@ -192,28 +199,28 @@ export default function SearchPage() {
                 exit={{ opacity: 0 }}
               >
                 {/* Artists Results */}
-                {filteredArtists.length > 0 && (
+                {filteredResults.artists.length > 0 && (
                   <motion.section 
                     className="mb-12"
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
                   >
                     <h2 className="text-2xl font-bold mb-6 text-pink-400">
-                      아티스트 ({filteredArtists.length})
+                      아티스트 ({filteredResults.artists.length})
                     </h2>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                      {filteredArtists.map((artist: any, index: number) => (
+                      {filteredResults.artists.map((artist: any, index: number) => (
                         <motion.div
                           key={artist.artist || index}
                           initial={{ opacity: 0, y: 20 }}
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ delay: index * 0.05 }}
                           whileHover={{ scale: 1.02 }}
-                          onClick={() => router.push(`/artist/${encodeURIComponent(artist.artist)}`)}
+                          onClick={() => router.push(`/artist/${encodeURIComponent(artist.artist_normalized || artist.name || artist.artist)}`)}
                           className="bg-white/10 backdrop-blur rounded-xl p-6 hover:bg-white/20 transition-all cursor-pointer border border-white/20"
                         >
                           <h3 className="text-xl font-semibold text-white mb-2">
-                            {artist.artist}
+                            {artist.name || artist.artist}
                           </h3>
                           <p className="text-gray-400">
                             {artist.track_count} 곡
@@ -225,65 +232,69 @@ export default function SearchPage() {
                 )}
 
                 {/* Tracks Results */}
-                {filteredTracks.length > 0 && (
+                {filteredResults.tracks.length > 0 && (
                   <motion.section
                     initial={{ opacity: 0, x: 20 }}
                     animate={{ opacity: 1, x: 0 }}
                   >
                     <h2 className="text-2xl font-bold mb-6 text-purple-400">
-                      트랙 ({filteredTracks.length})
+                      트랙 ({filteredResults.tracks.length})
                     </h2>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                      {filteredTracks.map((track: any, index: number) => (
+                    <div className="space-y-4">
+                      {filteredResults.tracks.map((track: any, index: number) => (
                         <motion.div
-                          key={`${track.artist}-${track.track}-${index}`}
-                          initial={{ opacity: 0, y: 20 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: index * 0.05 }}
-                          whileHover={{ scale: 1.02 }}
-                          onClick={() => router.push(`/track/${encodeURIComponent(track.artist)}/${encodeURIComponent(track.track)}`)}
-                          className="bg-white/10 backdrop-blur rounded-xl p-6 hover:bg-white/20 transition-all cursor-pointer border border-white/20"
+                          key={`${track.artist}-${track.title}-${index}`}
+                          initial={{ opacity: 0, x: -20 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: index * 0.02 }}
+                          whileHover={{ scale: 1.01 }}
+                          onClick={() => router.push(`/track/${encodeURIComponent(track.artist)}/${encodeURIComponent(track.title)}`)}
+                          className="bg-white/10 backdrop-blur rounded-xl p-4 hover:bg-white/20 transition-all cursor-pointer border border-white/20 flex items-center gap-4"
                         >
-                          <div className="flex items-center gap-4">
-                            <div className="relative">
-                              <ImageWithFallback
-                                src={track.image_url}
-                                artist={track.artist}
-                                track={track.track}
-                                alt={`${track.artist} - ${track.track}`}
-                                className="w-16 h-16 rounded-lg object-cover"
-                              />
-                            </div>
-                            <div className="flex-1">
-                              <h3 className="text-lg font-semibold text-white mb-1">
-                                {track.track}
-                              </h3>
-                              <p className="text-gray-400 mb-2">{track.artist}</p>
-                              
-                              {/* 차트 순위 */}
-                              {track.positions && (
-                                <div className="flex flex-wrap gap-2">
-                                  {Object.entries(track.positions).map(([chart, rank]) => (
-                                    <span
-                                      key={chart}
-                                      className="px-2 py-1 bg-gradient-to-r from-pink-500/20 to-purple-500/20 rounded-full text-xs text-pink-300"
-                                    >
-                                      {chart}: #{rank}
-                                    </span>
-                                  ))}
-                                </div>
-                              )}
-                              
-                              {/* 스코어 */}
-                              {track.score && (
-                                <div className="mt-2">
-                                  <span className="text-yellow-400 text-sm">
-                                    스코어: {track.score}
-                                  </span>
-                                </div>
-                              )}
-                            </div>
+                          {/* 앨범 이미지 */}
+                          <ImageWithFallback
+                            src={track.album_image || track.optimized_album_image}
+                            alt={`${track.artist} - ${track.title}`}
+                            width={64}
+                            height={64}
+                            className="rounded-lg"
+                          />
+                          
+                          {/* 트랙 정보 */}
+                          <div className="flex-grow">
+                            <h3 className="text-lg font-semibold text-white">
+                              {track.title}
+                            </h3>
+                            <p className="text-gray-400">
+                              {track.artist}
+                            </p>
+                            
+                            {/* YouTube 조회수 표시 */}
+                            {track.views_or_streams && track.views_or_streams !== '0' && (
+                              <div className="flex items-center gap-2 mt-1">
+                                <svg className="w-4 h-4 text-red-400" viewBox="0 0 24 24" fill="currentColor">
+                                  <path d="M10 15l5.19-3L10 9v6m11.56-7.83c.13.47.22 1.1.28 1.9.07.8.1 1.49.1 2.09L22 12c0 2.19-.16 3.8-.44 4.83-.25.9-.83 1.48-1.73 1.73-.47.13-1.33.22-2.65.28-1.3.07-2.49.1-3.59.1L12 19c-4.19 0-6.8-.16-7.83-.44-.9-.25-1.48-.83-1.73-1.73-.13-.47-.22-1.1-.28-1.9-.07-.8-.1-1.49-.1-2.09L2 12c0-2.19.16-3.8.44-4.83.25-.9.83-1.48 1.73-1.73.47-.13 1.33-.22 2.65-.28 1.3-.07 2.49-.1 3.59-.1L12 5c4.19 0 6.8.16 7.83.44.9.25 1.48.83 1.73 1.73z"/>
+                                </svg>
+                                <span className="text-sm text-white/70">
+                                  {formatViews(track.views_or_streams)} views
+                                </span>
+                              </div>
+                            )}
                           </div>
+                          
+                          {/* 차트 정보 */}
+                          {track.chart_name && (
+                            <div className="flex items-center gap-2">
+                              <span className="px-3 py-1 rounded-full bg-gradient-to-r from-pink-500/20 to-purple-500/20 text-xs text-white/80 border border-white/20">
+                                {track.chart_name}
+                              </span>
+                              {track.rank_position && (
+                                <span className="text-2xl font-bold text-white/50">
+                                  #{track.rank_position}
+                                </span>
+                              )}
+                            </div>
+                          )}
                         </motion.div>
                       ))}
                     </div>
@@ -291,17 +302,19 @@ export default function SearchPage() {
                 )}
 
                 {/* No Results */}
-                {!isLoading && searchQuery && searchResults.length === 0 && (
-                  <motion.div
+                {searchQuery && !isLoading && 
+                 filteredResults.artists.length === 0 && 
+                 filteredResults.tracks.length === 0 && (
+                  <motion.div 
+                    className="text-center py-20"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
-                    className="text-center py-20"
                   >
-                    <p className="text-gray-400 text-lg">
+                    <p className="text-2xl text-gray-400">
                       "{searchQuery}"에 대한 검색 결과가 없습니다.
                     </p>
-                    <p className="text-gray-500 mt-2">
-                      다른 키워드로 검색해보세요.
+                    <p className="text-gray-500 mt-4">
+                      다른 검색어를 시도해보세요.
                     </p>
                   </motion.div>
                 )}

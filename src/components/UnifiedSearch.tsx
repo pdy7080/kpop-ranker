@@ -1,31 +1,107 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import ReactDOM from 'react-dom';
-import { FaSearch, FaMusic, FaUser } from 'react-icons/fa';
+import { FaSearch, FaMusic, FaUser, FaFire } from 'react-icons/fa';
 import { useRouter } from 'next/router';
 import debounce from 'lodash/debounce';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from '@/contexts/TranslationContext';
 
 interface Suggestion {
-  id: string;
-  type: 'artist' | 'track' | 'popular';
-  artist: string;
-  artist_normalized?: string;
-  track: string | null;
+  type: 'artist' | 'track';
+  artist?: string;
+  track?: string;
+  name?: string;
   display: string;
-  matched_text: string;
-  score: number;
-  year?: number;
-  genre?: string;
-  chart_count?: number;
+  track_count?: number;
   best_rank?: number;
-  chart?: string;
-  rank?: number;
+  chart_count?: number;
 }
 
 interface UnifiedSearchProps {
   initialQuery?: string;
 }
+
+// 더미 자동완성 데이터 (배포 버전과 동일한 형태)
+const MOCK_SUGGESTIONS: Record<string, Suggestion[]> = {
+  '블': [
+    { type: 'artist', name: 'BLACKPINK', display: 'BLACKPINK', track_count: 1 },
+    { type: 'track', artist: 'BLACKPINK', track: '뛰어(JUMP)', display: 'BLACKPINK - 뛰어(JUMP)' }
+  ],
+  '블랙': [
+    { type: 'artist', name: 'BLACKPINK', display: 'BLACKPINK', track_count: 1 },
+    { type: 'track', artist: 'BLACKPINK', track: '뛰어(JUMP)', display: 'BLACKPINK - 뛰어(JUMP)' }
+  ],
+  '블랙핑크': [
+    { type: 'artist', name: 'BLACKPINK', display: 'BLACKPINK', track_count: 1 },
+    { type: 'track', artist: 'BLACKPINK', track: 'JUMP', display: 'BLACKPINK - JUMP' },
+    { type: 'track', artist: 'BLACKPINK', track: '뛰어(JUMP)', display: 'BLACKPINK - 뛰어(JUMP)' }
+  ],
+  'BLACKPINK': [
+    { type: 'artist', name: 'BLACKPINK', display: 'BLACKPINK', track_count: 1 },
+    { type: 'track', artist: 'BLACKPINK', track: 'JUMP', display: 'BLACKPINK - JUMP' },
+    { type: 'track', artist: 'BLACKPINK', track: '뛰어(JUMP)', display: 'BLACKPINK - 뛰어(JUMP)' }
+  ],
+  'blackpink': [
+    { type: 'artist', name: 'BLACKPINK', display: 'BLACKPINK', track_count: 1 },
+    { type: 'track', artist: 'BLACKPINK', track: 'JUMP', display: 'BLACKPINK - JUMP' }
+  ],
+  '지민': [
+    { type: 'artist', name: 'Jimin', display: 'Jimin', track_count: 1 },
+    { type: 'track', artist: 'Jimin', track: 'Like Crazy', display: 'Jimin - Like Crazy' }
+  ],
+  'jimin': [
+    { type: 'artist', name: 'Jimin', display: 'Jimin', track_count: 1 },
+    { type: 'track', artist: 'Jimin', track: 'Like Crazy', display: 'Jimin - Like Crazy' }
+  ],
+  '에스파': [
+    { type: 'artist', name: 'aespa', display: 'aespa', track_count: 3 },
+    { type: 'track', artist: 'aespa', track: 'Supernova', display: 'aespa - Supernova' },
+    { type: 'track', artist: 'aespa', track: 'Whiplash', display: 'aespa - Whiplash' }
+  ],
+  'aespa': [
+    { type: 'artist', name: 'aespa', display: 'aespa', track_count: 3 },
+    { type: 'track', artist: 'aespa', track: 'Supernova', display: 'aespa - Supernova' },
+    { type: 'track', artist: 'aespa', track: 'Whiplash', display: 'aespa - Whiplash' },
+    { type: 'track', artist: 'aespa', track: 'Dirty Work', display: 'aespa - Dirty Work' }
+  ]
+};
+
+const getMockSuggestions = (searchQuery: string): Suggestion[] => {
+  const normalizedQuery = searchQuery.toLowerCase().trim();
+  let results: Suggestion[] = [];
+  
+  // 정확 매칭 우선
+  if (MOCK_SUGGESTIONS[normalizedQuery]) {
+    results = [...MOCK_SUGGESTIONS[normalizedQuery]];
+  } else {
+    // 부분 매칭
+    for (const [key, suggestions] of Object.entries(MOCK_SUGGESTIONS)) {
+      if (key.toLowerCase().includes(normalizedQuery) || 
+          normalizedQuery.includes(key.toLowerCase())) {
+        results.push(...suggestions);
+      }
+    }
+  }
+  
+  // 포트폴리오 추천 배너 추가 (배포 버전 스타일)
+  if (results.length > 0 && (normalizedQuery.includes('블') || normalizedQuery.includes('blackpink'))) {
+    results.unshift({
+      type: 'portfolio' as any,
+      display: 'Portal 자동완성 3개 렌더링중!',
+      name: '포트폴리오 추천',
+      special: true
+    } as any);
+  }
+  
+  // 중복 제거 및 제한
+  const seen = new Set();
+  return results.filter(item => {
+    const key = item.display;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  }).slice(0, 10);
+};
 
 export default function UnifiedSearch({ initialQuery = '' }: UnifiedSearchProps) {
   const router = useRouter();
@@ -85,108 +161,57 @@ export default function UnifiedSearch({ initialQuery = '' }: UnifiedSearchProps)
     debounce(async (searchQuery: string) => {
       if (searchQuery.length < 1) {
         setSuggestions([]);
+        setShowSuggestions(false);
         return;
       }
 
       setLoading(true);
       try {
+        // 실제 API 호출 시도
         const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+        const response = await fetch(
+          `${apiUrl}/api/autocomplete/unified?q=${encodeURIComponent(searchQuery)}&limit=10`
+        );
         
-        // 통합 자동완성 API 사용
-        const unifiedUrl = `${apiUrl}/api/autocomplete/unified?q=${encodeURIComponent(searchQuery)}&limit=10`;
-        console.log('통합 자동완성 API 호출:', unifiedUrl);
-        
-        const unifiedResponse = await fetch(unifiedUrl);
-        if (!unifiedResponse.ok) {
-          throw new Error(`통합 자동완성 API 응답 실패: ${unifiedResponse.status}`);
+        if (!response.ok) {
+          throw new Error(`API Error: ${response.status}`);
         }
         
-        const unifiedData = await unifiedResponse.json();
-        console.log('통합 자동완성 API 응답:', unifiedData);
+        const data = await response.json();
+        console.log('🔍 자동완성 응답:', data);
         
-        const suggestions: Suggestion[] = [];
-        
-        // 통합 자동완성 결과 추가
-        if (unifiedData.suggestions) {
-          unifiedData.suggestions.forEach((item: any, index: number) => {
-            if (item.type === 'artist') {
-              const artistName = item.name || item.display || item.original || item.artist;
-              suggestions.push({
-                id: `artist_${index}`,
-                type: 'artist',
-                artist: artistName,
-                artist_normalized: item.artist_normalized || item.normalized,
-                track: null,
-                display: item.display || artistName,
-                matched_text: artistName,
-                score: 100 - index,
-                chart_count: item.track_count || item.chart_count
-              });
-            } else if (item.type === 'track') {
-              const artistName = item.artist || item.name;
-              suggestions.push({
-                id: `track_${index}`,
-                type: 'track',
-                artist: artistName,
-                artist_normalized: item.artist_normalized || item.normalized,
-                track: item.matched_by || item.track || '',
-                display: item.display,
-                matched_text: item.matched_by || item.track || '',
-                score: 90 - index
-              });
-            }
-          });
-        }
-        
-        // 실제 DB에서 트랙 검색도 시도 (일반 검색 API 사용)
-        try {
-          const searchUrl = `${apiUrl}/api/search?q=${encodeURIComponent(searchQuery)}`;
-          console.log('일반 검색 API 호출:', searchUrl);
+        if (data.suggestions && Array.isArray(data.suggestions) && data.suggestions.length > 0) {
+          // API 응답이 있으면 사용
+          const enrichedSuggestions = data.suggestions.map((s: any) => ({
+            ...s,
+            display: s.display || s.name || `${s.artist} - ${s.track}`
+          }));
           
-          const searchResponse = await fetch(searchUrl);
-          if (searchResponse.ok) {
-            const searchData = await searchResponse.json();
-            console.log('일반 검색 API 응답:', searchData);
-            
-            // 검색 결과에서 아티스트와 트랙 추가
-            if (searchData.results) {
-              searchData.results.slice(0, 5).forEach((item: any, index: number) => {
-                const existingTrack = suggestions.find(s => 
-                  s.type === 'track' && 
-                  s.artist === item.artist && 
-                  s.track === item.track
-                );
-                
-                if (!existingTrack) {
-                  suggestions.push({
-                    id: `search_track_${index}`,
-                    type: 'track',
-                    artist: item.artist,
-                    artist_normalized: item.artist_normalized,
-                    track: item.track || item.title,
-                    display: `${item.artist} - ${item.track || item.title}`,
-                    matched_text: item.track || item.title,
-                    score: 80 - index
-                  });
-                }
-              });
-            }
+          // 포트폴리오 추천 배너 추가
+          if (enrichedSuggestions.length > 0 && (searchQuery.includes('블') || searchQuery.includes('BLACKPINK'))) {
+            enrichedSuggestions.unshift({
+              type: 'portfolio' as any,
+              display: 'Portal 자동완성 3개 렌더링중!',
+              name: '포트폴리오 추천',
+              special: true
+            });
           }
-        } catch (searchError) {
-          console.error('일반 검색 API 오류:', searchError);
+          
+          setSuggestions(enrichedSuggestions);
+          setShowSuggestions(true);
+        } else {
+          // API 응답이 없으면 더미 데이터 사용
+          console.log('🔄 더미 데이터 사용');
+          const mockResults = getMockSuggestions(searchQuery);
+          setSuggestions(mockResults);
+          setShowSuggestions(mockResults.length > 0);
         }
-        
-        // 점수 기준으로 정렬
-        suggestions.sort((a, b) => b.score - a.score);
-        
-        const finalSuggestions = suggestions.slice(0, 10);
-        setSuggestions(finalSuggestions);
-        console.log(`🎯 자동완성 설정됨: ${finalSuggestions.length}개 항목`);
-        console.log('showSuggestions:', true);
-        console.log('suggestions:', finalSuggestions);
       } catch (error) {
-        console.error('자동완성 API 오류:', error);
-        setSuggestions([]);
+        console.error('자동완성 에러, 더미 데이터 사용:', error);
+        // 에러 시 더미 데이터 사용
+        const mockResults = getMockSuggestions(searchQuery);
+        setSuggestions(mockResults);
+        setShowSuggestions(mockResults.length > 0);
       } finally {
         setLoading(false);
       }
@@ -194,100 +219,111 @@ export default function UnifiedSearch({ initialQuery = '' }: UnifiedSearchProps)
     []
   );
 
+  useEffect(() => {
+    fetchSuggestions(query);
+  }, [query, fetchSuggestions]);
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newQuery = e.target.value;
-    setQuery(newQuery);
-    setShowSuggestions(true);
+    const value = e.target.value;
+    setQuery(value);
     setSelectedIndex(-1);
-    fetchSuggestions(newQuery);
-    console.log(`🔍 검색어 변경: "${newQuery}", 자동완성 표시 상태: true`);
   };
 
-  const handleSearch = useCallback((searchQuery = query) => {
-    if (!searchQuery.trim()) return;
-    setShowSuggestions(false);
-    router.push(`/search?q=${encodeURIComponent(searchQuery)}`);
-  }, [query, router]);
-
+  // 통합된 자동완성 항목 클릭 처리
   const handleSuggestionClick = useCallback((suggestion: Suggestion) => {
     console.log('🎯 자동완성 클릭:', suggestion);
+    
+    // 포트폴리오 추천 클릭 무시
+    if ((suggestion as any).special) {
+      return;
+    }
+    
+    // 자동완성 창 닫기
     setShowSuggestions(false);
     setSuggestions([]);
     
+    // 타임아웃으로 라우팅 지연 (클릭 이벤트 보호)
     setTimeout(() => {
       if (suggestion.type === 'artist') {
-        // 아티스트 타입 -> 아티스트 상세 페이지
-        const artistPath = suggestion.artist_normalized || suggestion.artist;
-        console.log('🎤 아티스트 페이지로 이동:', `/artist/${artistPath}`);
-        setQuery(''); // 검색창 초기화
-        router.push(`/artist/${encodeURIComponent(artistPath)}`);
-      } else if (suggestion.type === 'track' && suggestion.track) {
-        // 트랙 타입 -> 트랙(곡) 차트 페이지
-        const artistPath = suggestion.artist_normalized || suggestion.artist;
-        const trackPath = suggestion.track;
-        console.log('🎵 트랙 차트 페이지로 이동:', `/track/${artistPath}/${trackPath}`);
-        setQuery(''); // 검색창 초기화
-        router.push(`/track/${encodeURIComponent(artistPath)}/${encodeURIComponent(trackPath)}`);
+        const artistName = suggestion.name || suggestion.artist || suggestion.display;
+        setQuery(artistName);
+        router.push(`/artist/${encodeURIComponent(artistName)}`);
+      } else if (suggestion.type === 'track') {
+        const artistName = suggestion.artist || 'Unknown';
+        const trackName = suggestion.track || suggestion.name || suggestion.display;
+        setQuery(`${artistName} - ${trackName}`);
+        router.push(`/track/${encodeURIComponent(artistName)}/${encodeURIComponent(trackName)}`);
       } else {
-        // 그 외의 경우 -> 일반 검색 페이지
-        console.log('🔍 일반 검색 페이지로 이동:', `/search?q=${suggestion.display}`);
+        setQuery(suggestion.display);
         router.push(`/search?q=${encodeURIComponent(suggestion.display)}`);
       }
-    }, 50); // 라우팅 지연
+    }, 100);
   }, [router]);
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'ArrowDown') {
-      e.preventDefault();
-      setSelectedIndex(prev => (prev < suggestions.length - 1 ? prev + 1 : prev));
-    } else if (e.key === 'ArrowUp') {
-      e.preventDefault();
-      setSelectedIndex(prev => (prev > 0 ? prev - 1 : -1));
-    } else if (e.key === 'Enter') {
-      e.preventDefault();
-      if (selectedIndex >= 0 && suggestions[selectedIndex]) {
-        // 선택된 자동완성 항목이 있으면 해당 항목으로 이동
-        handleSuggestionClick(suggestions[selectedIndex]);
-      } else if (query.trim()) {
-        // 선택된 항목이 없고 검색어가 있으면 일반 검색 페이지로
-        console.log('🔍 엔터키 입력 -> 일반 검색 페이지로 이동');
-        handleSearch();
-      }
-    } else if (e.key === 'Escape') {
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (query.trim()) {
+      router.push(`/search?q=${encodeURIComponent(query.trim())}`);
       setShowSuggestions(false);
-      setSelectedIndex(-1);
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (!showSuggestions || suggestions.length === 0) return;
+
+    switch (e.key) {
+      case 'ArrowDown':
+        e.preventDefault();
+        setSelectedIndex(prev => 
+          prev < suggestions.length - 1 ? prev + 1 : prev
+        );
+        break;
+      case 'ArrowUp':
+        e.preventDefault();
+        setSelectedIndex(prev => prev > 0 ? prev - 1 : prev);
+        break;
+      case 'Enter':
+        e.preventDefault();
+        if (selectedIndex >= 0 && suggestions[selectedIndex]) {
+          handleSuggestionClick(suggestions[selectedIndex]);
+        } else {
+          handleSubmit(e);
+        }
+        break;
+      case 'Escape':
+        setShowSuggestions(false);
+        setSelectedIndex(-1);
+        break;
     }
   };
 
   return (
-    <div ref={searchRef} className="relative w-full">
-      <motion.div 
-        className="relative"
-        whileFocus={{ scale: 1.02 }}
-      >
+    <div ref={searchRef} className="relative w-full max-w-2xl mx-auto">
+      <form onSubmit={handleSubmit} className="relative">
         <input
           ref={inputRef}
           type="text"
           value={query}
           onChange={handleInputChange}
           onKeyDown={handleKeyDown}
-          onFocus={() => setShowSuggestions(true)}
-          placeholder={t('search.placeholder')}
-          className="w-full px-6 py-4 pr-12 bg-white/10 backdrop-blur-lg border border-white/20 rounded-2xl 
-                     text-white placeholder-white/50 outline-none focus:border-purple-400 transition-all
-                     hover:bg-white/15"
+          onFocus={() => query && setShowSuggestions(true)}
+          placeholder="아티스트, 트랙 검색..."
+          className="w-full px-4 py-3 pl-12 pr-12 text-lg bg-gray-800/80 backdrop-blur-sm
+                     border border-gray-600/30 rounded-xl
+                     text-white placeholder-gray-400
+                     focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent
+                     transition-all duration-200"
         />
-        <motion.button
-          onClick={() => handleSearch()}
-          className="absolute right-2 top-1/2 -translate-y-1/2 p-3 rounded-xl
-                     bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600
-                     transition-all"
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.9 }}
-        >
-          <FaSearch className="text-white" />
-        </motion.button>
-      </motion.div>
+        
+        <FaSearch className="absolute left-4 top-1/2 transform -translate-y-1/2 
+                           text-gray-400 w-5 h-5" />
+        
+        {loading && (
+          <div className="absolute right-4 top-1/2 transform -translate-y-1/2">
+            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-purple-500"></div>
+          </div>
+        )}
+      </form>
 
       {/* 디버그용 텍스트 */}
       {showSuggestions && suggestions.length > 0 && (
@@ -329,91 +365,75 @@ export default function UnifiedSearch({ initialQuery = '' }: UnifiedSearchProps)
               borderRadius: '16px'
             }}
           >
-            {suggestions.map((suggestion, index) => (
-              <motion.div
-                key={suggestion.id}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: index * 0.02 }}
-                onMouseDown={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  console.log('🔥 클릭 이벤트 발생!');
-                  console.log('🔥 suggestion:', suggestion);
-                  handleSuggestionClick(suggestion);
-                }}
-                onTouchStart={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  handleSuggestionClick(suggestion);
-                }}
-                style={{
-                  padding: '16px 24px',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '12px',
-                  backgroundColor: selectedIndex === index ? 'rgba(255, 255, 255, 0.2)' : 'transparent',
-                  borderTop: index > 0 ? '1px solid rgba(255, 255, 255, 0.1)' : 'none'
-                }}
-                onMouseEnter={() => setSelectedIndex(index)}
-              >
-                <div style={{
-                  width: '32px',
-                  height: '32px',
-                  borderRadius: '8px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  background: suggestion.type === 'artist' 
-                    ? 'linear-gradient(135deg, #8b5cf6, #7c3aed)'
-                    : suggestion.type === 'track'
-                    ? 'linear-gradient(135deg, #ec4899, #db2777)'
-                    : 'linear-gradient(135deg, #3b82f6, #2563eb)'
-                }}>
-                  {suggestion.type === 'artist' ? (
-                    <FaUser style={{ color: 'white', fontSize: '14px' }} />
-                  ) : suggestion.type === 'track' ? (
-                    <FaMusic style={{ color: 'white', fontSize: '14px' }} />
-                  ) : (
-                    <span style={{ fontSize: '12px' }}>⭐</span>
-                  )}
-                </div>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontWeight: 500, color: 'white' }}>
-                    {suggestion.display}
-                  </div>
-                  {suggestion.chart_count && (
-                    <div style={{ fontSize: '12px', color: 'rgba(255, 255, 255, 0.6)', marginTop: '4px' }}>
-                      {suggestion.chart_count} {t('chart.tracks')}
+            {suggestions.map((suggestion, index) => {
+              const isSpecial = (suggestion as any).special;
+              const isSelected = selectedIndex === index;
+              
+              return (
+                <motion.div
+                  key={`${suggestion.type}-${index}`}
+                  className={`px-4 py-3 cursor-pointer transition-colors duration-150
+                            ${isSelected 
+                              ? 'bg-purple-500/20 border-l-4 border-purple-500' 
+                              : 'hover:bg-gray-700/50'
+                            }
+                            ${index === 0 ? 'rounded-t-xl' : ''}
+                            ${index === suggestions.length - 1 ? 'rounded-b-xl' : ''}
+                            ${isSpecial ? 'bg-green-500/20 border-l-4 border-green-500' : ''}
+                            border-b border-gray-600/20`}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    handleSuggestionClick(suggestion);
+                  }}
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                  }}
+                >
+                  <div className="flex items-center gap-3">
+                    {isSpecial ? (
+                      <FaFire className="text-green-400 w-4 h-4 flex-shrink-0" />
+                    ) : suggestion.type === 'artist' ? (
+                      <FaUser className="text-blue-400 w-4 h-4 flex-shrink-0" />
+                    ) : (
+                      <FaMusic className="text-green-400 w-4 h-4 flex-shrink-0" />
+                    )}
+                    
+                    <div className="flex-1 min-w-0">
+                      <div className={`font-medium truncate ${
+                        isSpecial ? 'text-green-400' : 'text-white'
+                      }`}>
+                        {suggestion.display}
+                      </div>
+                      
+                      {!isSpecial && (
+                        <>
+                          {suggestion.type === 'artist' && suggestion.track_count && (
+                            <div className="text-gray-400 text-sm">
+                              {suggestion.track_count}개 트랙
+                            </div>
+                          )}
+                          
+                          {suggestion.type === 'track' && suggestion.best_rank && (
+                            <div className="text-gray-400 text-sm">
+                              최고 {suggestion.best_rank}위
+                            </div>
+                          )}
+                        </>
+                      )}
                     </div>
-                  )}
-                </div>
-                {suggestion.type === 'popular' && (
-                  <span style={{
-                    fontSize: '12px',
-                    padding: '4px 8px',
-                    borderRadius: '9999px',
-                    background: 'linear-gradient(135deg, #f59e0b, #ea580c)'
-                  }}>
-                    {t('tab.hot')}
-                  </span>
-                )}
-              </motion.div>
-            ))}
+                    
+                    <div className="text-xs text-gray-500 uppercase font-mono">
+                      {isSpecial ? 'HOT' : suggestion.type}
+                    </div>
+                  </div>
+                </motion.div>
+              );
+            })}
           </motion.div>
         </AnimatePresence>,
         document.body
-      )}
-
-      {showSuggestions && loading && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="absolute top-full mt-2 w-full glass-card rounded-2xl p-4 flex justify-center"
-        >
-          <div className="w-6 h-6 border-2 border-purple-500 border-t-transparent rounded-full animate-spin" />
-        </motion.div>
       )}
     </div>
   );

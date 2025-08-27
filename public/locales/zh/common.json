@@ -1,0 +1,106 @@
+{
+  "site": {
+    "title": "KPOP 排行榜",
+    "description": "实时K-POP音乐榜单监控平台",
+    "tagline": "全球K-POP榜单一览无余"
+  },
+  "nav": {
+    "home": "首页",
+    "trending": "热门",
+    "search": "搜索",
+    "portfolio": "收藏夹",
+    "insights": "洞察",
+    "login": "登录",
+    "logout": "退出",
+    "profile": "个人资料"
+  },
+  "search": {
+    "placeholder": "搜索艺人、歌曲、专辑...",
+    "noResults": "没有找到结果",
+    "searching": "搜索中...",
+    "recentSearches": "最近搜索",
+    "popularSearches": "热门搜索",
+    "clearHistory": "清除历史"
+  },
+  "chart": {
+    "rank": "排名",
+    "artist": "艺人",
+    "track": "歌曲",
+    "album": "专辑",
+    "change": "变化",
+    "new": "新",
+    "up": "上升",
+    "down": "下降",
+    "stable": "持平",
+    "weeks": "周",
+    "peak": "最高排名",
+    "debut": "首次上榜",
+    "reEntry": "重新上榜"
+  },
+  "trending": {
+    "title": "实时热门",
+    "hot": "热门",
+    "rising": "飙升",
+    "viral": "热议",
+    "viewAll": "查看全部",
+    "updated": "更新",
+    "score": "人气分数"
+  },
+  "portfolio": {
+    "title": "我的收藏",
+    "empty": "收藏夹为空",
+    "add": "添加到收藏",
+    "remove": "从收藏移除",
+    "added": "已添加",
+    "removed": "已移除",
+    "totalValue": "总价值",
+    "change24h": "24小时变化"
+  },
+  "button": {
+    "play": "播放",
+    "pause": "暂停",
+    "add": "添加",
+    "remove": "移除",
+    "share": "分享",
+    "more": "更多",
+    "less": "收起",
+    "save": "保存",
+    "cancel": "取消",
+    "confirm": "确认",
+    "close": "关闭",
+    "back": "返回",
+    "next": "下一个",
+    "previous": "上一个",
+    "refresh": "刷新"
+  },
+  "time": {
+    "now": "现在",
+    "ago": "前",
+    "minute": "分钟",
+    "minutes": "分钟",
+    "hour": "小时",
+    "hours": "小时",
+    "day": "天",
+    "days": "天",
+    "week": "周",
+    "weeks": "周",
+    "month": "个月",
+    "months": "个月",
+    "year": "年",
+    "years": "年"
+  },
+  "message": {
+    "loading": "加载中...",
+    "error": "发生错误",
+    "retry": "重试",
+    "success": "成功完成",
+    "networkError": "请检查网络连接",
+    "serverError": "服务器错误"
+  },
+  "auth": {
+    "loginRequired": "需要登录",
+    "loginSuccess": "登录成功",
+    "logoutSuccess": "退出成功",
+    "invalidCredentials": "无效的凭证"
+  }
+}
