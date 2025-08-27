@@ -83,7 +83,7 @@ export const artistAPI = {
   }
 };
 
-// Track API v15 - 차트 독립성 지원
+// Track API v15 - 차트 독립성 지원 (수정된 API 사용)
 export const trackAPI = {
   getDetails: async (artist: string, title: string) => {
     const response = await api.get(

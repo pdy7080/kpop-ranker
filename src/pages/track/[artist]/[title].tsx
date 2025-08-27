@@ -6,7 +6,7 @@ import ImageWithFallback from '@/components/ImageWithFallback';
 import { useAuth } from '@/contexts/AuthContext';
 import { portfolioAPI, trackAPI } from '@/lib/api';
 import toast from 'react-hot-toast';
-import { FaPlus, FaMusic, FaClock, FaChartLine, FaHeart, FaEye, FaPlay, FaArrowUp, FaArrowDown, FaMinus } from 'react-icons/fa';
+import { FaPlus, FaMusic, FaClock, FaChartLine, FaHeart, FaEye, FaPlay, FaArrowUp, FaArrowDown, FaMinus, FaInfoCircle } from 'react-icons/fa';
 
 interface ChartData {
   chart: string;
@@ -265,14 +265,14 @@ export default function TrackDetailPageV15() {
                     <h1 className="text-4xl font-bold text-gray-900 mb-2">{trackInfo.track}</h1>
                     <h2 className="text-2xl text-gray-600 mb-4">{trackInfo.artist}</h2>
                     
-                    {trackInfo.album && (
+                    {trackInfo.album && trackInfo.album !== 'K-POP Album' && (
                       <p className="text-gray-500 mb-2">
                         <FaMusic className="inline mr-2" />
                         앨범: {trackInfo.album}
                       </p>
                     )}
                     
-                    {trackInfo.release_date && (
+                    {trackInfo.release_date && trackInfo.release_date !== '2024' && (
                       <p className="text-gray-500 mb-2">
                         <FaClock className="inline mr-2" />
                         발매일: {trackInfo.release_date}
@@ -368,21 +368,7 @@ export default function TrackDetailPageV15() {
             </div>
           </div>
 
-          {/* Chart Independence Info */}
-          {trackInfo.chart_independence && (
-            <div className="bg-blue-50 border-l-4 border-blue-400 p-4 mb-8 rounded-r-lg">
-              <div className="flex items-center">
-                <FaChartLine className="text-blue-400 mr-3" />
-                <div>
-                  <h3 className="text-lg font-medium text-blue-800">차트 독립성 보장</h3>
-                  <p className="text-blue-700">
-                    각 차트별로 최신 업데이트가 개별적으로 반영됩니다. 
-                    총 {trackInfo.chart_independence.total_charts}개 차트에서 독립적으로 업데이트됨
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
+
 
           {/* Charts Section */}
           <div className="bg-white rounded-lg shadow-lg p-8 mb-8">
@@ -396,7 +382,7 @@ export default function TrackDetailPageV15() {
                 {trackInfo.charts.map((chart, index) => (
                   <div
                     key={`${chart.chart}-${index}`}
-                    className="border rounded-lg p-6 hover:shadow-md transition-shadow"
+                    className="border rounded-lg p-6 pb-2 hover:shadow-lg transition-all duration-300 relative"
                     style={{ borderLeftColor: CHART_COLORS[chart.chart] || '#666', borderLeftWidth: '4px' }}
                   >
                     <div className="flex items-center justify-between mb-3">
@@ -419,13 +405,21 @@ export default function TrackDetailPageV15() {
                       </div>
                     )}
                     
-                    <div className="text-xs text-gray-500 text-center">
-                      {chart.last_updated_formatted || new Date(chart.last_updated).toLocaleString('ko-KR', {
-                        month: '2-digit',
-                        day: '2-digit',
-                        hour: '2-digit',
-                        minute: '2-digit'
-                      })}
+                    {/* 업데이트 시간 강조 표시 */}
+                    <div className="bg-gray-50 rounded-b-lg px-3 py-2 -mx-6 -mb-2 mt-3">
+                      <div className="flex items-center justify-center text-xs text-gray-600">
+                        <FaClock className="mr-1 text-gray-500" />
+                        <span className="font-medium">
+                          {chart.last_updated_formatted || 
+                           new Date(chart.last_updated).toLocaleString('ko-KR', {
+                             month: '2-digit',
+                             day: '2-digit',
+                             hour: '2-digit',
+                             minute: '2-digit',
+                             hour12: false
+                           }).replace(/\. /g, '/').replace('.', '')}
+                        </span>
+                      </div>
                     </div>
                   </div>
                 ))}
