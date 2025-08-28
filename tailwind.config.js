@@ -5,45 +5,48 @@ module.exports = {
     './src/components/**/*.{js,ts,jsx,tsx,mdx}',
     './src/app/**/*.{js,ts,jsx,tsx,mdx}',
   ],
+  darkMode: 'class',
   theme: {
     extend: {
       colors: {
         primary: {
-          50: '#fef3f2',
-          100: '#fee4e2',
-          200: '#fececa',
-          300: '#fcaba5',
-          400: '#f87a71',
-          500: '#ef5144',
-          600: '#dc3426',
-          700: '#b8271c',
-          800: '#97241b',
-          900: '#7d241c',
-          950: '#440e0a',
+          50: '#f0f9ff',
+          100: '#e0f2fe', 
+          200: '#bae6fd',
+          300: '#7dd3fc',
+          400: '#38bdf8',
+          500: '#0ea5e9',
+          600: '#0284c7',
+          700: '#0369a1',
+          800: '#075985',
+          900: '#0c4a6e',
+          950: '#082f49',
         },
-        secondary: {
-          50: '#f5f3ff',
-          100: '#ede9fe',
-          200: '#ddd6fe',
-          300: '#c4b5fd',
-          400: '#a78bfa',
-          500: '#8b5cf6',
-          600: '#7c3aed',
-          700: '#6d28d9',
-          800: '#5b21b6',
-          900: '#4c1d95',
-          950: '#2e1065',
+        accent: {
+          50: '#fdf4ff',
+          100: '#fae8ff',
+          200: '#f5d0fe',
+          300: '#f0abfc',
+          400: '#e879f9',
+          500: '#d946ef',
+          600: '#c026d3',
+          700: '#a21caf',
+          800: '#86198f',
+          900: '#701a75',
+          950: '#4a044e',
         },
-        dark: {
-          100: '#1e1e1e',
-          200: '#2d2d2d',
-          300: '#3d3d3d',
-          400: '#4d4d4d',
-          500: '#5d5d5d',
-          600: '#6d6d6d',
-          700: '#7d7d7d',
-          800: '#8d8d8d',
-          900: '#9d9d9d',
+        surface: {
+          light: '#ffffff',
+          'light-secondary': '#f8fafc',
+          dark: '#0f172a',
+          'dark-secondary': '#1e293b',
+          'dark-card': '#334155'
+        },
+        text: {
+          'light-primary': '#0f172a',
+          'light-secondary': '#475569', 
+          'dark-primary': '#f8fafc',
+          'dark-secondary': '#cbd5e1'
         }
       },
       fontFamily: {
@@ -52,9 +55,8 @@ module.exports = {
       animation: {
         'fade-in': 'fadeIn 0.5s ease-in-out',
         'slide-up': 'slideUp 0.3s ease-out',
-        'slide-down': 'slideDown 0.3s ease-out',
-        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-        'spin-slow': 'spin 3s linear infinite',
+        'float': 'float 3s ease-in-out infinite',
+        'glow': 'glow 2s ease-in-out infinite alternate',
       },
       keyframes: {
         fadeIn: {
@@ -65,11 +67,18 @@ module.exports = {
           '0%': { transform: 'translateY(10px)', opacity: '0' },
           '100%': { transform: 'translateY(0)', opacity: '1' },
         },
-        slideDown: {
-          '0%': { transform: 'translateY(-10px)', opacity: '0' },
-          '100%': { transform: 'translateY(0)', opacity: '1' },
+        float: {
+          '0%, 100%': { transform: 'translateY(0px)' },
+          '50%': { transform: 'translateY(-10px)' },
+        },
+        glow: {
+          '0%': { boxShadow: '0 0 20px rgba(217, 70, 239, 0.5)' },
+          '100%': { boxShadow: '0 0 40px rgba(217, 70, 239, 0.8)' },
         },
       },
+      backdropBlur: {
+        xs: '2px',
+      }
     },
   },
   plugins: [],

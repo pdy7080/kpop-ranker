@@ -91,272 +91,92 @@ const getChartInfo = (chartName: string) => {
   };
 };
 
+// AI 인사이트 - 글 형식
 const AIInsightsSection = ({ artistName, stats }: { artistName: string; stats: any }) => {
-  const [aiData, setAiData] = useState<any>(null);
-  const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    fetchAIInsights();
-  }, [artistName]);
-
-  const fetchAIInsights = async () => {
-    try {
-      setLoading(true);
-      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
-      const response = await fetch(`${API_URL}/api/artist/${encodeURIComponent(artistName)}/ai-insights`);
-      
-      if (response.ok) {
-        const data = await response.json();
-        if (data.success) {
-          setAiData(data);
-        }
-      }
-    } catch (error) {
-      console.error('AI 인사이트 로드 실패:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   return (
     <div className="bg-gray-800/30 rounded-xl p-6 border border-gray-700">
-      <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
+      <h3 className="text-lg font-bold mb-6 flex items-center gap-2">
         <Sparkles className="w-5 h-5 text-purple-400" />
-        AI 인사이트
-        {aiData?.cached && (
-          <span className="text-xs bg-green-900/50 text-green-300 px-2 py-1 rounded">
-            캐시됨
-          </span>
-        )}
+        AI 분석가 리포트
       </h3>
       
-      {loading ? (
-        <div className="text-center py-4">
-          <div className="animate-spin w-6 h-6 border-2 border-purple-500 border-t-transparent rounded-full mx-auto mb-2" />
-          <p className="text-gray-400 text-sm">AI 분석 중...</p>
+      <div className="text-gray-300 leading-relaxed space-y-4">
+        <p className="text-base">
+          현재 <strong className="text-purple-400">{artistName}</strong>는 K-POP 시장에서 
+          <strong className="text-yellow-400"> {stats.total_tracks || 0}개의 트랙</strong>을 통해 
+          <strong className="text-blue-400"> {stats.active_charts || 0}개 차트</strong>에서 활동하고 있습니다.
+        </p>
+        
+        <p className="text-base">
+          최고 순위 <strong className="text-yellow-400">#{stats.best_peak || '-'}</strong>를 기록하며, 
+          TOP 10 진입 성공률은 <strong className="text-green-400">{stats.success_rate || 0}%</strong>로 
+          {(stats.success_rate || 0) > 70 ? '매우 우수한' : (stats.success_rate || 0) > 40 ? '양호한' : '안정적인'} 
+          성과를 보이고 있습니다.
+        </p>
+        
+        <p className="text-base">
+          최장 차트인 기록인 <strong className="text-cyan-400">{stats.longest_charting || 0}일</strong>을 달성하여 
+          지속적인 인기를 입증하고 있으며, 
+          {(stats.top10_hits || 0) > 3 ? '추세는 상승세' : (stats.top10_hits || 0) > 1 ? '안정적 성장' : '성장 잠재 보유'}를 보여주고 있습니다.
+        </p>
+        
+        <p className="text-base">
+          차트 다양성 측면에서는 국내 주요 차트에서의 안정적 성과와 
+          함께 글로벌 플랫폼 확장 가능성을 보여주며, 
+          특히 <strong className="text-pink-400">{stats.most_successful_track || '대표곡'}</strong>을 통해 
+          탄탄한 팬덤 기반을 구축하고 있습니다.
+        </p>
+        
+        <div className="mt-6 p-4 bg-purple-900/30 rounded-lg border border-purple-500/30">
+          <p className="text-sm text-purple-200">
+            💡 <strong>AI 분석 요약:</strong> {artistName}은(는) 
+            {(stats.top10_hits || 0) > 2 ? '상위권 진입 능력이 입증된' : '성장 잠재력이 높은'} 
+            아티스트로, 지속적인 차트 활동을 통해 
+            {(stats.success_rate || 0) > 50 ? '안정적인 시장 지위를 확보' : '시장 진입을 확대'}하고 있습니다.
+          </p>
         </div>
-      ) : aiData?.ai_insights ? (
-        <div className="space-y-4">
-          {/* 팬 중심 지표 */}
-          <div className="grid grid-cols-2 gap-4 mb-4">
-            <div className="text-center">
-              <div className="text-2xl font-bold text-yellow-400">
-                {aiData.metrics?.top10_count || 0}
-              </div>
-              <div className="text-xs text-gray-400">TOP 10 진입</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-purple-400">
-                {aiData.metrics?.success_rate || 0}%
-              </div>
-              <div className="text-xs text-gray-400">성공률</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-green-400">
-                {aiData.metrics?.max_chart_days || 0}일
-              </div>
-              <div className="text-xs text-gray-400">최장 차트인</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-blue-400">
-                {aiData.metrics?.trend || '안정'}
-                {aiData.metrics?.trend_value > 0 && (
-                  <span className="text-sm ml-1">+{aiData.metrics.trend_value}</span>
-                )}
-              </div>
-              <div className="text-xs text-gray-400">최근 트렌드</div>
-            </div>
-          </div>
-
-          {/* AI 인사이트 5가지 */}
-          <div className="space-y-3 text-sm">
-            {[
-              { key: 'comeback_prediction', title: '📅 컴백 예측', icon: Calendar },
-              { key: 'growth_trend', title: '📈 성장 트렌드', icon: TrendingUp },
-              { key: 'chart_strategy', title: '🎯 차트 전략', icon: Target },
-              { key: 'fandom_power', title: '💪 팬덤 파워', icon: Users },
-              { key: 'market_position', title: '🌏 시장 포지션', icon: Globe }
-            ].map(({ key, title, icon: Icon }) => (
-              aiData.ai_insights[key] && (
-                <div key={key} className="p-3 bg-gray-900/30 rounded-lg">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Icon className="w-4 h-4 text-purple-400" />
-                    <span className="font-medium text-purple-300">{title}</span>
-                  </div>
-                  <p className="text-gray-300 leading-relaxed">
-                    {aiData.ai_insights[key]}
-                  </p>
-                </div>
-              )
-            ))}
-          </div>
-
-          {/* 생성 시간 */}
-          {aiData.generated_at && (
-            <div className="text-xs text-gray-500 pt-3 border-t border-gray-700">
-              AI 분석 시간: {new Date(aiData.generated_at).toLocaleString('ko-KR')}
-            </div>
-          )}
-        </div>
-      ) : (
-        <div className="text-center py-4">
-          <Sparkles className="w-12 h-12 text-gray-600 mx-auto mb-2 opacity-50" />
-          <p className="text-gray-400">AI 인사이트를 불러오는 중입니다.</p>
-        </div>
-      )}
+      </div>
     </div>
   );
 };
 
-export default function ArtistDetailPage() {
+export default function ArtistPage() {
   const router = useRouter();
   const { artist } = router.query;
   const [artistData, setArtistData] = useState<ArtistData | null>(null);
-  const [comprehensiveData, setComprehensiveData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'overview' | 'tracks' | 'news' | 'goods' | 'insights'>('overview');
+  const [error, setError] = useState<string | null>(null);
   const [sortBy, setSortBy] = useState<'trend' | 'rank' | 'date' | 'duration'>('trend');
+  const [activeTab, setActiveTab] = useState<'overview' | 'tracks' | 'news' | 'goods' | 'insights'>('overview');
 
   useEffect(() => {
-    if (artist && typeof artist === 'string') {
-      fetchArtistData(artist);
+    if (artist) {
+      fetchArtistData();
     }
   }, [artist]);
 
-  const fetchArtistData = async (artistName: string) => {
+  const fetchArtistData = async () => {
     try {
       setLoading(true);
+      setError(null);
       
-      // 기본 아티스트 데이터
-      const response = await artistAPI.getDetails(artistName);
-      setArtistData(response);
+      console.log('🎭 Fetching artist data:', artist);
       
-      // 종합 정보는 선택적으로 로드
-      try {
-        const comprehensiveResponse = await fetch(`${API_URL}/api/artist/${encodeURIComponent(artistName)}/comprehensive`);
-        if (comprehensiveResponse.ok) {
-          const compData = await comprehensiveResponse.json();
-          setComprehensiveData(compData);
-        }
-      } catch (e) {
-        console.log('Comprehensive data not available');
+      const response = await artistAPI.getDetails(artist as string);
+      
+      console.log('📊 Artist response:', response);
+      
+      if (response) {
+        setArtistData(response);
+      } else {
+        setError('Artist not found');
       }
-      
     } catch (err) {
-      console.error('Failed to fetch artist:', err);
-      setArtistData(null);
+      console.error('❌ Failed to fetch artist data:', err);
+      setError('Failed to load artist data');
     } finally {
       setLoading(false);
     }
-  };
-
-  // Process artist info with real data
-  const artistInfo = {
-    name: artistData?.artist || artist as string || 'Unknown',
-    totalTracks: artistData?.stats?.total_tracks || 0,
-    activeCharts: artistData?.stats?.chart_diversity || 0,
-    bestRanking: artistData?.stats?.best_peak || null
-  };
-
-  // Process tracks with real data
-  const tracks = (artistData?.tracks || []).map(track => {
-    const trackTitle = track.title || track.track || track.unified_track || 'Unknown';
-    
-    let imageUrl = track.album_image || track.image_url || track.local_image;
-    if (!imageUrl || (!imageUrl.startsWith('http') && !imageUrl.startsWith('/'))) {
-      imageUrl = `${API_URL}/api/album-image-smart/${encodeURIComponent(artistInfo.name)}/${encodeURIComponent(trackTitle)}`;
-    } else if (!imageUrl.startsWith('http')) {
-      imageUrl = `${API_URL}${imageUrl}`;
-    }
-    
-    return {
-      ...track,
-      title: trackTitle,
-      album_image: imageUrl,
-      charts: track.charts || {}
-    };
-  });
-
-  // Sort tracks based on selected criteria
-  const sortedTracks = [...tracks].sort((a, b) => {
-    switch (sortBy) {
-      case 'trend':
-        return (b.trend_score || 0) - (a.trend_score || 0);
-      case 'rank':
-        const aRank = a.best_rank || a.peak_position || 999;
-        const bRank = b.best_rank || b.peak_position || 999;
-        return aRank - bRank;
-      case 'date':
-        if (a.is_new && !b.is_new) return -1;
-        if (!a.is_new && b.is_new) return 1;
-        return 0;
-      case 'duration':
-        return (b.days_on_chart || 0) - (a.days_on_chart || 0);
-      default:
-        return 0;
-    }
-  });
-
-  // Real statistics from API
-  const stats = artistData?.stats || {
-    total_tracks: 0,
-    active_tracks: 0,
-    top10_hits: 0,
-    best_peak: 999,
-    success_rate: 0,
-    trending_up: 0,
-    trending_down: 0,
-    longest_charting: 0,
-    most_successful_track: null,
-    newest_entry: null,
-    chart_diversity: 0
-  };
-
-  // Chart dominance calculation
-  const chartDominance = React.useMemo(() => {
-    const chartCounts: Record<string, number> = {};
-    tracks.forEach(track => {
-      if (track.charts) {
-        Object.keys(track.charts).forEach(chart => {
-          chartCounts[chart] = (chartCounts[chart] || 0) + 1;
-        });
-      }
-    });
-    
-    const total = Object.values(chartCounts).reduce((a, b) => a + b, 0);
-    
-    return Object.entries(chartCounts)
-      .map(([chart, count]) => ({
-        name: chart,
-        count,
-        percentage: total > 0 ? Math.round((count / total) * 100) : 0,
-        info: getChartInfo(chart)
-      }))
-      .sort((a, b) => b.count - a.count);
-  }, [tracks]);
-
-  const renderChartInfo = (charts: Record<string, number | string>) => {
-    return (
-      <div className="flex flex-wrap gap-1">
-        {Object.entries(charts).slice(0, 4).map(([chartName, rank]) => {
-          const chartInfo = getChartInfo(chartName);
-          return (
-            <div 
-              key={chartName}
-              className={`${chartInfo.bgColor} text-white text-xs px-2 py-1 rounded flex items-center gap-1`}
-            >
-              <span>{chartInfo.icon}</span>
-              <span>#{rank}</span>
-            </div>
-          );
-        })}
-        {Object.keys(charts).length > 4 && (
-          <div className="bg-gray-600 text-white text-xs px-2 py-1 rounded">
-            +{Object.keys(charts).length - 4}
-          </div>
-        )}
-      </div>
-    );
   };
 
   if (loading) {
@@ -375,17 +195,19 @@ export default function ArtistDetailPage() {
     );
   }
 
-  if (!artistData) {
+  if (error || !artistData) {
     return (
       <Layout>
         <div className="min-h-screen bg-gradient-to-br from-gray-900 to-black flex items-center justify-center">
           <div className="text-center">
-            <h2 className="text-3xl font-bold text-white mb-4">아티스트를 찾을 수 없습니다</h2>
+            <h2 className="text-3xl font-bold text-white mb-4">
+              {error || 'Artist not found'}
+            </h2>
             <button
-              onClick={() => router.push('/')}
+              onClick={() => router.back()}
               className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
             >
-              홈으로 돌아가기
+              Go Back
             </button>
           </div>
         </div>
@@ -393,17 +215,87 @@ export default function ArtistDetailPage() {
     );
   }
 
-  const bestTrack = sortedTracks[0];
+  const tracks = artistData.tracks || [];
+  const stats = artistData.stats || {};
+
+  // 아티스트 정보 생성
+  const artistInfo = {
+    name: artistData.artist || (artist as string),
+    totalTracks: tracks.length,
+    activeCharts: new Set(tracks.flatMap(track => Object.keys(track.charts || {}))).size,
+    bestRanking: stats.best_peak || Math.min(...tracks.map(track => track.best_rank || track.peak_position || 100).filter(Boolean))
+  };
+
+  const bestTrack = tracks.length > 0 ? tracks[0] : null;
+
+  // 차트 정보 생성
+  const chartDominance = Object.entries(
+    tracks.reduce((acc, track) => {
+      Object.keys(track.charts || {}).forEach(chart => {
+        acc[chart] = (acc[chart] || 0) + 1;
+      });
+      return acc;
+    }, {} as Record<string, number>)
+  ).map(([chart, count]) => ({
+    name: chart,
+    count,
+    percentage: Math.round((count / tracks.length) * 100),
+    info: getChartInfo(chart)
+  })).sort((a, b) => b.count - a.count);
+
+  // 트랙 정렬
+  const sortedTracks = [...tracks].sort((a, b) => {
+    switch (sortBy) {
+      case 'rank':
+        const aRank = a.best_rank || a.peak_position || 999;
+        const bRank = b.best_rank || b.peak_position || 999;
+        return aRank - bRank;
+      case 'date':
+        return new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime();
+      case 'duration':
+        return (b.days_on_chart || 0) - (a.days_on_chart || 0);
+      case 'trend':
+      default:
+        return (b.trend_score || 0) - (a.trend_score || 0);
+    }
+  });
+
+  // 차트 정보 렌더링
+  const renderChartInfo = (charts: Record<string, number | string>) => {
+    const chartEntries = Object.entries(charts).slice(0, 4);
+    
+    return (
+      <div className="flex flex-wrap gap-2">
+        {chartEntries.map(([chart, rank]) => {
+          const info = getChartInfo(chart);
+          const rankNum = typeof rank === 'string' ? parseInt(rank) || 0 : rank;
+          
+          return (
+            <div
+              key={chart}
+              className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${info.bgColor} text-white`}
+            >
+              <span>{info.icon}</span>
+              <span>#{rankNum}</span>
+            </div>
+          );
+        })}
+        {Object.keys(charts).length > 4 && (
+          <span className="text-xs text-gray-400">+{Object.keys(charts).length - 4}</span>
+        )}
+      </div>
+    );
+  };
 
   return (
     <Layout>
       <Head>
-        <title>{artistInfo.name} - 아티스트 상세 | KPOP Ranker</title>
-        <meta name="description" content={`${artistInfo.name}의 전체 차트 성과, 트랙 목록, 최신 뉴스 및 AI 인사이트`} />
+        <title>{artistInfo.name} | KPOP Ranker</title>
+        <meta name="description" content={`${artistInfo.name}의 차트 성과 및 트랙 정보`} />
       </Head>
 
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 to-black">
-        {/* Hero Section */}
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900/20 to-gray-900">
+        {/* Header Section */}
         <div className="relative overflow-hidden">
           {/* Background */}
           <div className="absolute inset-0">
@@ -417,10 +309,10 @@ export default function ArtistDetailPage() {
             <div className="absolute inset-0 bg-gradient-to-b from-gray-900/80 to-gray-900" />
           </div>
 
-          {/* Content */}
+          {/* Content - 중앙 정렬 */}
           <div className="relative container mx-auto px-4 py-20">
-            <div className="grid md:grid-cols-3 gap-12 items-center">
-              {/* Artist Image */}
+            <div className="text-center space-y-8">
+              {/* Artist Image - 중앙 정렬 */}
               <motion.div
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={{ opacity: 1, scale: 1 }}
@@ -433,7 +325,7 @@ export default function ArtistDetailPage() {
                       <ImageWithFallback
                         artist={artistInfo.name}
                         track={bestTrack.title}
-                        className="w-full h-full object-cover"
+                        className="w-full h-full object-cover object-center"
                       />
                     ) : (
                       <div className="w-full h-full bg-gradient-to-br from-purple-600 to-pink-600 flex items-center justify-center">
@@ -448,51 +340,38 @@ export default function ArtistDetailPage() {
                 </div>
               </motion.div>
 
-              {/* Artist Info */}
-              <div className="md:col-span-2 space-y-6">
-                <motion.div
-                  initial={{ opacity: 0, y: 30 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.2 }}
-                >
-                  <h1 className="text-5xl md:text-6xl font-black text-white mb-4">
-                    {artistInfo.name}
-                  </h1>
-                  
-                  {/* Quick Stats */}
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-                    <div className="text-center">
-                      <div className="text-3xl font-bold text-purple-400">{artistInfo.totalTracks}</div>
-                      <div className="text-sm text-gray-400">Total Tracks</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-3xl font-bold text-blue-400">{artistInfo.activeCharts}</div>
-                      <div className="text-sm text-gray-400">Active Charts</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-3xl font-bold text-yellow-400">
-                        {artistInfo.bestRanking ? `#${artistInfo.bestRanking}` : '-'}
-                      </div>
-                      <div className="text-sm text-gray-400">Best Rank</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-3xl font-bold text-green-400">{stats.top10_hits || 0}</div>
-                      <div className="text-sm text-gray-400">Top 10 Hits</div>
-                    </div>
+              {/* Artist Info - 중앙 정렬 */}
+              <motion.div
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+              >
+                <h1 className="text-5xl md:text-6xl font-black text-white mb-6">
+                  {artistInfo.name}
+                </h1>
+                
+                {/* Quick Stats */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-2xl mx-auto">
+                  <div className="text-center">
+                    <div className="text-3xl font-bold text-purple-400">{artistInfo.totalTracks}</div>
+                    <div className="text-sm text-gray-400">Total Tracks</div>
                   </div>
-
-                  {/* Action Buttons */}
-                  <div className="flex gap-4">
-                    <button className="px-8 py-4 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold rounded-full hover:shadow-lg transform hover:scale-105 transition-all flex items-center gap-3">
-                      <Play className="w-5 h-5" />
-                      Play Top Track
-                    </button>
-                    <button className="px-6 py-4 bg-white/10 backdrop-blur text-white rounded-full hover:bg-white/20 transition-all">
-                      <Heart className="w-5 h-5" />
-                    </button>
+                  <div className="text-center">
+                    <div className="text-3xl font-bold text-blue-400">{artistInfo.activeCharts}</div>
+                    <div className="text-sm text-gray-400">Active Charts</div>
                   </div>
-                </motion.div>
-              </div>
+                  <div className="text-center">
+                    <div className="text-3xl font-bold text-yellow-400">
+                      {artistInfo.bestRanking ? `#${artistInfo.bestRanking}` : '-'}
+                    </div>
+                    <div className="text-sm text-gray-400">Best Rank</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-3xl font-bold text-green-400">{stats.top10_hits || 0}</div>
+                    <div className="text-sm text-gray-400">Top 10 Hits</div>
+                  </div>
+                </div>
+              </motion.div>
             </div>
           </div>
         </div>

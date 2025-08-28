@@ -3,6 +3,7 @@ import { useRouter } from 'next/router';
 import Head from 'next/head';
 import Layout from '@/components/Layout';
 import ImageWithFallback from '@/components/ImageWithFallback';
+import ShareModal from '@/components/ShareModal';
 import { trackAPI } from '@/lib/api';
 import { motion } from 'framer-motion';
 import { 
@@ -117,6 +118,7 @@ export default function TrackDetailPage() {
   const [trackInfo, setTrackInfo] = useState<TrackInfo | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showShareModal, setShowShareModal] = useState(false);
 
   useEffect(() => {
     if (artist && title) {
@@ -157,6 +159,69 @@ export default function TrackDetailPage() {
     }
   };
 
+  // YouTube 뛰어가기 기능 추가
+  const handleWatchOnYouTube = () => {
+    if (trackInfo?.artist && currentTrackTitle) {
+      const searchQuery = `${trackInfo.artist} ${currentTrackTitle} official MV`.replace(/[()]/g, '');
+      const youtubeUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(searchQuery)}`;
+      window.open(youtubeUrl, '_blank');
+    }
+  };
+
+  // 1. Spotify에서 트랙 재생
+  const handlePlayTrack = () => {
+    const currentTrackTitle = trackInfo?.track || trackInfo?.title || (title as string) || '';
+    if (trackInfo?.artist && currentTrackTitle) {
+      const searchQuery = `${trackInfo.artist} ${currentTrackTitle}`.replace(/[()]/g, '');
+      const spotifyUrl = `https://open.spotify.com/search/${encodeURIComponent(searchQuery)}`;
+      window.open(spotifyUrl, '_blank');
+    }
+  };
+
+  // 2. 포트폴리오에 곡 추가
+  const handleAddToPortfolio = async () => {
+    try {
+      const currentTrackTitle = trackInfo?.track || trackInfo?.title || (title as string) || '';
+      console.log('🔥 포트폴리오 추가 시도:', { artist: trackInfo?.artist, title: currentTrackTitle });
+      
+      const response = await fetch(`${API_URL}/api/portfolio`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer demo_token' // 임시 데모 토큰 사용
+        },
+        body: JSON.stringify({
+          artist: trackInfo?.artist,
+          title: currentTrackTitle  // track → title로 변경
+        })
+      });
+      
+      console.log('🔍 포트폴리오 API 응답 상태:', response.status);
+      
+      const data = await response.json();
+      console.log('📊 포트폴리오 API 응답 데이터:', data);
+      
+      if (data.success) {
+        alert('포트폴리오에 추가되었습니다!');
+      } else {
+        if (data.requireAuth) {
+          alert('포트폴리오 기능을 사용하려면 로그인이 필요합니다.');
+        } else {
+          console.error('❌ 포트폴리오 추가 실패:', data);
+          alert(data.error || '포트폴리오 추가에 실패했습니다.');
+        }
+      }
+    } catch (error) {
+      console.error('❌ 포트폴리오 추가 중 오류:', error);
+      alert('포트폴리오 추가 중 오류가 발생했습니다.');
+    }
+  };
+
+  // 3. 공유하기 기능 - 모달 열기
+  const handleShare = () => {
+    setShowShareModal(true);
+  };
+
   if (loading) {
     return (
       <Layout>
@@ -193,7 +258,7 @@ export default function TrackDetailPage() {
     );
   }
 
-  const trackTitle = trackInfo.track || trackInfo.title || '';
+  const currentTrackTitle = trackInfo?.track || trackInfo?.title || (title as string) || '';
   const bestRank = trackInfo.stats?.best_rank || 
                   (trackInfo.charts && trackInfo.charts.length > 0 
                     ? Math.min(...trackInfo.charts.map(c => c.rank)) 
@@ -202,8 +267,8 @@ export default function TrackDetailPage() {
   return (
     <Layout>
       <Head>
-        <title>{trackTitle} - {trackInfo.artist} | KPOP Ranker</title>
-        <meta name="description" content={`${trackInfo.artist}의 ${trackTitle} 차트 성과 및 순위 정보`} />
+        <title>{currentTrackTitle} - {trackInfo.artist} | KPOP Ranker</title>
+        <meta name="description" content={`${trackInfo.artist}의 ${currentTrackTitle} 차트 성과 및 순위 정보`} />
       </Head>
 
       <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900/20 to-gray-900">
@@ -213,7 +278,7 @@ export default function TrackDetailPage() {
           <div className="absolute inset-0">
             <ImageWithFallback
               artist={trackInfo.artist}
-              track={trackTitle}
+              track={currentTrackTitle}
               className="w-full h-full object-cover filter blur-2xl opacity-20"
             />
             <div className="absolute inset-0 bg-gradient-to-b from-gray-900/80 to-gray-900" />
@@ -232,7 +297,7 @@ export default function TrackDetailPage() {
                   <div className="w-80 h-80 md:w-96 md:h-96 rounded-2xl overflow-hidden shadow-2xl">
                     <ImageWithFallback
                       artist={trackInfo.artist}
-                      track={trackTitle}
+                      track={currentTrackTitle}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                     />
                     
@@ -268,7 +333,7 @@ export default function TrackDetailPage() {
               >
                 <div>
                   <h1 className="text-4xl md:text-5xl font-black text-white mb-2">
-                    {trackTitle}
+                    {currentTrackTitle}
                   </h1>
                   <button
                     onClick={handleArtistClick}
@@ -305,21 +370,45 @@ export default function TrackDetailPage() {
                 </div>
 
                 {/* Action Buttons */}
-                <div className="flex gap-4">
-                  <button className="px-8 py-4 bg-gradient-to-r from-purple-600 to-pink-600 
-                                   text-white font-bold rounded-full flex items-center gap-3 
-                                   hover:shadow-lg transform hover:scale-105 transition-all">
-                    <Play className="w-5 h-5" />
-                    Play Track
+                <div className="flex gap-3 flex-wrap">
+                  <button 
+                    onClick={handlePlayTrack}
+                    className="px-6 py-3 bg-gradient-to-r from-green-600 to-green-500 
+                             text-white font-bold rounded-full flex items-center gap-2 
+                             hover:shadow-lg transform hover:scale-105 transition-all
+                             hover:from-green-500 hover:to-green-400"
+                  >
+                    <Play className="w-4 h-4" />
+                    Spotify
                   </button>
                   
-                  <button className="px-6 py-4 glass-card text-white rounded-full 
-                                   hover:bg-white/20 transition-all">
+                  <button 
+                    onClick={handleWatchOnYouTube}
+                    className="px-6 py-3 bg-gradient-to-r from-red-600 to-red-500 
+                             text-white font-bold rounded-full flex items-center gap-2 
+                             hover:shadow-lg transform hover:scale-105 transition-all
+                             hover:from-red-500 hover:to-red-400"
+                  >
+                    <Play className="w-4 h-4" />
+                    YouTube
+                  </button>
+                  
+                  <button 
+                    onClick={handleAddToPortfolio}
+                    className="px-6 py-4 bg-gradient-to-r from-pink-600 to-pink-500 text-white rounded-full 
+                             hover:from-pink-500 hover:to-pink-400 hover:shadow-lg transform hover:scale-105 transition-all
+                             flex items-center gap-2"
+                    title="포트폴리오에 추가"
+                  >
                     <Heart className="w-5 h-5" />
                   </button>
                   
-                  <button className="px-6 py-4 glass-card text-white rounded-full 
-                                   hover:bg-white/20 transition-all">
+                  <button 
+                    onClick={handleShare}
+                    className="px-6 py-4 glass-card text-white rounded-full 
+                             hover:bg-white/20 transition-all flex items-center gap-2"
+                    title="공유하기"
+                  >
                     <Share2 className="w-5 h-5" />
                   </button>
                 </div>
@@ -378,9 +467,26 @@ export default function TrackDetailPage() {
                       
                       {chart.views && (
                         <div className="flex justify-between items-center">
-                          <span className="text-gray-400">Views</span>
+                          <span className="text-gray-400">
+                            {chartName === 'youtube' ? 'Video Views' : 'Views'}
+                          </span>
                           <span className="text-white font-medium">{formatViews(chart.views)}</span>
                         </div>
+                      )}
+
+                      {/* YouTube 전용 뮤직비디오 버튼 */}
+                      {chartName === 'youtube' && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleWatchOnYouTube();
+                          }}
+                          className="w-full mt-3 px-4 py-2 bg-red-600 hover:bg-red-700 
+                                   text-white rounded-lg transition-all flex items-center justify-center gap-2"
+                        >
+                          <Play className="w-4 h-4" />
+                          Watch MV
+                        </button>
                       )}
 
                       {/* Progress Bar */}
@@ -438,6 +544,19 @@ export default function TrackDetailPage() {
           border: 1px solid rgba(255, 255, 255, 0.1);
         }
       `}</style>
+      
+      {/* Share Modal */}
+      {trackInfo && (
+        <ShareModal
+          isOpen={showShareModal}
+          onClose={() => setShowShareModal(false)}
+          trackInfo={{
+            artist: trackInfo.artist,
+            title: currentTrackTitle
+          }}
+          url={typeof window !== 'undefined' ? window.location.href : ''}
+        />
+      )}
     </Layout>
   );
 }

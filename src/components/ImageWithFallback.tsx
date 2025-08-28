@@ -11,7 +11,6 @@ interface ImageWithFallbackProps {
   priority?: boolean;
 }
 
-// 글로벌 에러 캐시 (실패한 이미지만 기록)
 const errorCache = new Set<string>();
 
 const ImageWithFallback: React.FC<ImageWithFallbackProps> = ({
@@ -23,25 +22,25 @@ const ImageWithFallback: React.FC<ImageWithFallbackProps> = ({
   height = 160,
   priority = false,
 }) => {
-  const cacheKey = `${artist}:${track}`;
+  const safeArtist = artist || 'Unknown Artist';
+  const safeTrack = track || 'Unknown Track';
+  const cacheKey = `${safeArtist}:${safeTrack}`;
+  
   const [hasError, setHasError] = useState(false);
-  const [isLoading, setIsLoading] = useState(false); // 기본값 false로 변경
+  const [isLoading, setIsLoading] = useState(false);
   const mountedRef = useRef(true);
 
-  // 이미지 URL 직접 생성 (빠른 로딩을 위해)
   const getImageUrl = () => {
     const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
-    const encodedArtist = encodeURIComponent(artist);
-    const encodedTrack = encodeURIComponent(track);
+    const encodedArtist = encodeURIComponent(safeArtist);
+    const encodedTrack = encodeURIComponent(safeTrack);
     
-    // Fast API 사용
-    return `${baseUrl}/api/album-image-fast/${encodedArtist}/${encodedTrack}`;
+    return `${baseUrl}/api/album-image-smart/${encodedArtist}/${encodedTrack}`;
   };
 
   useEffect(() => {
     mountedRef.current = true;
     
-    // 에러 캐시에 있으면 바로 폴백 표시
     if (errorCache.has(cacheKey)) {
       setHasError(true);
       setIsLoading(false);
@@ -52,30 +51,28 @@ const ImageWithFallback: React.FC<ImageWithFallbackProps> = ({
     };
   }, [cacheKey]);
 
-  // 이미지 로드 에러 처리
   const handleError = () => {
     errorCache.add(cacheKey);
     setHasError(true);
     setIsLoading(false);
   };
 
-  // 이미지 로드 완료
   const handleLoad = () => {
     setIsLoading(false);
   };
 
-  // 에러 발생시 폴백 UI
+  // 에러 발생시 폴백 UI - 완전 원형
   if (hasError) {
     const gradients = [
-      'from-purple-400 to-pink-400',
-      'from-blue-400 to-cyan-400',
-      'from-green-400 to-teal-400',
-      'from-yellow-400 to-orange-400',
-      'from-red-400 to-pink-400',
-      'from-indigo-400 to-purple-400',
+      'from-purple-500 to-pink-500',
+      'from-blue-500 to-cyan-500',
+      'from-green-500 to-teal-500',
+      'from-yellow-500 to-orange-500',
+      'from-red-500 to-pink-500',
+      'from-indigo-500 to-purple-500',
     ];
     
-    const hashCode = (artist + track).split('').reduce((a, b) => {
+    const hashCode = (safeArtist + safeTrack).split('').reduce((a, b) => {
       a = ((a << 5) - a) + b.charCodeAt(0);
       return a & a;
     }, 0);
@@ -84,17 +81,18 @@ const ImageWithFallback: React.FC<ImageWithFallbackProps> = ({
     
     return (
       <div 
-        className={`relative bg-gradient-to-br ${gradient} ${className}`}
+        className={`relative rounded-full bg-gradient-to-br ${gradient} flex items-center justify-center ${className}`}
         style={{ width, height }}
       >
-        <div className="absolute inset-0 bg-black bg-opacity-10 flex flex-col items-center justify-center p-2">
-          <FaCompactDisc className="w-10 h-10 text-white opacity-60 mb-1" />
-          <div className="text-white text-xs font-medium truncate max-w-full px-2 text-center opacity-90">
-            {artist}
+        <div className="absolute inset-0 bg-black bg-opacity-10 rounded-full"></div>
+        <div className="relative z-10 text-center p-2">
+          <FaCompactDisc className="w-6 h-6 text-white opacity-80 mx-auto mb-1" />
+          <div className="text-white text-xs font-medium truncate max-w-full">
+            {safeArtist.slice(0, 8)}
           </div>
-          {track && (
-            <div className="text-white text-xs truncate max-w-full px-2 text-center opacity-70">
-              {track}
+          {safeTrack && safeTrack !== 'Unknown Track' && (
+            <div className="text-white text-xs truncate max-w-full opacity-70">
+              {safeTrack.slice(0, 8)}
             </div>
           )}
         </div>
@@ -102,46 +100,48 @@ const ImageWithFallback: React.FC<ImageWithFallbackProps> = ({
     );
   }
 
-  // 정상 이미지 표시 (즉시 렌더링)
+  // 정상 이미지 표시 - 완전 원형, 꽉 채우기
   return (
-    <div className={`relative overflow-hidden bg-gray-100 ${className}`} style={{ width, height }}>
-      {/* 로딩 중일 때 스켈레톤 (옵션) */}
+    <div 
+      className={`relative overflow-hidden bg-gray-100 dark:bg-gray-800 rounded-full ${className}`} 
+      style={{ width, height }}
+    >
       {isLoading && (
-        <div className="absolute inset-0 bg-gray-200 dark:bg-gray-700 animate-pulse flex items-center justify-center">
+        <div className="absolute inset-0 bg-gray-200 dark:bg-gray-700 animate-pulse rounded-full flex items-center justify-center">
           <FaCompactDisc className="w-8 h-8 text-gray-400 dark:text-gray-600 opacity-50" />
         </div>
       )}
       
-      {/* 이미지는 항상 렌더링 (빠른 표시) */}
       <img
         src={getImageUrl()}
-        alt={alt || `${artist} - ${track}`}
+        alt={alt || `${safeArtist} - ${safeTrack}`}
         width={width}
         height={height}
-        className={`object-cover w-full h-full ${isLoading ? 'opacity-0' : 'opacity-100'} transition-opacity duration-200`}
+        className={`w-full h-full object-cover rounded-full ${isLoading ? 'opacity-0' : 'opacity-100'} transition-opacity duration-200`}
         onError={handleError}
         onLoad={handleLoad}
         loading={priority ? 'eager' : 'lazy'}
         decoding="async"
         onLoadStart={() => setIsLoading(true)}
+        style={{ 
+          objectFit: 'cover',
+          objectPosition: 'center center'
+        }}
       />
     </div>
   );
 };
 
-// 에러 캐시 클리어
 export const clearImageCache = () => {
   errorCache.clear();
 };
 
-// 이미지 프리페치 (선택적)
 export const prefetchImage = (artist: string, track: string) => {
   const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
   const encodedArtist = encodeURIComponent(artist);
   const encodedTrack = encodeURIComponent(track);
-  const url = `${baseUrl}/api/album-image-fast/${encodedArtist}/${encodedTrack}`;
+  const url = `${baseUrl}/api/album-image-smart/${encodedArtist}/${encodedTrack}`;
   
-  // 브라우저 프리페치 힌트
   const link = document.createElement('link');
   link.rel = 'prefetch';
   link.href = url;
@@ -149,9 +149,7 @@ export const prefetchImage = (artist: string, track: string) => {
   document.head.appendChild(link);
 };
 
-// 배치 프리페치 (페이지 로드시 사용)
 export const prefetchImages = (items: Array<{artist: string, track: string}>) => {
-  // 상위 10개만 프리페치
   items.slice(0, 10).forEach(item => {
     prefetchImage(item.artist, item.track);
   });

@@ -78,7 +78,7 @@ export const searchAPI = {
 // Artist API v16 - 차트 독립성 및 AI 인사이트
 export const artistAPI = {
   getDetails: async (name: string) => {
-    const response = await api.get(`/api/artist/v16/${encodeURIComponent(name)}/complete`);
+    const response = await api.get(`/api/artist/${encodeURIComponent(name)}/complete`);
     return response.data;
   }
 };
@@ -134,10 +134,8 @@ export const portfolioAPI = {
     return response.data;
   },
   
-  remove: async (artist: string, track: string) => {
-    const response = await api.delete('/api/portfolio', { 
-      data: { artist, track }
-    });
+  remove: async (itemId: string) => {
+    const response = await api.delete(`/api/portfolio/${itemId}`);
     return response.data;
   },
   

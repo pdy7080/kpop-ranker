@@ -13,11 +13,11 @@ import {
 } from 'lucide-react';
 
 interface PortfolioItem {
-  id: string;
+  id: number;
   artist: string;
   title: string;
   album_image?: string;
-  charts: Record<string, number>;
+  charts?: Record<string, number>;
   added_at: string;
   trend_score?: number;
 }
@@ -35,7 +35,6 @@ export default function PortfolioPage() {
 
   const checkAuth = async () => {
     try {
-      // 로컬 스토리지에서 토큰 확인
       const token = localStorage.getItem('auth_token');
       const user = localStorage.getItem('user_email');
       
@@ -43,7 +42,6 @@ export default function PortfolioPage() {
         setIsAuthenticated(true);
         fetchPortfolio();
       } else {
-        // 토큰이 없으면 API로 확인
         const status = await authAPI.getStatus();
         setIsAuthenticated(status.authenticated);
         
@@ -65,12 +63,10 @@ export default function PortfolioPage() {
       console.log('Portfolio response:', response);
       
       if (response.requireAuth) {
-        // 인증 필요
         setIsAuthenticated(false);
         return;
       }
       
-      // 성공적으로 받았을 때
       if (response.success && response.items) {
         setPortfolioItems(response.items);
       } else {
@@ -82,10 +78,10 @@ export default function PortfolioPage() {
     }
   };
 
-  const removeFromPortfolio = async (id: string) => {
+  const removeFromPortfolio = async (itemId: number) => {
     try {
-      await portfolioAPI.remove(id);
-      setPortfolioItems(prev => prev.filter(item => item.id !== id));
+      await portfolioAPI.remove(itemId.toString());
+      setPortfolioItems(prev => prev.filter(item => item.id !== itemId));
     } catch (error) {
       console.error('Failed to remove item:', error);
     }
@@ -152,70 +148,104 @@ export default function PortfolioPage() {
       <div className="min-h-screen bg-[#0A0A0F] text-white">
         <div className="container mx-auto px-4 py-8">
           {/* Header */}
-          <motion.div 
-            initial={{ opacity: 0, y: -20 }}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="mb-8"
+            className="text-center mb-8"
           >
-            <div className="flex items-center justify-between mb-6">
-              <div>
-                <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
-                  My K-POP Portfolio
-                </h1>
-                <p className="text-gray-400 mt-2">
-                  Track and analyze your favorite K-POP songs
-                </p>
-              </div>
-              
-              <div className="flex gap-2">
-                <button
-                  onClick={exportPortfolio}
-                  className="p-2 bg-gray-800 rounded-lg hover:bg-gray-700 transition-all"
-                  title="Export"
-                >
-                  <Download className="w-5 h-5" />
-                </button>
-                <button
-                  onClick={sharePortfolio}
-                  className="p-2 bg-gray-800 rounded-lg hover:bg-gray-700 transition-all"
-                  title="Share"
-                >
-                  <Share2 className="w-5 h-5" />
-                </button>
-              </div>
-            </div>
+            <h1 className="text-4xl font-bold mb-2">
+              <span className="bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
+                My K-POP Portfolio
+              </span>
+            </h1>
+            <p className="text-gray-400">내가 좋아하는 K-POP 트랙들을 관리해보세요</p>
+          </motion.div>
 
-            {/* View Mode Tabs */}
+          {/* Stats */}
+          {portfolioItems.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8"
+            >
+              <div className="bg-gray-800/50 backdrop-blur rounded-xl p-4 text-center">
+                <div className="text-2xl font-bold text-purple-400">{portfolioItems.length}</div>
+                <div className="text-xs text-gray-400">Total Tracks</div>
+              </div>
+              <div className="bg-gray-800/50 backdrop-blur rounded-xl p-4 text-center">
+                <div className="text-2xl font-bold text-green-400">
+                  {[...new Set(portfolioItems.map(item => item.artist))].length}
+                </div>
+                <div className="text-xs text-gray-400">Artists</div>
+              </div>
+              <div className="bg-gray-800/50 backdrop-blur rounded-xl p-4 text-center">
+                <div className="text-2xl font-bold text-blue-400">
+                  {portfolioItems.reduce((sum, item) => sum + Object.keys(item.charts || {}).length, 0)}
+                </div>
+                <div className="text-xs text-gray-400">Chart Entries</div>
+              </div>
+              <div className="bg-gray-800/50 backdrop-blur rounded-xl p-4 text-center">
+                <div className="text-2xl font-bold text-orange-400">
+                  {Math.round(portfolioItems.reduce((sum, item) => sum + (item.trend_score || 0), 0) / portfolioItems.length) || 0}
+                </div>
+                <div className="text-xs text-gray-400">Avg Score</div>
+              </div>
+            </motion.div>
+          )}
+
+          {/* Controls */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="flex flex-wrap items-center justify-between gap-4 mb-8"
+          >
             <div className="flex gap-2">
               <button
                 onClick={() => setViewMode('analytics')}
-                className={`px-6 py-2 rounded-lg transition-all ${
+                className={`px-4 py-2 rounded-lg transition-all ${
                   viewMode === 'analytics' 
                     ? 'bg-purple-600 text-white' 
-                    : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+                    : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
                 }`}
               >
                 Analytics
               </button>
               <button
                 onClick={() => setViewMode('grid')}
-                className={`px-6 py-2 rounded-lg transition-all ${
+                className={`px-4 py-2 rounded-lg transition-all ${
                   viewMode === 'grid' 
                     ? 'bg-purple-600 text-white' 
-                    : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+                    : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
                 }`}
               >
                 Grid View
               </button>
               <button
                 onClick={() => setViewMode('list')}
-                className={`px-6 py-2 rounded-lg transition-all ${
+                className={`px-4 py-2 rounded-lg transition-all ${
                   viewMode === 'list' 
                     ? 'bg-purple-600 text-white' 
-                    : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+                    : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
                 }`}
               >
                 List View
+              </button>
+            </div>
+
+            <div className="flex gap-2">
+              <button
+                onClick={sharePortfolio}
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg transition-all flex items-center gap-2"
+              >
+                <Share2 className="w-4 h-4" />
+                Share
+              </button>
+              <button
+                onClick={exportPortfolio}
+                className="px-4 py-2 bg-green-600 hover:bg-green-700 rounded-lg transition-all flex items-center gap-2"
+              >
+                <Download className="w-4 h-4" />
+                Export
               </button>
             </div>
           </motion.div>
@@ -259,8 +289,8 @@ export default function PortfolioPage() {
                     >
                       <div className="flex items-center gap-3">
                         <ImageWithFallback
-                          src={item.album_image}
-                          alt={item.title}
+                          artist={item.artist}
+                          track={item.title}
                           width={60}
                           height={60}
                           className="rounded-lg"
@@ -311,8 +341,8 @@ export default function PortfolioPage() {
                   >
                     <div className="relative mb-3">
                       <ImageWithFallback
-                        src={item.album_image}
-                        alt={item.title}
+                        artist={item.artist}
+                        track={item.title}
                         width={200}
                         height={200}
                         className="rounded-lg w-full"
@@ -332,7 +362,7 @@ export default function PortfolioPage() {
                     <p className="text-sm text-gray-400 truncate">{item.artist}</p>
                     
                     <div className="mt-3 flex items-center justify-between">
-                      <span className="text-xs text-gray-500">{Object.keys(item.charts).length} charts</span>
+                      <span className="text-xs text-gray-500">{Object.keys(item.charts || {}).length} charts</span>
                       {item.trend_score && (
                         <span className="text-sm font-bold text-purple-400">{item.trend_score}</span>
                       )}
@@ -358,8 +388,8 @@ export default function PortfolioPage() {
                   >
                     <div className="flex items-center gap-4">
                       <ImageWithFallback
-                        src={item.album_image}
-                        alt={item.title}
+                        artist={item.artist}
+                        track={item.title}
                         width={80}
                         height={80}
                         className="rounded-lg"
@@ -374,7 +404,7 @@ export default function PortfolioPage() {
                             Added {new Date(item.added_at).toLocaleDateString()}
                           </span>
                           <div className="flex gap-1">
-                            {Object.entries(item.charts).slice(0, 3).map(([chart, rank]) => (
+                            {Object.entries(item.charts || {}).slice(0, 3).map(([chart, rank]) => (
                               <span key={chart} className="text-xs px-2 py-1 bg-gray-700 rounded">
                                 {chart}: #{rank}
                               </span>
