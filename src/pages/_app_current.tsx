@@ -1,5 +1,4 @@
 import '@/styles/globals.css';
-import '@/styles/kpop-theme.css';
 import type { AppProps } from 'next/app';
 import { useEffect } from 'react';
 import { Toaster } from 'react-hot-toast';

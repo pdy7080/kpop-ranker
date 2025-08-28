@@ -2,18 +2,13 @@ import React, { useEffect, useState } from 'react';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
 import Layout from '@/components/Layout';
-import { motion } from 'framer-motion';
-import { trendingApi, chartStatusAPI, statisticsAPI } from '@/lib/api';
+import { motion, AnimatePresence } from 'framer-motion';
 import ImageWithFallback from '@/components/ImageWithFallback';
 import UnifiedSearch from '@/components/UnifiedSearch';
 import ChartRankDisplay from '@/components/ChartRankDisplay';
-import TopChampionsSection from '@/components/TopChampionsSection';
-import TrendingGallery from '@/components/TrendingGallery';
 import { 
-  TrendingUp, Music, Award, Flame, ChevronRight,
-  Activity, Sparkles, BarChart3, Globe, Star,
-  Zap, Users, Radio, Headphones, Crown, Play,
-  Clock, Heart, Eye, Trophy
+  Crown, Trophy, TrendingUp, Music, Star, Sparkles,
+  Play, Heart, Eye, BarChart3, Globe, Users, Disc
 } from 'lucide-react';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
@@ -25,318 +20,434 @@ interface TrendingTrack {
   charts: Record<string, number | string>;
   best_rank: number;
   chart_count: number;
-  image_url?: string;
-  local_image?: string;
-  has_real_image?: boolean;
 }
 
-// 조회수 포맷팅 함수
-const formatViews = (views: string | number): string => {
-  if (!views) return '';
-  const num = typeof views === 'string' ? parseInt(views.replace(/,/g, '')) : views;
-  if (isNaN(num)) return '';
-  
-  if (num >= 1000000000) return `${(num / 1000000000).toFixed(1)}B`;
-  if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`;
-  if (num >= 1000) return `${(num / 1000).toFixed(0)}K`;
-  return num.toLocaleString();
+// 차트 색상 매핑
+const chartColors = {
+  melon: '#00CD3C',
+  genie: '#00A8E6',
+  bugs: '#FF6B00',
+  spotify: '#1DB954',
+  youtube: '#FF0000',
+  flo: '#AA40FC',
+  vibe: '#EC4899',
+  billboard: '#1F2937'
 };
 
 export default function Home() {
   const router = useRouter();
   const [trendingTracks, setTrendingTracks] = useState<TrendingTrack[]>([]);
-  const [topTracks, setTopTracks] = useState<TrendingTrack[]>([]);
-  const [stats, setStats] = useState({
-    totalTracks: 0,
-    totalArtists: 0,
-    activeCharts: 8,
-    lastUpdate: ''
-  });
   const [isLoading, setIsLoading] = useState(true);
-  const [mounted, setMounted] = useState(false);
+  const [activeHero, setActiveHero] = useState(0);
 
   useEffect(() => {
-    setMounted(true);
-    fetchData();
-    fetchStats();
+    fetchTrendingData();
+    const interval = setInterval(() => {
+      setActiveHero((prev) => (prev + 1) % 3);
+    }, 5000);
+    return () => clearInterval(interval);
   }, []);
 
-  const fetchData = async () => {
+  const fetchTrendingData = async () => {
     try {
       setIsLoading(true);
+      const response = await fetch(`${API_URL}/api/trending?limit=30`);
+      const data = await response.json();
       
-      // 트렌딩 데이터 가져오기
-      console.log('🔥 Fetching trending data from:', `${API_URL}/api/trending?limit=20`);
-      const response = await fetch(`${API_URL}/api/trending?limit=20`);
-      
-      if (response.ok) {
-        const data = await response.json();
-        console.log('📊 Trending API Response:', data);
-        
-        if (data?.trending && Array.isArray(data.trending)) {
-          // 이미지 URL 처리
-          const processedTracks = data.trending.map((track: any) => {
-            let imageUrl = track.image_url;
-            
-            // 이미지가 없거나 has_real_image가 false인 경우 Smart API 사용
-            if (!imageUrl || !track.has_real_image) {
-              imageUrl = `${API_URL}/api/album-image-smart/${encodeURIComponent(track.artist)}/${encodeURIComponent(track.track)}`;
-            } else if (!imageUrl.startsWith('http')) {
-              imageUrl = imageUrl.startsWith('/') ? `${API_URL}${imageUrl}` : imageUrl;
-            }
-            
-            return {
-              ...track,
-              image_url: imageUrl
-            };
-          });
-          
-          setTrendingTracks(processedTracks);
-          setTopTracks(processedTracks.slice(0, 3)); // TOP 3 저장
-          
-          console.log('✅ Trending tracks set:', processedTracks.length);
-          console.log('✅ Top 3 tracks set:', processedTracks.slice(0, 3));
-        } else {
-          console.log('⚠️ No trending data found in response');
-        }
+      if (data?.trending) {
+        setTrendingTracks(data.trending);
       }
-      
     } catch (error) {
-      console.error('❌ Failed to fetch trending:', error);
+      console.error('Failed to fetch:', error);
     } finally {
       setIsLoading(false);
-      console.log('✅ Loading complete');
     }
   };
 
-  const fetchStats = async () => {
-    try {
-      console.log('📊 Fetching statistics...');
-      
-      // 새로운 Statistics API 사용
-      const response = await statisticsAPI.getStatistics();
-      console.log('✅ Statistics API Response:', response);
-      
-      if (response.success) {
-        const summary = response.statistics.summary;
-        
-        setStats({
-          totalTracks: summary.unique_tracks || 545,
-          totalArtists: summary.unique_artists || 297,
-          activeCharts: summary.active_charts || 8,
-          lastUpdate: summary.last_update || new Date().toISOString()
-        });
-        
-        console.log('✅ Stats updated:', {
-          totalTracks: summary.unique_tracks,
-          totalArtists: summary.unique_artists,
-          activeCharts: summary.active_charts
-        });
-      } else {
-        // 폴백 데이터 사용
-        const summary = response.statistics.summary;
-        setStats({
-          totalTracks: summary.unique_tracks,
-          totalArtists: summary.unique_artists,
-          activeCharts: summary.active_charts,
-          lastUpdate: summary.last_update
-        });
-        console.log('⚠️ Using fallback statistics data');
-      }
-      
-    } catch (error) {
-      console.error('❌ Failed to fetch statistics:', error);
-      // 최종 폴백 데이터
-      setStats({
-        totalTracks: 545,
-        totalArtists: 297,
-        activeCharts: 8,
-        lastUpdate: new Date().toISOString()
-      });
-    }
-  };
-
-  // 차트 정보 렌더링
-  const renderChartInfo = (charts: Record<string, number | string>) => {
-    const entries = Object.entries(charts);
-    const rankCharts = entries.filter(([chart, value]) => 
-      chart !== 'youtube' && typeof value === 'number' && value > 0
-    );
-    const youtubeData = entries.find(([chart]) => chart === 'youtube');
-
-    return (
-      <div className="flex flex-wrap gap-1">
-        {/* 순위 차트들 */}
-        {rankCharts.slice(0, 3).map(([chart, rank]) => (
-          <ChartRankDisplay
-            key={chart}
-            chartName={chart}
-            rank={rank as number}
-            displayType="badge"
-          />
-        ))}
-        
-        {/* YouTube 조회수 */}
-        {youtubeData && youtubeData[1] && (
-          <div className="px-2 py-1 bg-red-500 text-white text-xs rounded-full flex items-center gap-1">
-            <Play className="w-3 h-3" />
-            {formatViews(youtubeData[1])}
-          </div>
-        )}
-      </div>
-    );
-  };
-
-  if (!mounted) {
-    return null;
-  }
+  const topTracks = trendingTracks.slice(0, 3);
+  const hotTracks = trendingTracks.slice(3, 15);
+  const risingTracks = trendingTracks.slice(15, 27);
 
   return (
     <Layout>
       <Head>
-        <title>KPOP Ranker - 실시간 K-POP 차트 통합 플랫폼</title>
-        <meta name="description" content="전 세계 K-POP 차트를 한눈에 - Melon, Genie, Spotify, Apple Music 등 8개 차트 실시간 모니터링" />
+        <title>KPOP Ranker - Global K-POP Chart Platform</title>
+        <meta name="description" content="실시간 K-POP 차트 통합 플랫폼 - 전 세계 음원 차트를 한눈에" />
       </Head>
 
-      <div className="min-h-screen bg-gray-900">
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900/20 to-gray-900">
+        {/* Hero Section - 대형 비주얼 */}
+        <section className="relative h-[70vh] min-h-[500px] overflow-hidden">
+          {/* Background Hero Images */}
+          <AnimatePresence mode="wait">
+            {topTracks.length > 0 && (
+              <motion.div
+                key={activeHero}
+                initial={{ opacity: 0, scale: 1.1 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 1 }}
+                className="absolute inset-0"
+              >
+                <ImageWithFallback
+                  artist={topTracks[activeHero]?.artist || ''}
+                  track={topTracks[activeHero]?.track || ''}
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-gray-900/50 to-transparent" />
+              </motion.div>
+            )}
+          </AnimatePresence>
 
-        {/* Hero Section */}
-        <div className="relative">
-          <div className="container mx-auto px-4 py-12">
-            {/* Logo & Title */}
+          {/* Hero Content */}
+          <div className="relative h-full flex flex-col justify-center items-center px-4">
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
+              initial={{ y: 30, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.2 }}
               className="text-center mb-8"
             >
-              <motion.div
-                initial={{ scale: 0.8 }}
-                animate={{ scale: 1 }}
-                transition={{ type: "spring", stiffness: 100 }}
-                className="mb-6"
-              >
-                <h1 className="text-5xl md:text-6xl font-black text-white mb-3">
-                  <span className="text-indigo-400">KPOP</span>
-                  <span className="ml-3">RANKER</span>
+              {/* Logo */}
+              <div className="mb-6">
+                <h1 className="text-6xl md:text-7xl font-black">
+                  <span className="bg-gradient-to-r from-purple-400 via-pink-400 to-blue-400 
+                               bg-clip-text text-transparent drop-shadow-2xl">
+                    KPOP RANKER
+                  </span>
                 </h1>
-              </motion.div>
-              
-              <p className="text-lg md:text-xl text-gray-400 font-light">
-                전 세계 K-POP 차트를 한눈에
-              </p>
-              
-              {/* Live Badge */}
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.5 }}
-                className="flex items-center justify-center gap-2 mt-3"
-              >
+                <p className="text-lg md:text-xl text-gray-300 mt-2 font-light">
+                  Global K-POP Chart Platform
+                </p>
+              </div>
+
+              {/* Live Indicator */}
+              <div className="flex items-center justify-center gap-2 mb-8">
                 <span className="relative flex h-3 w-3">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
                   <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
                 </span>
-                <span className="text-sm text-gray-400">LIVE</span>
-              </motion.div>
+                <span className="text-green-400 text-sm font-medium">LIVE TRACKING</span>
+              </div>
+
+              {/* Search Bar */}
+              <div className="max-w-2xl mx-auto">
+                <UnifiedSearch />
+              </div>
             </motion.div>
 
-            {/* Search Bar */}
+            {/* Quick Stats */}
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
-              className="max-w-2xl mx-auto mb-12"
+              initial={{ y: 30, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.4 }}
+              className="flex gap-8 text-center"
             >
-              <UnifiedSearch />
+              <div className="glass-card px-6 py-3 rounded-full">
+                <div className="text-2xl font-bold text-white">8</div>
+                <div className="text-xs text-gray-400">Charts</div>
+              </div>
+              <div className="glass-card px-6 py-3 rounded-full">
+                <div className="text-2xl font-bold text-white">24/7</div>
+                <div className="text-xs text-gray-400">Updates</div>
+              </div>
+              <div className="glass-card px-6 py-3 rounded-full">
+                <div className="text-2xl font-bold text-white">500+</div>
+                <div className="text-xs text-gray-400">Artists</div>
+              </div>
             </motion.div>
-
-            {/* Stats - Clean */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.6 }}
-              className="flex justify-center gap-8 mb-16"
-            >
-              {[
-                { label: '총 트랙 수', value: stats.totalTracks.toLocaleString() },
-                { label: '아티스트 수', value: stats.totalArtists.toLocaleString() },
-                { label: '차트 수', value: stats.activeCharts }
-              ].map((stat, idx) => (
-                <div key={idx} className="text-center">
-                  <div className="text-2xl font-bold text-white mb-1">{stat.value}</div>
-                  <div className="text-sm text-gray-400">{stat.label}</div>
-                </div>
-              ))}
-            </motion.div>
-
-            {/* Top Champions Section - 새로운 TOP 3 섹션 */}
-            {!isLoading && trendingTracks.length > 0 && (
-              <TopChampionsSection 
-                trendingTracks={trendingTracks}
-                stats={{
-                  totalTracks: stats.totalTracks,
-                  totalArtists: stats.totalArtists,
-                  activeCharts: stats.activeCharts,
-                  lastUpdate: new Date().toLocaleString('ko-KR')
-                }}
-              />
-            )}
           </div>
-        </div>
 
-        {/* Trending Gallery - 새로운 4x4 갤러리 */}
-        {!isLoading && trendingTracks.length > 3 && (
-          <TrendingGallery trendingTracks={trendingTracks} />
+          {/* Hero Dots Indicator */}
+          <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 flex gap-2">
+            {[0, 1, 2].map((idx) => (
+              <button
+                key={idx}
+                onClick={() => setActiveHero(idx)}
+                className={`w-2 h-2 rounded-full transition-all ${
+                  activeHero === idx ? 'w-8 bg-white' : 'bg-white/40'
+                }`}
+              />
+            ))}
+          </div>
+        </section>
+
+        {/* TOP 3 Championship - 포디움 스타일 */}
+        {!isLoading && topTracks.length > 0 && (
+          <section className="container mx-auto px-4 py-16">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.5 }}
+            >
+              {/* Section Header */}
+              <div className="text-center mb-12">
+                <h2 className="text-4xl md:text-5xl font-bold mb-2">
+                  <span className="bg-gradient-to-r from-yellow-400 via-yellow-500 to-orange-500 
+                               bg-clip-text text-transparent">
+                    TODAY'S CHAMPIONS
+                  </span>
+                </h2>
+                <p className="text-gray-400">가장 핫한 K-POP 트랙</p>
+              </div>
+
+              {/* Podium Style Layout */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+                {/* 2nd Place */}
+                <motion.div
+                  initial={{ y: 50, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ delay: 0.6 }}
+                  className="md:mt-8"
+                >
+                  <ChampionCard track={topTracks[1]} rank={2} />
+                </motion.div>
+
+                {/* 1st Place */}
+                <motion.div
+                  initial={{ y: 50, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ delay: 0.7 }}
+                >
+                  <ChampionCard track={topTracks[0]} rank={1} />
+                </motion.div>
+
+                {/* 3rd Place */}
+                <motion.div
+                  initial={{ y: 50, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ delay: 0.8 }}
+                  className="md:mt-16"
+                >
+                  <ChampionCard track={topTracks[2]} rank={3} />
+                </motion.div>
+              </div>
+            </motion.div>
+          </section>
         )}
 
-        {/* Features Section */}
-        <motion.div
-          initial={{ opacity: 0, y: 40 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 2.0 }}
-          className="relative py-16"
-        >
-          <div className="container mx-auto px-4">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {[
-                {
-                  icon: Globe,
-                  title: '글로벌 차트 통합',
-                  description: 'Melon, Genie, Bugs, Spotify, Apple Music, Last.fm, YouTube 등 8개 차트 실시간 모니터링',
-                  gradient: 'from-blue-600 to-cyan-600'
-                },
-                {
-                  icon: Crown,
-                  title: '스마트 랭킹 시스템',
-                  description: 'AI 기반 트렌드 분석과 종합 스코어링 알고리즘으로 정확한 인기도 측정',
-                  gradient: 'from-purple-600 to-pink-600'
-                },
-                {
-                  icon: Radio,
-                  title: '실시간 업데이트',
-                  description: '매시간 자동 크롤링으로 최신 차트 정보와 YouTube 조회수까지 제공',
-                  gradient: 'from-green-600 to-emerald-600'
-                }
-              ].map((feature, idx) => (
+        {/* HOT TRACKS - Magazine Grid */}
+        {!isLoading && hotTracks.length > 0 && (
+          <section className="container mx-auto px-4 py-16">
+            <div className="mb-8">
+              <h2 className="text-3xl font-bold text-white flex items-center gap-3">
+                <div className="p-2 bg-gradient-to-r from-orange-500 to-red-500 rounded-lg">
+                  <TrendingUp className="w-6 h-6" />
+                </div>
+                HOT TRACKS
+              </h2>
+            </div>
+
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              {hotTracks.map((track, idx) => (
                 <motion.div
-                  key={idx}
-                  whileHover={{ scale: 1.05 }}
-                  className="relative group"
+                  key={`${track.artist}-${track.track}`}
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: idx * 0.05 }}
+                  whileHover={{ y: -8 }}
+                  className="group cursor-pointer"
+                  onClick={() => router.push(`/track/${encodeURIComponent(track.artist)}/${encodeURIComponent(track.track)}`)}
                 >
-                  <div className={`absolute inset-0 bg-gradient-to-r ${feature.gradient} rounded-2xl blur-xl opacity-20 group-hover:opacity-40 transition-opacity`} />
-                  <div className="relative glass-card p-8 h-full border border-white/10 hover:border-white/20 transition-all">
-                    <div className={`inline-flex p-4 rounded-xl bg-gradient-to-r ${feature.gradient} mb-4`}>
-                      <feature.icon className="w-8 h-8 text-white" />
+                  <div className="relative aspect-square rounded-xl overflow-hidden mb-3">
+                    <ImageWithFallback
+                      artist={track.artist}
+                      track={track.track}
+                      className="w-full h-full object-cover transition-transform group-hover:scale-110"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent 
+                                  opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="absolute bottom-4 left-4 right-4">
+                        <Play className="w-12 h-12 text-white mb-2" />
+                      </div>
                     </div>
-                    <h3 className="text-xl font-bold text-white mb-2">{feature.title}</h3>
-                    <p className="text-gray-400 leading-relaxed">{feature.description}</p>
+                    {/* Rank Badge */}
+                    <div className="absolute top-2 left-2 bg-black/60 backdrop-blur-sm px-2 py-1 rounded-full">
+                      <span className="text-white font-bold text-sm">#{idx + 4}</span>
+                    </div>
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-white text-sm line-clamp-1">{track.track}</h3>
+                    <p className="text-gray-400 text-xs line-clamp-1">{track.artist}</p>
+                    <div className="flex gap-1 mt-2">
+                      {Object.entries(track.charts)
+                        .filter(([chart]) => chart !== 'youtube')
+                        .slice(0, 3)
+                        .map(([chart, rank]) => (
+                          <span
+                            key={chart}
+                            className="px-2 py-0.5 text-xs font-medium rounded-full"
+                            style={{
+                              backgroundColor: `${chartColors[chart as keyof typeof chartColors]}20`,
+                              color: chartColors[chart as keyof typeof chartColors]
+                            }}
+                          >
+                            {chart} #{rank}
+                          </span>
+                        ))}
+                    </div>
                   </div>
                 </motion.div>
               ))}
             </div>
+          </section>
+        )}
+
+        {/* RISING STARS - Horizontal Scroll */}
+        {!isLoading && risingTracks.length > 0 && (
+          <section className="py-16 bg-gradient-to-r from-purple-900/20 to-blue-900/20">
+            <div className="container mx-auto px-4">
+              <div className="mb-8">
+                <h2 className="text-3xl font-bold text-white flex items-center gap-3">
+                  <div className="p-2 bg-gradient-to-r from-purple-500 to-blue-500 rounded-lg">
+                    <Sparkles className="w-6 h-6" />
+                  </div>
+                  RISING STARS
+                </h2>
+              </div>
+
+              <div className="overflow-x-auto pb-4">
+                <div className="flex gap-4" style={{ width: 'max-content' }}>
+                  {risingTracks.map((track, idx) => (
+                    <motion.div
+                      key={`${track.artist}-${track.track}-${idx}`}
+                      initial={{ opacity: 0, x: 20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: idx * 0.05 }}
+                      className="w-48 flex-shrink-0 cursor-pointer"
+                      onClick={() => router.push(`/track/${encodeURIComponent(track.artist)}/${encodeURIComponent(track.track)}`)}
+                    >
+                      <div className="glass-card p-4 rounded-xl hover:bg-white/10 transition-all">
+                        <div className="aspect-square rounded-lg overflow-hidden mb-3">
+                          <ImageWithFallback
+                            artist={track.artist}
+                            track={track.track}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                        <h4 className="font-bold text-white text-sm line-clamp-1">{track.track}</h4>
+                        <p className="text-gray-400 text-xs line-clamp-1 mb-2">{track.artist}</p>
+                        <div className="flex items-center gap-2 text-xs text-gray-400">
+                          <Trophy className="w-3 h-3" />
+                          <span>Best #{track.best_rank}</span>
+                        </div>
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </section>
+        )}
+
+        {/* Loading State */}
+        {isLoading && (
+          <div className="flex justify-center items-center py-20">
+            <motion.div
+              animate={{ rotate: 360 }}
+              transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+            >
+              <Disc className="w-12 h-12 text-purple-500" />
+            </motion.div>
           </div>
-        </motion.div>
+        )}
       </div>
+
+      <style jsx global>{`
+        .glass-card {
+          background: rgba(255, 255, 255, 0.05);
+          backdrop-filter: blur(10px);
+          border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+      `}</style>
     </Layout>
+  );
+}
+
+// Champion Card Component
+function ChampionCard({ track, rank }: { track: TrendingTrack; rank: number }) {
+  const router = useRouter();
+  
+  const getRankStyle = () => {
+    switch(rank) {
+      case 1: return 'from-yellow-400 to-yellow-600';
+      case 2: return 'from-gray-300 to-gray-500';
+      case 3: return 'from-orange-400 to-orange-600';
+      default: return 'from-purple-400 to-purple-600';
+    }
+  };
+
+  const getRankSize = () => {
+    switch(rank) {
+      case 1: return 'h-80';
+      case 2: return 'h-72';
+      case 3: return 'h-64';
+      default: return 'h-60';
+    }
+  };
+
+  return (
+    <div 
+      className={`relative group cursor-pointer ${rank === 1 ? 'transform scale-110' : ''}`}
+      onClick={() => router.push(`/track/${encodeURIComponent(track.artist)}/${encodeURIComponent(track.track)}`)}
+    >
+      {/* Rank Medal */}
+      <div className={`absolute -top-4 left-1/2 transform -translate-x-1/2 z-20 
+                      w-16 h-16 bg-gradient-to-br ${getRankStyle()} 
+                      rounded-full flex items-center justify-center shadow-2xl
+                      ${rank === 1 ? 'w-20 h-20' : ''}`}>
+        <span className="text-white font-black text-2xl">{rank}</span>
+      </div>
+
+      {/* Card */}
+      <div className={`glass-card ${getRankSize()} rounded-2xl overflow-hidden 
+                      transform transition-all hover:scale-105`}>
+        {/* Album Art */}
+        <div className="relative h-2/3">
+          <ImageWithFallback
+            artist={track.artist}
+            track={track.track}
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
+          
+          {/* Play Button Overlay */}
+          <div className="absolute inset-0 flex items-center justify-center opacity-0 
+                        group-hover:opacity-100 transition-opacity">
+            <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-full 
+                          flex items-center justify-center">
+              <Play className="w-8 h-8 text-white ml-1" />
+            </div>
+          </div>
+        </div>
+
+        {/* Info */}
+        <div className="absolute bottom-0 left-0 right-0 p-4">
+          <h3 className="font-bold text-white text-lg line-clamp-1">{track.track}</h3>
+          <p className="text-gray-300 text-sm mb-2">{track.artist}</p>
+          
+          {/* Charts */}
+          <div className="flex flex-wrap gap-1">
+            {Object.entries(track.charts)
+              .filter(([chart]) => chart !== 'youtube')
+              .slice(0, 3)
+              .map(([chart, rank]) => (
+                <span
+                  key={chart}
+                  className="px-2 py-0.5 text-xs font-medium rounded-full bg-white/20 text-white"
+                >
+                  {chart} #{rank}
+                </span>
+              ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Crown for #1 */}
+      {rank === 1 && (
+        <div className="absolute -top-12 left-1/2 transform -translate-x-1/2">
+          <Crown className="w-8 h-8 text-yellow-400 animate-bounce" />
+        </div>
+      )}
+    </div>
   );
 }

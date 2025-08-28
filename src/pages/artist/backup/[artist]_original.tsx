@@ -6,15 +6,17 @@ import ImageWithFallback from '@/components/ImageWithFallback';
 import ChartRankDisplay from '@/components/ChartRankDisplay';
 import { motion, AnimatePresence } from 'framer-motion';
 import { artistAPI } from '@/lib/api';
+import ArtistTop10Stats from '@/components/ArtistTop10Stats';
 import NewsTab from '@/components/NewsTab';
 import GoodsTab from '@/components/GoodsTab';
+import { AIInsightsSection, EventsSection, NewsSection } from '@/components/AIInsightsSection';
 import { 
   Music, TrendingUp, Award, Clock, BarChart3, 
   Globe, Play, Star, Activity, Disc, Mic,
   Calendar, Hash, Users, Zap, Trophy,
   ArrowUp, ArrowDown, Sparkles, Target,
   ChevronUp, ChevronDown, Eye, Heart, Flame,
-  Newspaper, ShoppingBag, Crown
+  Newspaper, ShoppingBag
 } from 'lucide-react';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
@@ -91,126 +93,9 @@ const getChartInfo = (chartName: string) => {
   };
 };
 
-const AIInsightsSection = ({ artistName, stats }: { artistName: string; stats: any }) => {
-  const [aiData, setAiData] = useState<any>(null);
-  const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    fetchAIInsights();
-  }, [artistName]);
-
-  const fetchAIInsights = async () => {
-    try {
-      setLoading(true);
-      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
-      const response = await fetch(`${API_URL}/api/artist/${encodeURIComponent(artistName)}/ai-insights`);
-      
-      if (response.ok) {
-        const data = await response.json();
-        if (data.success) {
-          setAiData(data);
-        }
-      }
-    } catch (error) {
-      console.error('AI 인사이트 로드 실패:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return (
-    <div className="bg-gray-800/30 rounded-xl p-6 border border-gray-700">
-      <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
-        <Sparkles className="w-5 h-5 text-purple-400" />
-        AI 인사이트
-        {aiData?.cached && (
-          <span className="text-xs bg-green-900/50 text-green-300 px-2 py-1 rounded">
-            캐시됨
-          </span>
-        )}
-      </h3>
-      
-      {loading ? (
-        <div className="text-center py-4">
-          <div className="animate-spin w-6 h-6 border-2 border-purple-500 border-t-transparent rounded-full mx-auto mb-2" />
-          <p className="text-gray-400 text-sm">AI 분석 중...</p>
-        </div>
-      ) : aiData?.ai_insights ? (
-        <div className="space-y-4">
-          {/* 팬 중심 지표 */}
-          <div className="grid grid-cols-2 gap-4 mb-4">
-            <div className="text-center">
-              <div className="text-2xl font-bold text-yellow-400">
-                {aiData.metrics?.top10_count || 0}
-              </div>
-              <div className="text-xs text-gray-400">TOP 10 진입</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-purple-400">
-                {aiData.metrics?.success_rate || 0}%
-              </div>
-              <div className="text-xs text-gray-400">성공률</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-green-400">
-                {aiData.metrics?.max_chart_days || 0}일
-              </div>
-              <div className="text-xs text-gray-400">최장 차트인</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-blue-400">
-                {aiData.metrics?.trend || '안정'}
-                {aiData.metrics?.trend_value > 0 && (
-                  <span className="text-sm ml-1">+{aiData.metrics.trend_value}</span>
-                )}
-              </div>
-              <div className="text-xs text-gray-400">최근 트렌드</div>
-            </div>
-          </div>
-
-          {/* AI 인사이트 5가지 */}
-          <div className="space-y-3 text-sm">
-            {[
-              { key: 'comeback_prediction', title: '📅 컴백 예측', icon: Calendar },
-              { key: 'growth_trend', title: '📈 성장 트렌드', icon: TrendingUp },
-              { key: 'chart_strategy', title: '🎯 차트 전략', icon: Target },
-              { key: 'fandom_power', title: '💪 팬덤 파워', icon: Users },
-              { key: 'market_position', title: '🌏 시장 포지션', icon: Globe }
-            ].map(({ key, title, icon: Icon }) => (
-              aiData.ai_insights[key] && (
-                <div key={key} className="p-3 bg-gray-900/30 rounded-lg">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Icon className="w-4 h-4 text-purple-400" />
-                    <span className="font-medium text-purple-300">{title}</span>
-                  </div>
-                  <p className="text-gray-300 leading-relaxed">
-                    {aiData.ai_insights[key]}
-                  </p>
-                </div>
-              )
-            ))}
-          </div>
-
-          {/* 생성 시간 */}
-          {aiData.generated_at && (
-            <div className="text-xs text-gray-500 pt-3 border-t border-gray-700">
-              AI 분석 시간: {new Date(aiData.generated_at).toLocaleString('ko-KR')}
-            </div>
-          )}
-        </div>
-      ) : (
-        <div className="text-center py-4">
-          <Sparkles className="w-12 h-12 text-gray-600 mx-auto mb-2 opacity-50" />
-          <p className="text-gray-400">AI 인사이트를 불러오는 중입니다.</p>
-        </div>
-      )}
-    </div>
-  );
-};
-
 export default function ArtistDetailPage() {
   const router = useRouter();
-  const { artist } = router.query;
+  const { artist } = router.query;  // name → artist로 변경
   const [artistData, setArtistData] = useState<ArtistData | null>(null);
   const [comprehensiveData, setComprehensiveData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -219,9 +104,9 @@ export default function ArtistDetailPage() {
 
   useEffect(() => {
     if (artist && typeof artist === 'string') {
-      fetchArtistData(artist);
+      fetchArtistData(artist);  // name → artist
     }
-  }, [artist]);
+  }, [artist]);  // name → artist
 
   const fetchArtistData = async (artistName: string) => {
     try {
@@ -252,7 +137,7 @@ export default function ArtistDetailPage() {
 
   // Process artist info with real data
   const artistInfo = {
-    name: artistData?.artist || artist as string || 'Unknown',
+    name: artistData?.artist || artist as string || 'Unknown',  // name → artist
     totalTracks: artistData?.stats?.total_tracks || 0,
     activeCharts: artistData?.stats?.chart_diversity || 0,
     bestRanking: artistData?.stats?.best_peak || null
@@ -312,48 +197,47 @@ export default function ArtistDetailPage() {
     chart_diversity: 0
   };
 
-  // Chart dominance calculation
-  const chartDominance = React.useMemo(() => {
-    const chartCounts: Record<string, number> = {};
-    tracks.forEach(track => {
-      if (track.charts) {
-        Object.keys(track.charts).forEach(chart => {
-          chartCounts[chart] = (chartCounts[chart] || 0) + 1;
-        });
-      }
-    });
-    
-    const total = Object.values(chartCounts).reduce((a, b) => a + b, 0);
-    
-    return Object.entries(chartCounts)
-      .map(([chart, count]) => ({
-        name: chart,
-        count,
-        percentage: total > 0 ? Math.round((count / total) * 100) : 0,
-        info: getChartInfo(chart)
-      }))
-      .sort((a, b) => b.count - a.count);
-  }, [tracks]);
+  // Chart dominance with real data - 새로운 차트 포함
+  const chartDominance = ['melon', 'genie', 'bugs', 'flo', 'spotify', 'apple_music', 'youtube', 'lastfm'].map(chart => {
+    const count = tracks.filter(t => t.charts && t.charts[chart] !== undefined).length;
+    return {
+      name: chart,
+      count,
+      percentage: tracks.length > 0 ? Math.round((count / tracks.length) * 100) : 0,
+      info: getChartInfo(chart)
+    };
+  }).filter(c => c.count > 0);
 
+  // 차트 정보 렌더링 함수
   const renderChartInfo = (charts: Record<string, number | string>) => {
+    const entries = Object.entries(charts);
+    const rankCharts = entries.filter(([chart, value]) => 
+      chart !== 'youtube' && typeof value === 'number' && value > 0
+    );
+    const youtubeData = entries.find(([chart]) => chart === 'youtube');
+
     return (
       <div className="flex flex-wrap gap-1">
-        {Object.entries(charts).slice(0, 4).map(([chartName, rank]) => {
-          const chartInfo = getChartInfo(chartName);
-          return (
-            <div 
-              key={chartName}
-              className={`${chartInfo.bgColor} text-white text-xs px-2 py-1 rounded flex items-center gap-1`}
-            >
-              <span>{chartInfo.icon}</span>
-              <span>#{rank}</span>
-            </div>
-          );
-        })}
-        {Object.keys(charts).length > 4 && (
-          <div className="bg-gray-600 text-white text-xs px-2 py-1 rounded">
-            +{Object.keys(charts).length - 4}
+        {/* 순위 차트들 */}
+        {rankCharts.slice(0, 3).map(([chart, rank]) => (
+          <ChartRankDisplay
+            key={chart}
+            chartName={chart}
+            rank={rank as number}
+            displayType="badge"
+          />
+        ))}
+        
+        {/* YouTube 조회수 */}
+        {youtubeData && youtubeData[1] && (
+          <div className="px-2 py-1 bg-red-500 text-white text-xs rounded-full flex items-center gap-1">
+            <Play className="w-3 h-3" />
+            {formatViews(youtubeData[1])}
           </div>
+        )}
+        
+        {rankCharts.length > 3 && (
+          <span className="text-xs text-gray-400">+{rankCharts.length - 3}</span>
         )}
       </div>
     );
@@ -362,11 +246,10 @@ export default function ArtistDetailPage() {
   if (loading) {
     return (
       <Layout>
-        <div className="min-h-screen bg-gradient-to-br from-gray-900 to-black flex items-center justify-center">
+        <div className="min-h-screen bg-[#0A0A0F] flex items-center justify-center">
           <motion.div
             animate={{ rotate: 360 }}
-            transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-            className="text-6xl"
+            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
           >
             <Disc className="w-16 h-16 text-purple-500" />
           </motion.div>
@@ -378,12 +261,13 @@ export default function ArtistDetailPage() {
   if (!artistData) {
     return (
       <Layout>
-        <div className="min-h-screen bg-gradient-to-br from-gray-900 to-black flex items-center justify-center">
+        <div className="min-h-screen bg-[#0A0A0F] flex items-center justify-center">
           <div className="text-center">
-            <h2 className="text-3xl font-bold text-white mb-4">아티스트를 찾을 수 없습니다</h2>
-            <button
+            <Music className="w-24 h-24 text-gray-600 mx-auto mb-4" />
+            <h1 className="text-2xl text-white mb-4">아티스트를 찾을 수 없습니다</h1>
+            <button 
               onClick={() => router.push('/')}
-              className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+              className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
             >
               홈으로 돌아가기
             </button>
@@ -393,201 +277,162 @@ export default function ArtistDetailPage() {
     );
   }
 
-  const bestTrack = sortedTracks[0];
-
   return (
     <Layout>
       <Head>
-        <title>{artistInfo.name} - 아티스트 상세 | KPOP Ranker</title>
-        <meta name="description" content={`${artistInfo.name}의 전체 차트 성과, 트랙 목록, 최신 뉴스 및 AI 인사이트`} />
+        <title>{artistInfo.name} - KPOP Ranker</title>
+        <meta name="description" content={`${artistInfo.name}의 차트 순위 및 트랙 정보 - K-POP 아티스트 상세 페이지`} />
       </Head>
 
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 to-black">
-        {/* Hero Section */}
-        <div className="relative overflow-hidden">
-          {/* Background */}
-          <div className="absolute inset-0">
-            {bestTrack && (
-              <ImageWithFallback
-                artist={artistInfo.name}
-                track={bestTrack.title}
-                className="w-full h-full object-cover filter blur-3xl opacity-30"
-              />
-            )}
-            <div className="absolute inset-0 bg-gradient-to-b from-gray-900/80 to-gray-900" />
-          </div>
-
-          {/* Content */}
-          <div className="relative container mx-auto px-4 py-20">
-            <div className="grid md:grid-cols-3 gap-12 items-center">
-              {/* Artist Image */}
-              <motion.div
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.6 }}
-                className="flex justify-center"
-              >
-                <div className="relative">
-                  <div className="w-80 h-80 rounded-full overflow-hidden shadow-2xl border-4 border-purple-500/30">
-                    {bestTrack ? (
-                      <ImageWithFallback
-                        artist={artistInfo.name}
-                        track={bestTrack.title}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <div className="w-full h-full bg-gradient-to-br from-purple-600 to-pink-600 flex items-center justify-center">
-                        <Mic className="w-32 h-32 text-white/60" />
-                      </div>
+      <div className="min-h-screen bg-[#0A0A0F] text-white">
+        <div className="container mx-auto px-4 py-8">
+          {/* Artist Header */}
+          <motion.div 
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-8"
+          >
+            {/* Hero Section */}
+            <div className="relative mb-8 rounded-2xl overflow-hidden bg-gradient-to-br from-purple-900/50 to-pink-900/50 p-8">
+              <div className="absolute inset-0 bg-gradient-to-br from-purple-600/20 to-pink-600/20" />
+              
+              <div className="relative flex flex-col md:flex-row items-center gap-6">
+                <motion.div 
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ type: "spring", stiffness: 200 }}
+                  className="w-32 h-32 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center shadow-2xl"
+                >
+                  <Mic className="w-16 h-16 text-white" />
+                </motion.div>
+                
+                <div className="flex-grow text-center md:text-left">
+                  <h1 className="text-4xl md:text-5xl font-bold mb-4">{artistInfo.name}</h1>
+                  <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 text-gray-300">
+                    <span className="flex items-center gap-1">
+                      <Music className="w-4 h-4" />
+                      {stats.total_tracks} 트랙
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <Activity className="w-4 h-4" />
+                      {stats.active_tracks} 현재 활동
+                    </span>
+                    {stats.best_peak && stats.best_peak <= 10 && (
+                      <span className="flex items-center gap-1">
+                        <Trophy className="w-4 h-4 text-yellow-500" />
+                        최고 {stats.best_peak}위
+                      </span>
+                    )}
+                    {stats.top10_hits && stats.top10_hits > 0 && (
+                      <span className="flex items-center gap-1">
+                        <Star className="w-4 h-4 text-yellow-400" />
+                        TOP 10 {stats.top10_hits}회
+                      </span>
                     )}
                   </div>
-                  {/* Crown */}
-                  <div className="absolute -top-8 left-1/2 transform -translate-x-1/2">
-                    <Crown className="w-16 h-16 text-yellow-400" />
-                  </div>
                 </div>
-              </motion.div>
-
-              {/* Artist Info */}
-              <div className="md:col-span-2 space-y-6">
-                <motion.div
-                  initial={{ opacity: 0, y: 30 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.2 }}
-                >
-                  <h1 className="text-5xl md:text-6xl font-black text-white mb-4">
-                    {artistInfo.name}
-                  </h1>
-                  
-                  {/* Quick Stats */}
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-                    <div className="text-center">
-                      <div className="text-3xl font-bold text-purple-400">{artistInfo.totalTracks}</div>
-                      <div className="text-sm text-gray-400">Total Tracks</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-3xl font-bold text-blue-400">{artistInfo.activeCharts}</div>
-                      <div className="text-sm text-gray-400">Active Charts</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-3xl font-bold text-yellow-400">
-                        {artistInfo.bestRanking ? `#${artistInfo.bestRanking}` : '-'}
-                      </div>
-                      <div className="text-sm text-gray-400">Best Rank</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-3xl font-bold text-green-400">{stats.top10_hits || 0}</div>
-                      <div className="text-sm text-gray-400">Top 10 Hits</div>
-                    </div>
-                  </div>
-
-                  {/* Action Buttons */}
-                  <div className="flex gap-4">
-                    <button className="px-8 py-4 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold rounded-full hover:shadow-lg transform hover:scale-105 transition-all flex items-center gap-3">
-                      <Play className="w-5 h-5" />
-                      Play Top Track
-                    </button>
-                    <button className="px-6 py-4 bg-white/10 backdrop-blur text-white rounded-full hover:bg-white/20 transition-all">
-                      <Heart className="w-5 h-5" />
-                    </button>
-                  </div>
-                </motion.div>
               </div>
             </div>
-          </div>
-        </div>
 
-        {/* Tab Navigation */}
-        <div className="container mx-auto px-4">
-          <div className="border-b border-gray-700 mb-8">
-            <div className="flex flex-wrap gap-0 -mb-px">
-              {[
-                { id: 'overview', label: '개요', icon: Star },
-                { id: 'tracks', label: '트랙', icon: Music },
-                { id: 'news', label: '뉴스', icon: Newspaper },
-                { id: 'goods', label: '굿즈', icon: ShoppingBag },
-                { id: 'insights', label: 'AI 인사이트', icon: Sparkles }
-              ].map(({ id, label, icon: Icon }) => (
-                <button
-                  key={id}
-                  onClick={() => setActiveTab(id as any)}
-                  className={`flex items-center gap-2 px-6 py-4 font-medium transition-all border-b-2 ${
-                    activeTab === id
-                      ? 'text-purple-400 border-purple-400'
-                      : 'text-gray-400 border-transparent hover:text-white hover:border-gray-600'
+            {/* Tabs */}
+            <div className="flex gap-2 mb-6 overflow-x-auto">
+              {([
+                { key: 'overview', label: 'Overview', icon: BarChart3 },
+                { key: 'tracks', label: `Tracks (${tracks.length})`, icon: Music },
+                { key: 'news', label: '뉴스', icon: Newspaper },
+                { key: 'goods', label: '굿즈', icon: ShoppingBag },
+                { key: 'insights', label: 'Insights', icon: Zap }
+              ] as const).map(tab => (
+                <motion.button
+                  key={tab.key}
+                  onClick={() => setActiveTab(tab.key as any)}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  className={`relative px-6 py-3 rounded-xl transition-all whitespace-nowrap font-medium ${
+                    activeTab === tab.key 
+                      ? 'text-white' 
+                      : 'text-gray-400 hover:text-white'
                   }`}
                 >
-                  <Icon className="w-4 h-4" />
-                  {label}
-                </button>
+                  {activeTab === tab.key && (
+                    <motion.div
+                      layoutId="activeArtistTab"
+                      className="absolute inset-0 bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl"
+                      transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                    />
+                  )}
+                  <span className="relative flex items-center gap-2">
+                    <tab.icon className="w-4 h-4" />
+                    {tab.label}
+                  </span>
+                </motion.button>
               ))}
             </div>
-          </div>
+          </motion.div>
 
           {/* Tab Content */}
           <AnimatePresence mode="wait">
-            {/* Overview Tab */}
             {activeTab === 'overview' && (
               <motion.div
                 key="overview"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -20 }}
-                className="space-y-8 pb-16"
+                className="space-y-6"
               >
-                {/* Top Tracks Preview */}
-                <div>
-                  <h3 className="text-2xl font-bold text-white mb-6">인기 트랙</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {sortedTracks.slice(0, 6).map((track, idx) => (
-                      <motion.div
-                        key={track.title}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: idx * 0.1 }}
-                        whileHover={{ scale: 1.02, y: -5 }}
-                        onClick={() => router.push(`/track/${encodeURIComponent(artistInfo.name)}/${encodeURIComponent(track.title)}`)}
-                        className="group bg-gray-800/50 backdrop-blur rounded-xl p-6 hover:bg-gray-800/70 transition-all cursor-pointer border border-gray-700 hover:border-purple-500"
-                      >
-                        <div className="flex gap-4 mb-4">
-                          <div className="w-16 h-16 rounded-lg overflow-hidden bg-gradient-to-br from-purple-500 to-pink-500">
-                            <ImageWithFallback
-                              artist={artistInfo.name}
-                              track={track.title}
-                              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                            />
-                          </div>
-                          <div className="flex-grow min-w-0">
-                            <h4 className="font-bold text-white mb-1 truncate group-hover:text-purple-300 transition-colors">
-                              {track.title}
-                            </h4>
-                            {track.peak_position && (
-                              <div className="text-yellow-400 text-sm font-medium">
-                                최고 #{track.peak_position}
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                        {track.charts && Object.keys(track.charts).length > 0 && (
-                          <div>{renderChartInfo(track.charts)}</div>
-                        )}
-                      </motion.div>
-                    ))}
-                  </div>
+                {/* 통계 카드들 */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+                  {[
+                    { label: '총 트랙 수', value: stats.total_tracks, icon: Music, color: 'from-blue-500 to-blue-600' },
+                    { label: 'TOP 10 진입', value: `${stats.top10_hits}회`, icon: Trophy, color: 'from-yellow-500 to-yellow-600' },
+                    { label: '차트 다양성', value: `${stats.chart_diversity}개`, icon: Globe, color: 'from-green-500 to-green-600' },
+                    { label: '성공률', value: `${stats.success_rate}%`, icon: Target, color: 'from-purple-500 to-purple-600' }
+                  ].map((stat, idx) => (
+                    <motion.div
+                      key={idx}
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ delay: idx * 0.1 }}
+                      className="bg-gray-800/50 rounded-xl p-4 text-center border border-gray-700"
+                    >
+                      <div className={`inline-flex p-3 rounded-lg bg-gradient-to-r ${stat.color} mb-2`}>
+                        <stat.icon className="w-5 h-5 text-white" />
+                      </div>
+                      <div className="text-xl font-bold text-white">{stat.value}</div>
+                      <div className="text-sm text-gray-400">{stat.label}</div>
+                    </motion.div>
+                  ))}
                 </div>
 
+                {/* TOP 10 진입 통계 컴포넌트 */}
+                <ArtistTop10Stats artistName={artistInfo.name} />
+
                 {/* Chart Performance */}
-                <div>
-                  <h3 className="text-2xl font-bold text-white mb-6">차트별 활동 현황</h3>
-                  <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4">
+                <div className="bg-gray-800/30 rounded-xl p-6 border border-gray-700">
+                  <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
+                    <BarChart3 className="w-5 h-5 text-blue-400" />
+                    차트별 성과 분석
+                  </h3>
+                  <div className="space-y-4">
                     {chartDominance.map(chart => (
-                      <div key={chart.name} className="text-center bg-gray-800/30 rounded-xl p-4 border border-gray-700">
-                        <div className={`text-3xl mb-2 ${chart.info.bgColor} rounded-lg p-3 inline-block`}>
-                          {chart.info.icon}
+                      <div key={chart.name}>
+                        <div className="flex justify-between mb-2">
+                          <span className="text-sm flex items-center gap-2">
+                            <span className="text-lg">{chart.info.icon}</span>
+                            <span className="font-medium">{chart.info.name}</span>
+                          </span>
+                          <span className="text-sm text-gray-400">
+                            {chart.count}곡 ({chart.percentage}%)
+                          </span>
                         </div>
-                        <p className="text-2xl font-bold text-white">{chart.count}</p>
-                        <p className="text-sm font-medium text-gray-300">{chart.info.name}</p>
-                        <p className="text-xs text-purple-400">{chart.percentage}%</p>
+                        <div className="w-full bg-gray-700 rounded-full h-3">
+                          <motion.div 
+                            initial={{ width: 0 }}
+                            animate={{ width: `${chart.percentage}%` }}
+                            transition={{ duration: 1, ease: "easeOut" }}
+                            className={`${chart.info.bgColor} h-3 rounded-full`}
+                          />
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -595,18 +440,16 @@ export default function ArtistDetailPage() {
               </motion.div>
             )}
 
-            {/* Tracks Tab */}
             {activeTab === 'tracks' && (
               <motion.div
                 key="tracks"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -20 }}
-                className="space-y-6 pb-16"
               >
-                {/* Sort Controls */}
-                <div className="flex justify-between items-center">
-                  <h3 className="text-2xl font-bold text-white">전체 트랙 ({tracks.length})</h3>
+                {/* Sort Options */}
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+                  <h2 className="text-2xl font-bold">전체 트랙</h2>
                   <select
                     value={sortBy}
                     onChange={(e) => setSortBy(e.target.value as any)}
@@ -695,40 +538,37 @@ export default function ArtistDetailPage() {
               </motion.div>
             )}
 
-            {/* News Tab */}
+            {/* 뉴스 탭 */}
             {activeTab === 'news' && (
               <motion.div
                 key="news"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -20 }}
-                className="pb-16"
               >
                 <NewsTab artistName={artistInfo.name} />
               </motion.div>
             )}
 
-            {/* Goods Tab */}
+            {/* 굿즈 탭 */}
             {activeTab === 'goods' && (
               <motion.div
                 key="goods"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -20 }}
-                className="pb-16"
               >
                 <GoodsTab artistName={artistInfo.name} />
               </motion.div>
             )}
 
-            {/* Insights Tab */}
             {activeTab === 'insights' && (
               <motion.div
                 key="insights"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -20 }}
-                className="space-y-6 pb-16"
+                className="space-y-6"
               >
                 {/* Performance Metrics & AI Insights */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -741,7 +581,7 @@ export default function ArtistDetailPage() {
                       <div className="flex justify-between">
                         <span className="text-gray-400">대표곡</span>
                         <span className="font-bold text-right max-w-[60%] truncate">
-                          {stats.most_successful_track || bestTrack?.title || '-'}
+                          {stats.most_successful_track || '-'}
                         </span>
                       </div>
                       <div className="flex justify-between">
@@ -795,6 +635,12 @@ export default function ArtistDetailPage() {
                       </div>
                     ))}
                   </div>
+                </div>
+
+                {/* Events & News Section */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <EventsSection comprehensiveData={comprehensiveData} />
+                  <NewsSection comprehensiveData={comprehensiveData} />
                 </div>
               </motion.div>
             )}

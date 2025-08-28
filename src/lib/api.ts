@@ -92,6 +92,13 @@ export const trackAPI = {
     return response.data;
   },
   
+  getTrackDetail: async (artist: string, title: string) => {
+    const response = await api.get(
+      `/api/track/${encodeURIComponent(artist)}/${encodeURIComponent(title)}`
+    );
+    return response.data;
+  },
+  
   getChartsSummary: async (artist: string, title: string) => {
     const response = await api.get(
       `/api/charts/summary/${encodeURIComponent(artist)}/${encodeURIComponent(title)}`
