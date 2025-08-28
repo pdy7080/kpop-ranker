@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import ImageWithFallback from '@/components/ImageWithFallback';
 import UnifiedSearch from '@/components/UnifiedSearch';
 import ChartRankDisplay from '@/components/ChartRankDisplay';
+import ChartUpdateStatus from '@/components/ChartUpdateStatus';
 import { 
   Crown, Trophy, TrendingUp, Music, Star, Sparkles,
   Play, Heart, Eye, BarChart3, Globe, Users, Disc
@@ -350,6 +351,11 @@ export default function Home() {
             </motion.div>
           </div>
         )}
+      </div>
+
+      {/* Chart Update Status - 하단 */}
+      <div className="mt-16 mb-8 container mx-auto px-4">
+        <ChartUpdateStatus />
       </div>
 
       <style jsx global>{`
