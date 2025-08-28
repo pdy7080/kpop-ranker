@@ -309,77 +309,64 @@ export default function ArtistPage() {
             <div className="absolute inset-0 bg-gradient-to-b from-gray-900/80 to-gray-900" />
           </div>
 
-          {/* Content - 중앙 정렬 */}
+          {/* Content - 좌우 배치 */}
           <div className="relative container mx-auto px-4 py-20">
-            <div className="text-center space-y-8">
-              {/* Artist Image - 중앙 정렬 */}
-              <motion.div
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.6 }}
-                className="flex justify-center"
-              >
-                <div className="relative">
-                  <div className="w-80 h-80 rounded-full overflow-hidden shadow-2xl border-4 border-purple-500/30">
-                    {bestTrack ? (
-                      <ImageWithFallback
-                        artist={artistInfo.name}
-                        track={bestTrack.title}
-                        className="w-full h-full object-cover object-center"
-                      />
-                    ) : (
-                      <div className="w-full h-full bg-gradient-to-br from-purple-600 to-pink-600 flex items-center justify-center">
-                        <Mic className="w-32 h-32 text-white/60" />
-                      </div>
-                    )}
-                  </div>
-                  {/* Crown */}
-                  <div className="absolute -top-8 left-1/2 transform -translate-x-1/2">
-                    <Crown className="w-16 h-16 text-yellow-400" />
-                  </div>
+            <div className="flex flex-col md:flex-row items-center gap-8 md:gap-12">
+              
+              {/* Left - Artist Image */}
+              <div className="flex-shrink-0">
+                <div className="w-64 h-64 md:w-80 md:h-80 rounded-2xl overflow-hidden shadow-2xl">
+                  {bestTrack ? (
+                    <ImageWithFallback
+                      artist={artistInfo.name}
+                      track={bestTrack.title}
+                      shape="square"
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-gradient-to-br from-purple-600 to-pink-600 flex items-center justify-center">
+                      <Mic className="w-32 h-32 text-white/60" />
+                    </div>
+                  )}
                 </div>
-              </motion.div>
+              </div>
 
-              {/* Artist Info - 중앙 정렬 */}
-              <motion.div
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2 }}
-              >
-                <h1 className="text-5xl md:text-6xl font-black text-white mb-6">
+              {/* Right - Artist Info */}
+              <div className="flex-1 text-center md:text-left">
+                <h1 className="text-4xl md:text-6xl lg:text-7xl font-black text-white mb-8">
                   {artistInfo.name}
                 </h1>
                 
-                {/* Quick Stats */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-2xl mx-auto">
-                  <div className="text-center">
-                    <div className="text-3xl font-bold text-purple-400">{artistInfo.totalTracks}</div>
+                {/* Stats Grid */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+                  <div className="text-center md:text-left">
+                    <div className="text-3xl md:text-4xl font-bold text-purple-400">{artistInfo.totalTracks}</div>
                     <div className="text-sm text-gray-400">Total Tracks</div>
                   </div>
-                  <div className="text-center">
-                    <div className="text-3xl font-bold text-blue-400">{artistInfo.activeCharts}</div>
+                  <div className="text-center md:text-left">
+                    <div className="text-3xl md:text-4xl font-bold text-blue-400">{artistInfo.activeCharts}</div>
                     <div className="text-sm text-gray-400">Active Charts</div>
                   </div>
-                  <div className="text-center">
-                    <div className="text-3xl font-bold text-yellow-400">
+                  <div className="text-center md:text-left">
+                    <div className="text-3xl md:text-4xl font-bold text-yellow-400">
                       {artistInfo.bestRanking ? `#${artistInfo.bestRanking}` : '-'}
                     </div>
                     <div className="text-sm text-gray-400">Best Rank</div>
                   </div>
-                  <div className="text-center">
-                    <div className="text-3xl font-bold text-green-400">{stats.top10_hits || 0}</div>
+                  <div className="text-center md:text-left">
+                    <div className="text-3xl md:text-4xl font-bold text-green-400">{stats.top10_hits || 0}</div>
                     <div className="text-sm text-gray-400">Top 10 Hits</div>
                   </div>
                 </div>
-              </motion.div>
+              </div>
             </div>
           </div>
         </div>
 
         {/* Tab Navigation */}
         <div className="container mx-auto px-4">
-          <div className="border-b border-gray-700 mb-8">
-            <div className="flex flex-wrap gap-0 -mb-px">
+          <div className="bg-gray-800/80 backdrop-blur-sm rounded-xl border border-gray-700 mb-8">
+            <div className="flex flex-wrap gap-1 p-2">
               {[
                 { id: 'overview', label: '개요', icon: Star },
                 { id: 'tracks', label: '트랙', icon: Music },
@@ -390,10 +377,10 @@ export default function ArtistPage() {
                 <button
                   key={id}
                   onClick={() => setActiveTab(id as any)}
-                  className={`flex items-center gap-2 px-6 py-4 font-medium transition-all border-b-2 ${
+                  className={`flex items-center gap-1 md:gap-2 px-2 md:px-4 py-2 text-sm md:text-base font-medium transition-all rounded-lg ${
                     activeTab === id
-                      ? 'text-purple-400 border-purple-400'
-                      : 'text-gray-400 border-transparent hover:text-white hover:border-gray-600'
+                      ? 'text-white bg-purple-600'
+                      : 'text-gray-300 hover:text-white hover:bg-gray-700'
                   }`}
                 >
                   <Icon className="w-4 h-4" />
@@ -417,7 +404,7 @@ export default function ArtistPage() {
                 {/* Top Tracks Preview */}
                 <div>
                   <h3 className="text-2xl font-bold text-white mb-6">인기 트랙</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
                     {sortedTracks.slice(0, 6).map((track, idx) => (
                       <motion.div
                         key={track.title}
@@ -429,10 +416,11 @@ export default function ArtistPage() {
                         className="group bg-gray-800/50 backdrop-blur rounded-xl p-6 hover:bg-gray-800/70 transition-all cursor-pointer border border-gray-700 hover:border-purple-500"
                       >
                         <div className="flex gap-4 mb-4">
-                          <div className="w-16 h-16 rounded-lg overflow-hidden bg-gradient-to-br from-purple-500 to-pink-500">
+                          <div className="w-14 h-14 md:w-16 md:h-16 rounded-lg overflow-hidden bg-gradient-to-br from-purple-500 to-pink-500">
                             <ImageWithFallback
                               artist={artistInfo.name}
                               track={track.title}
+                              shape="square"
                               className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
                             />
                           </div>
@@ -458,14 +446,14 @@ export default function ArtistPage() {
                 {/* Chart Performance */}
                 <div>
                   <h3 className="text-2xl font-bold text-white mb-6">차트별 활동 현황</h3>
-                  <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-8 gap-3 md:gap-4">
                     {chartDominance.map(chart => (
                       <div key={chart.name} className="text-center bg-gray-800/30 rounded-xl p-4 border border-gray-700">
                         <div className={`text-3xl mb-2 ${chart.info.bgColor} rounded-lg p-3 inline-block`}>
                           {chart.info.icon}
                         </div>
-                        <p className="text-2xl font-bold text-white">{chart.count}</p>
-                        <p className="text-sm font-medium text-gray-300">{chart.info.name}</p>
+                        <p className="text-xl md:text-2xl font-bold text-white">{chart.count}</p>
+                        <p className="text-xs md:text-sm font-medium text-gray-300">{chart.info.name}</p>
                         <p className="text-xs text-purple-400">{chart.percentage}%</p>
                       </div>
                     ))}
@@ -498,7 +486,7 @@ export default function ArtistPage() {
                   </select>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
                   {sortedTracks.map((track, idx) => (
                     <motion.div
                       key={`${track.title}-${idx}`}
@@ -511,10 +499,11 @@ export default function ArtistPage() {
                     >
                       <div className="flex gap-4 mb-4">
                         <div className="flex-shrink-0">
-                          <div className="w-20 h-20 rounded-lg overflow-hidden bg-gradient-to-br from-purple-500 to-pink-500">
+                          <div className="w-16 h-16 md:w-20 md:h-20 rounded-lg overflow-hidden bg-gradient-to-br from-purple-500 to-pink-500">
                             <ImageWithFallback
                               artist={artistInfo.name}
                               track={track.title}
+                              shape="square"
                               className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
                             />
                           </div>
@@ -610,7 +599,7 @@ export default function ArtistPage() {
                 className="space-y-6 pb-16"
               >
                 {/* Performance Metrics & AI Insights */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
                   <div className="bg-gray-800/30 rounded-xl p-6 border border-gray-700">
                     <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
                       <Trophy className="w-5 h-5 text-yellow-400" />

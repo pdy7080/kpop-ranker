@@ -9,6 +9,7 @@ interface ImageWithFallbackProps {
   width?: number;
   height?: number;
   priority?: boolean;
+  shape?: 'square' | 'circle';  // 추가: 모양 선택 옵션
 }
 
 const errorCache = new Set<string>();
@@ -21,6 +22,7 @@ const ImageWithFallback: React.FC<ImageWithFallbackProps> = ({
   width = 160,
   height = 160,
   priority = false,
+  shape = 'square',  // 기본값: 사각형
 }) => {
   const safeArtist = artist || 'Unknown Artist';
   const safeTrack = track || 'Unknown Track';
@@ -61,7 +63,9 @@ const ImageWithFallback: React.FC<ImageWithFallbackProps> = ({
     setIsLoading(false);
   };
 
-  // 에러 발생시 폴백 UI - 완전 원형
+  const shapeClasses = shape === 'circle' ? 'rounded-full' : 'rounded-xl';
+
+  // 에러 발생시 폴백 UI
   if (hasError) {
     const gradients = [
       'from-purple-500 to-pink-500',
@@ -81,10 +85,10 @@ const ImageWithFallback: React.FC<ImageWithFallbackProps> = ({
     
     return (
       <div 
-        className={`relative rounded-full bg-gradient-to-br ${gradient} flex items-center justify-center ${className}`}
+        className={`relative ${shapeClasses} bg-gradient-to-br ${gradient} flex items-center justify-center ${className}`}
         style={{ width, height }}
       >
-        <div className="absolute inset-0 bg-black bg-opacity-10 rounded-full"></div>
+        <div className={`absolute inset-0 bg-black bg-opacity-10 ${shapeClasses}`}></div>
         <div className="relative z-10 text-center p-2">
           <FaCompactDisc className="w-6 h-6 text-white opacity-80 mx-auto mb-1" />
           <div className="text-white text-xs font-medium truncate max-w-full">
@@ -100,14 +104,14 @@ const ImageWithFallback: React.FC<ImageWithFallbackProps> = ({
     );
   }
 
-  // 정상 이미지 표시 - 완전 원형, 꽉 채우기
+  // 정상 이미지 표시
   return (
     <div 
-      className={`relative overflow-hidden bg-gray-100 dark:bg-gray-800 rounded-full ${className}`} 
+      className={`relative overflow-hidden bg-gray-100 dark:bg-gray-800 ${shapeClasses} ${className}`} 
       style={{ width, height }}
     >
       {isLoading && (
-        <div className="absolute inset-0 bg-gray-200 dark:bg-gray-700 animate-pulse rounded-full flex items-center justify-center">
+        <div className={`absolute inset-0 bg-gray-200 dark:bg-gray-700 animate-pulse ${shapeClasses} flex items-center justify-center`}>
           <FaCompactDisc className="w-8 h-8 text-gray-400 dark:text-gray-600 opacity-50" />
         </div>
       )}
@@ -117,7 +121,7 @@ const ImageWithFallback: React.FC<ImageWithFallbackProps> = ({
         alt={alt || `${safeArtist} - ${safeTrack}`}
         width={width}
         height={height}
-        className={`w-full h-full object-cover rounded-full ${isLoading ? 'opacity-0' : 'opacity-100'} transition-opacity duration-200`}
+        className={`w-full h-full object-cover ${shapeClasses} ${isLoading ? 'opacity-0' : 'opacity-100'} transition-opacity duration-200`}
         onError={handleError}
         onLoad={handleLoad}
         loading={priority ? 'eager' : 'lazy'}
