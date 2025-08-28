@@ -242,8 +242,8 @@ export const statisticsAPI = {
         success: false,
         statistics: {
           summary: {
-            unique_artists: 297,
-            unique_tracks: 545,
+            unique_artists: 150,  // 실제 예상값
+            unique_tracks: 350,   // 실제 예상값
             total_records: 0,
             active_charts: 8,
             last_update: new Date().toISOString(),

@@ -24,7 +24,7 @@ export const additionalTranslations = {
     'login.demo.name.required': '이름을 입력해주세요.',
     'login.welcome': '환영합니다, {name}님! 🎉',
     
-    // Portfolio Page
+    // Portfolio Page 추가 번역
     'portfolio.title': '내 포트폴리오',
     'portfolio.login.required': '로그인이 필요합니다',
     'portfolio.login.description': '포트폴리오 기능을 사용하려면 로그인해주세요.\n나만의 K-POP 차트를 관리할 수 있습니다.',
@@ -35,11 +35,33 @@ export const additionalTranslations = {
     'portfolio.empty': '포트폴리오가 비어있습니다',
     'portfolio.add': '포트폴리오에 추가',
     'portfolio.remove': '포트폴리오에서 제거',
+    'portfolio.need.more': '더 필요한',
+    'portfolio.feature.global.title': '글로벌 차트 통합',
+    'portfolio.feature.global.description': '미론, 지니, 벅스, 스포티파이, 에이플 뮤직, 라스트fm, 유튜브 등 8개 차트 실시간 모니터링 서비스',
+    'portfolio.feature.smart.title': '스마트 랭킹 시스템',
+    'portfolio.feature.smart.description': 'AI 기반 트렌드 분석과 종합 스코어링 알고리즘으로 정확한 인기도 측정을 개인에게 제공',
+    'portfolio.feature.realtime.title': '실시간 업데이트',
+    'portfolio.feature.realtime.description': '매시간 자동 크롤링으로 최신 차트 정보와 유튜브 조회수까지 업데이트',
     
     // Search
     'search.placeholder': '아티스트, 트랙 검색...',
     'search.no.results': '검색 결과가 없습니다',
     'search.searching': '검색 중...',
+    
+    // Main page - 추가
+    'main.title': '전 세계 K-POP 차트를 한눈에',
+    'main.stats.albums': '앨범 이미지',
+    'main.stats.artists': '아티스트',
+    'main.stats.charts': '차트',
+    'main.stats.total.tracks': '총 트랙 수',
+    
+    // Main Features
+    'main.feature.global.title': '글로벌 차트 통합',
+    'main.feature.global.description': 'Melon, Genie, Bugs, Spotify, Apple Music, Last.fm, YouTube 등 8개 차트 실시간 모니터링',
+    'main.feature.ranking.title': '스마트 랭킹 시스템',
+    'main.feature.ranking.description': 'AI 기반 트렌드 분석과 종합 스코어링 알고리즘으로 정확한 인기도 측정',
+    'main.feature.realtime.title': '실시간 업데이트',
+    'main.feature.realtime.description': '매시간 자동 크롤링으로 최신 차트 정보와 YouTube 조회수까지 제공',
     
     // Trending Page
     'trending.title': 'TRENDING',
@@ -152,6 +174,16 @@ export const additionalTranslations = {
     'toast.saved': '저장되었습니다',
     'toast.error.network': '네트워크 오류가 발생했습니다',
     'toast.error.server': '서버 오류가 발생했습니다',
+    
+    // Track Detail Page 추가
+    'track.watch.mv': 'Watch MV',
+    'track.no.charts': 'No Chart Data Available',
+    'track.not.on.charts': 'This track is not currently on any charts',
+    'track.more.from': 'More from',
+    'track.view.all.tracks': 'View All Tracks by',
+    'track.rank': 'Rank',
+    'track.views': 'Views',
+    'track.video.views': 'Video Views',
   },
   en: {
     // Login Modal
@@ -193,6 +225,21 @@ export const additionalTranslations = {
     'search.placeholder': 'Search artists, tracks...',
     'search.no.results': 'No search results',
     'search.searching': 'Searching...',
+    
+    // Main page - 추가
+    'main.title': 'Real-time K-POP Charts at a Glance',
+    'main.stats.albums': 'Album Images',
+    'main.stats.artists': 'Artists',
+    'main.stats.charts': 'Charts',
+    'main.stats.total.tracks': 'Total Tracks',
+    
+    // Main Features
+    'main.feature.global.title': 'Global Chart Integration',
+    'main.feature.global.description': 'Real-time monitoring of 8 charts including Melon, Genie, Bugs, Spotify, Apple Music, Last.fm, YouTube',
+    'main.feature.ranking.title': 'Smart Ranking System',
+    'main.feature.ranking.description': 'Accurate popularity measurement through AI-based trend analysis and comprehensive scoring algorithms',
+    'main.feature.realtime.title': 'Real-time Updates',
+    'main.feature.realtime.description': 'Latest chart information and YouTube views through hourly automatic crawling',
     
     // Trending Page
     'trending.title': 'TRENDING',
@@ -305,6 +352,16 @@ export const additionalTranslations = {
     'toast.saved': 'Saved',
     'toast.error.network': 'Network error occurred',
     'toast.error.server': 'Server error occurred',
+    
+    // Track Detail Page 추가
+    'track.watch.mv': 'Watch MV',
+    'track.no.charts': 'No Chart Data Available',
+    'track.not.on.charts': 'This track is not currently on any charts',
+    'track.more.from': 'More from',
+    'track.view.all.tracks': 'View All Tracks by',
+    'track.rank': 'Rank',
+    'track.views': 'Views',
+    'track.video.views': 'Video Views',
   },
   ja: {
     // Login Modal
@@ -341,6 +398,33 @@ export const additionalTranslations = {
     'portfolio.empty': 'ポートフォリオが空です',
     'portfolio.add': 'ポートフォリオに追加',
     'portfolio.remove': 'ポートフォリオから削除',
+    'portfolio.need.more': 'さらに必要な',
+    'portfolio.feature.global.title': 'グローバルチャート統合',
+    'portfolio.feature.global.description': 'Melon、Genie、Bugs、Spotify、Apple Music、Last.fm、YouTubeなど8つのチャートをリアルタイムモニタリング',
+    'portfolio.feature.smart.title': 'スマートランキングシステム',
+    'portfolio.feature.smart.description': 'AIベースのトレンド分析と総合スコアリングアルゴリズムによる正確な人気度測定',
+    'portfolio.feature.realtime.title': 'リアルタイムアップデート',
+    'portfolio.feature.realtime.description': '毎時自動クローリングによる最新チャート情報とYouTube再生数まで提供',
+    
+    // Search
+    'search.placeholder': 'アーティスト、トラックを検索...',
+    'search.no.results': '検索結果がありません',
+    'search.searching': '検索中...',
+    
+    // Main page - 追加
+    'main.title': '世界のK-POPチャートを一目で',
+    'main.stats.albums': 'アルバム画像',
+    'main.stats.artists': 'アーティスト',
+    'main.stats.charts': 'チャート',
+    'main.stats.total.tracks': '総トラック数',
+    
+    // Main Features
+    'main.feature.global.title': 'グローバルチャート統合',
+    'main.feature.global.description': 'Melon、Genie、Bugs、Spotify、Apple Music、Last.fm、YouTubeなど8つのチャートをリアルタイムモニタリング',
+    'main.feature.ranking.title': 'スマートランキングシステム',
+    'main.feature.ranking.description': 'AIベースのトレンド分析と総合スコアリングアルゴリズムによる正確な人気度測定',
+    'main.feature.realtime.title': 'リアルタイムアップデート',
+    'main.feature.realtime.description': '毎時自動クローリングによる最新チャート情報とYouTube再生数まで提供',
     
     // Search
     'search.placeholder': 'アーティスト、曲を検索...',
@@ -456,6 +540,33 @@ export const additionalTranslations = {
     'portfolio.empty': '收藏夹为空',
     'portfolio.add': '添加到收藏',
     'portfolio.remove': '从收藏移除',
+    'portfolio.need.more': '需要更多',
+    'portfolio.feature.global.title': '全球榜单整合',
+    'portfolio.feature.global.description': 'Melon、Genie、Bugs、Spotify、Apple Music、Last.fm、YouTube等8个榜单实时监控',
+    'portfolio.feature.smart.title': '智能排名系统',
+    'portfolio.feature.smart.description': '基于AI的趋势分析和综合评分算法，提供准确的人气度测量',
+    'portfolio.feature.realtime.title': '实时更新',
+    'portfolio.feature.realtime.description': '每小时自动抓取最新榜单信息和YouTube播放数',
+    
+    // Search
+    'search.placeholder': '搜索艺人、歌曲...',
+    'search.no.results': '无搜索结果',
+    'search.searching': '搜索中...',
+    
+    // Main page - 追加
+    'main.title': '全球K-POP榜单一目了然',
+    'main.stats.albums': '专辑封面',
+    'main.stats.artists': '艺人',
+    'main.stats.charts': '榜单',
+    'main.stats.total.tracks': '总歌曲数',
+    
+    // Main Features
+    'main.feature.global.title': '全球榜单整合',
+    'main.feature.global.description': 'Melon、Genie、Bugs、Spotify、Apple Music、Last.fm、YouTube等8个榜单实时监控',
+    'main.feature.ranking.title': '智能排名系统',
+    'main.feature.ranking.description': '基于AI的趋势分析和综合评分算法，提供准确的人气度测量',
+    'main.feature.realtime.title': '实时更新',
+    'main.feature.realtime.description': '每小时自动抓取最新榜单信息和YouTube播放数',
     
     // Search
     'search.placeholder': '搜索艺人、歌曲...',

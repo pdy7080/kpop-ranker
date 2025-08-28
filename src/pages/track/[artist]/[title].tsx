@@ -11,6 +11,7 @@ import {
   TrendingDown, Minus, ArrowUp, ArrowDown, Eye, Calendar,
   ExternalLink, Award, Star, Radio, Disc
 } from 'lucide-react';
+import { useTranslation } from '@/contexts/TranslationContext';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
@@ -114,6 +115,7 @@ const ChangeIndicator = ({ change }: { change?: number }) => {
 
 export default function TrackDetailPage() {
   const router = useRouter();
+  const { t } = useTranslation();
   const { artist, title } = router.query;
   const [trackInfo, setTrackInfo] = useState<TrackInfo | null>(null);
   const [loading, setLoading] = useState(true);
@@ -143,11 +145,11 @@ export default function TrackDetailPage() {
       if (response) {
         setTrackInfo(response);
       } else {
-        setError('Track not found');
+        setError(t('search.no.results'));
       }
     } catch (err) {
       console.error('❌ Failed to fetch track data:', err);
-      setError('Failed to load track data');
+      setError(t('common.error'));
     } finally {
       setLoading(false);
     }
@@ -202,10 +204,10 @@ export default function TrackDetailPage() {
       console.log('📊 포트폴리오 API 응답 데이터:', data);
       
       if (data.success) {
-        alert('포트폴리오에 추가되었습니다!');
+        alert(t('toast.added.portfolio'));
       } else {
         if (data.requireAuth) {
-          alert('포트폴리오 기능을 사용하려면 로그인이 필요합니다.');
+          alert(t('portfolio.login.description'));
         } else {
           console.error('❌ 포트폴리오 추가 실패:', data);
           alert(data.error || '포트폴리오 추가에 실패했습니다.');
@@ -229,9 +231,10 @@ export default function TrackDetailPage() {
           <motion.div
             animate={{ rotate: 360 }}
             transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-            className="text-6xl"
+            className="flex flex-col items-center gap-4"
           >
             <Disc className="w-16 h-16 text-purple-500" />
+            <p className="text-gray-400">{t('common.loading')}</p>
           </motion.div>
         </div>
       </Layout>
@@ -244,13 +247,13 @@ export default function TrackDetailPage() {
         <div className="min-h-screen bg-gradient-to-br from-gray-900 to-black flex items-center justify-center">
           <div className="text-center">
             <h2 className="text-3xl font-bold text-white mb-4">
-              {error || 'Track not found'}
+              {error || t('search.no.results')}
             </h2>
             <button
               onClick={() => router.back()}
               className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
             >
-              Go Back
+              {t('common.retry')}
             </button>
           </div>
         </div>

@@ -10,6 +10,7 @@ import {
   Search, Music, Grid, List, Play, ChevronRight,
   Sparkles, Star
 } from 'lucide-react';
+import { useTranslation } from '@/contexts/TranslationContext';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
@@ -24,6 +25,7 @@ interface SearchResult {
 
 export default function SearchPageFixed() {
   const router = useRouter();
+  const { t } = useTranslation();
   const { q } = router.query;
   const [results, setResults] = useState<SearchResult[]>([]);
   const [isLoading, setIsLoading] = useState(false);

@@ -11,6 +11,7 @@ import {
   Plus, Trash2, Share2, Download, LogIn,
   Music, Star, Activity, Globe
 } from 'lucide-react';
+import { useTranslation } from '@/contexts/TranslationContext';
 
 interface PortfolioItem {
   id: number;
@@ -24,6 +25,7 @@ interface PortfolioItem {
 
 export default function PortfolioPage() {
   const router = useRouter();
+  const { t } = useTranslation();
   const [portfolioItems, setPortfolioItems] = useState<PortfolioItem[]>([]);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);

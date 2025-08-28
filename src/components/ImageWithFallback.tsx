@@ -1,15 +1,15 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { FaCompactDisc } from 'react-icons/fa';
 
 interface ImageWithFallbackProps {
   artist: string;
   track: string;
   alt?: string;
   className?: string;
+  src?: string;  // 외부에서 URL 직접 전달 가능
   width?: number;
   height?: number;
   priority?: boolean;
-  shape?: 'square' | 'circle';  // 추가: 모양 선택 옵션
+  shape?: 'square' | 'circle';
 }
 
 const errorCache = new Set<string>();
@@ -19,20 +19,24 @@ const ImageWithFallback: React.FC<ImageWithFallbackProps> = ({
   track,
   alt,
   className = '',
-  width = 160,
-  height = 160,
+  src,
+  width,
+  height,
   priority = false,
-  shape = 'square',  // 기본값: 사각형
+  shape = 'square',
 }) => {
   const safeArtist = artist || 'Unknown Artist';
   const safeTrack = track || 'Unknown Track';
   const cacheKey = `${safeArtist}:${safeTrack}`;
   
   const [hasError, setHasError] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const mountedRef = useRef(true);
 
   const getImageUrl = () => {
+    // 외부에서 전달된 src가 있으면 우선 사용
+    if (src) return src;
+    
     const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
     const encodedArtist = encodeURIComponent(safeArtist);
     const encodedTrack = encodeURIComponent(safeTrack);
@@ -53,110 +57,81 @@ const ImageWithFallback: React.FC<ImageWithFallbackProps> = ({
     };
   }, [cacheKey]);
 
-  const handleError = () => {
-    errorCache.add(cacheKey);
-    setHasError(true);
-    setIsLoading(false);
+  const handleImageLoad = () => {
+    if (mountedRef.current) {
+      setIsLoading(false);
+      setHasError(false);
+    }
   };
 
-  const handleLoad = () => {
-    setIsLoading(false);
+  const handleImageError = () => {
+    if (mountedRef.current) {
+      setHasError(true);
+      setIsLoading(false);
+      errorCache.add(cacheKey);
+    }
   };
 
-  const shapeClasses = shape === 'circle' ? 'rounded-full' : 'rounded-xl';
-
-  // 에러 발생시 폴백 UI
+  // 에러 상태면 폴백 표시 - 개선된 디자인
   if (hasError) {
-    const gradients = [
-      'from-purple-500 to-pink-500',
-      'from-blue-500 to-cyan-500',
-      'from-green-500 to-teal-500',
-      'from-yellow-500 to-orange-500',
-      'from-red-500 to-pink-500',
-      'from-indigo-500 to-purple-500',
-    ];
-    
-    const hashCode = (safeArtist + safeTrack).split('').reduce((a, b) => {
-      a = ((a << 5) - a) + b.charCodeAt(0);
-      return a & a;
-    }, 0);
-    const gradientIndex = Math.abs(hashCode) % gradients.length;
-    const gradient = gradients[gradientIndex];
-    
     return (
-      <div 
-        className={`relative ${shapeClasses} bg-gradient-to-br ${gradient} flex items-center justify-center ${className}`}
-        style={{ width, height }}
-      >
-        <div className={`absolute inset-0 bg-black bg-opacity-10 ${shapeClasses}`}></div>
-        <div className="relative z-10 text-center p-2">
-          <FaCompactDisc className="w-6 h-6 text-white opacity-80 mx-auto mb-1" />
-          <div className="text-white text-xs font-medium truncate max-w-full">
-            {safeArtist.slice(0, 8)}
+      <div className={`${className} bg-gradient-to-br from-purple-900/30 to-pink-900/30 backdrop-blur-sm flex flex-col items-center justify-center text-center relative overflow-hidden`}>
+        {/* 배경 패턴 */}
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute inset-0 bg-gradient-to-br from-purple-600 via-pink-600 to-blue-600"></div>
+        </div>
+        
+        {/* 음악 아이콘 */}
+        <div className="relative z-10 w-16 h-16 mb-4 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center shadow-lg">
+          <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/>
+          </svg>
+        </div>
+        
+        {/* 텍스트 정보 */}
+        <div className="relative z-10 px-3">
+          <div className="text-white text-sm font-bold line-clamp-1 mb-1 drop-shadow-lg">
+            {safeArtist}
           </div>
-          {safeTrack && safeTrack !== 'Unknown Track' && (
-            <div className="text-white text-xs truncate max-w-full opacity-70">
-              {safeTrack.slice(0, 8)}
-            </div>
-          )}
+          <div className="text-gray-200 text-xs line-clamp-1 drop-shadow-lg">
+            {safeTrack}
+          </div>
         </div>
       </div>
     );
   }
 
-  // 정상 이미지 표시
+  const imageUrl = getImageUrl();
+  const altText = alt || `${safeArtist} - ${safeTrack} 앨범 커버`;
+
+  // width/height props가 있을 때만 인라인 스타일 적용
+  const imageStyle = (width || height) ? {
+    width: width ? `${width}px` : undefined,
+    height: height ? `${height}px` : undefined,
+  } : undefined;
+
   return (
-    <div 
-      className={`relative overflow-hidden bg-gray-100 dark:bg-gray-800 ${shapeClasses} ${className}`} 
-      style={{ width, height }}
-    >
+    <div className={`relative ${className}`}>
+      {/* 로딩 상태 */}
       {isLoading && (
-        <div className={`absolute inset-0 bg-gray-200 dark:bg-gray-700 animate-pulse ${shapeClasses} flex items-center justify-center`}>
-          <FaCompactDisc className="w-8 h-8 text-gray-400 dark:text-gray-600 opacity-50" />
+        <div className="absolute inset-0 bg-gradient-to-br from-gray-800 to-gray-900 animate-pulse flex items-center justify-center z-10">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-500"></div>
         </div>
       )}
       
+      {/* 실제 이미지 - className이 우선 적용되도록 */}
       <img
-        src={getImageUrl()}
-        alt={alt || `${safeArtist} - ${safeTrack}`}
-        width={width}
-        height={height}
-        className={`w-full h-full object-cover ${shapeClasses} ${isLoading ? 'opacity-0' : 'opacity-100'} transition-opacity duration-200`}
-        onError={handleError}
-        onLoad={handleLoad}
-        loading={priority ? 'eager' : 'lazy'}
+        src={imageUrl}
+        alt={altText}
+        className={className}
+        onLoad={handleImageLoad}
+        onError={handleImageError}
+        loading={priority ? "eager" : "lazy"}
         decoding="async"
-        onLoadStart={() => setIsLoading(true)}
-        style={{ 
-          objectFit: 'cover',
-          objectPosition: 'center center'
-        }}
+        style={imageStyle}
       />
     </div>
   );
-};
-
-export const clearImageCache = () => {
-  errorCache.clear();
-};
-
-export const prefetchImage = (artist: string, track: string) => {
-  const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
-  const encodedArtist = encodeURIComponent(artist);
-  const encodedTrack = encodeURIComponent(track);
-  const url = `${baseUrl}/api/album-image-smart/${encodedArtist}/${encodedTrack}`;
-  
-  const link = document.createElement('link');
-  link.rel = 'prefetch';
-  link.href = url;
-  link.as = 'image';
-  document.head.appendChild(link);
-};
-
-export const prefetchImages = (items: Array<{artist: string, track: string}>) => {
-  items.slice(0, 10).forEach(item => {
-    prefetchImage(item.artist, item.track);
-  });
 };
 
 export default ImageWithFallback;
