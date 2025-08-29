@@ -7,7 +7,6 @@ import { trendingApi, chartStatusAPI, statisticsAPI } from '@/lib/api';
 import UnifiedSearch from '@/components/UnifiedSearch';
 import HeroSectionV3 from '@/components/HeroSectionV3';
 import AlbumGalleryV3 from '@/components/AlbumGalleryV3';
-import ChartUpdateStatus from '@/components/ChartUpdateStatus';
 import { 
   TrendingUp, Music, Award, Globe, Zap, Clock, Database, Activity, Trophy
 } from 'lucide-react';
@@ -314,11 +313,6 @@ export default function Home() {
           </div>
         </div>
       </section>
-
-      {/* Chart Update Status - Fixed Bottom */}
-      <div className="fixed bottom-0 left-0 right-0 z-40">
-        <ChartUpdateStatus />
-      </div>
     </Layout>
   );
 }
