@@ -15,6 +15,76 @@ const api = axios.create({
   withCredentials: false
 });
 
+// Auth API
+export const authAPI = {
+  login: async (email: string, password?: string) => {
+    const response = await api.post('/api/auth/login', { email, password });
+    return response.data;
+  },
+  demoLogin: async (name: string, email?: string) => {
+    const response = await api.post('/api/auth/demo-login', {
+      name,
+      email: email || `${name.toLowerCase().replace(/\s+/g, '')}@demo.com`
+    });
+    return response.data;
+  },
+  logout: async () => {
+    const response = await api.post('/api/auth/logout');
+    return response.data;
+  },
+  status: async () => {
+    const response = await api.get('/api/auth/status');
+    return response.data;
+  },
+  getUser: async () => {
+    const response = await api.get('/api/auth/user');
+    return response.data;
+  },
+  // OAuth URLs
+  getGoogleOAuthUrl: async () => {
+    const response = await api.get('/api/auth/google/url');
+    return response.data;
+  },
+  getKakaoOAuthUrl: async () => {
+    const response = await api.get('/api/auth/kakao/url');
+    return response.data;
+  },
+  // OAuth Callbacks
+  googleCallback: async (code: string) => {
+    const response = await api.post('/api/auth/google/callback', { code });
+    return response.data;
+  },
+  kakaoCallback: async (code: string) => {
+    const response = await api.post('/api/auth/kakao/callback', { code });
+    return response.data;
+  },
+};
+
+// Portfolio API
+export const portfolioAPI = {
+  get: async () => {
+    const response = await api.get('/api/portfolio');
+    return response.data;
+  },
+  add: async (artist: string, track: string) => {
+    const response = await api.post('/api/portfolio/add', {
+      artist,
+      track
+    });
+    return response.data;
+  },
+  remove: async (artist: string, track: string) => {
+    const response = await api.delete('/api/portfolio/remove', {
+      data: { artist, track }
+    });
+    return response.data;
+  },
+  analyze: async () => {
+    const response = await api.get('/api/portfolio/analyze');
+    return response.data;
+  },
+};
+
 // API 호출 로깅 및 인증 헤더 추가
 api.interceptors.request.use((config) => {
   // 인증 토큰 추가 (포트폴리오, 인증 관련 API만)
