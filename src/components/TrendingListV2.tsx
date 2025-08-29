@@ -77,7 +77,7 @@ const TrendingListV2: React.FC<TrendingListV2Props> = ({
                   <div className="absolute top-2 right-2 z-20">
                     <div className="px-2 py-1 bg-purple-500/30 backdrop-blur-md rounded-md border border-purple-400/30">
                       <span className="text-xs font-bold text-white">
-                        {track.chart_count}
+                        {isNaN(track.chart_count) || !track.chart_count ? '0' : track.chart_count}
                       </span>
                     </div>
                   </div>
@@ -107,11 +107,11 @@ const TrendingListV2: React.FC<TrendingListV2Props> = ({
                     <div className="flex items-center gap-2 mt-1.5">
                       <div className="flex items-center gap-0.5">
                         <TrendingUp className="w-3 h-3 text-green-400" />
-                        <span className="text-xs text-white font-medium">#{track.best_rank}</span>
+                        <span className="text-xs text-white font-medium">#{isNaN(track.best_rank) ? '?' : track.best_rank}</span>
                       </div>
                       <div className="flex items-center gap-0.5">
                         <Flame className="w-3 h-3 text-orange-400" />
-                        <span className="text-xs text-white font-medium">{Math.round(track.score)}</span>
+                        <span className="text-xs text-white font-medium">{isNaN(track.score) ? '0' : Math.round(track.score)}</span>
                       </div>
                     </div>
                   </div>
@@ -181,15 +181,15 @@ const TrendingListV2: React.FC<TrendingListV2Props> = ({
             <div className="flex items-center gap-4 text-sm">
               <div className="text-center hidden sm:block">
                 <div className="text-xs text-gray-500">차트</div>
-                <div className="font-bold text-purple-400">{track.chart_count}</div>
+                <div className="font-bold text-purple-400">{isNaN(track.chart_count) || !track.chart_count ? '0' : track.chart_count}</div>
               </div>
               <div className="text-center">
                 <div className="text-xs text-gray-500">최고</div>
-                <div className="font-bold text-green-400">#{track.best_rank}</div>
+                <div className="font-bold text-green-400">#{isNaN(track.best_rank) ? '?' : track.best_rank}</div>
               </div>
               <div className="text-center">
                 <div className="text-xs text-gray-500">점수</div>
-                <div className="font-bold text-orange-400">{Math.round(track.score)}</div>
+                <div className="font-bold text-orange-400">{isNaN(track.score) ? '0' : Math.round(track.score)}</div>
               </div>
             </div>
 

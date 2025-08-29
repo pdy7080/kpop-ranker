@@ -79,7 +79,7 @@ const AlbumGalleryV3: React.FC<AlbumGalleryV3Props> = ({
 
                     {/* Chart Count */}
                     <div className="px-2 py-1 bg-purple-500/30 backdrop-blur-md rounded-md border border-purple-400/30">
-                      <span className="text-xs font-bold text-white">{track.chart_count}</span>
+                      <span className="text-xs font-bold text-white">{isNaN(track.chart_count) || !track.chart_count ? '0' : track.chart_count}</span>
                     </div>
                   </div>
 
@@ -108,11 +108,11 @@ const AlbumGalleryV3: React.FC<AlbumGalleryV3Props> = ({
                     <div className="flex items-center gap-2 mt-1">
                       <div className="flex items-center gap-1">
                         <TrendingUp className="w-3 h-3 text-green-400" />
-                        <span className="text-[10px] text-white font-medium">#{track.best_rank}</span>
+                        <span className="text-[10px] text-white font-medium">#{isNaN(track.best_rank) ? '?' : track.best_rank}</span>
                       </div>
                       <div className="flex items-center gap-1">
                         <Flame className="w-3 h-3 text-orange-400" />
-                        <span className="text-[10px] text-white font-medium">{Math.round(track.score)}</span>
+                        <span className="text-[10px] text-white font-medium">{isNaN(track.score) ? '0' : Math.round(track.score)}</span>
                       </div>
                     </div>
                   </div>
