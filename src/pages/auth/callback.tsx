@@ -89,19 +89,20 @@ const AuthCallbackPage: React.FC = () => {
         // 디버깅 로그 - API 응답 (프로덕션에서는 비활성화)
         if (process.env.NODE_ENV === 'development') {
           console.log('🟡 OAuth API Response:', {
-            success: response?.data?.success,
-            hasToken: !!response?.data?.token,
-            hasUser: !!response?.data?.user
+            success: response?.success,
+            hasToken: !!response?.token,
+            hasUser: !!response?.user,
+            fullResponse: response
           });
         }
 
-        if (response?.data?.success && response?.data?.token) {
+        if (response?.success && response?.token) {
           // 토큰 저장
-          localStorage.setItem('auth_token', response.data.token);
+          localStorage.setItem('auth_token', response.token);
           
           // 사용자 정보 저장
-          if (response.data.user) {
-            localStorage.setItem('user_info', JSON.stringify(response.data.user));
+          if (response.user) {
+            localStorage.setItem('user_info', JSON.stringify(response.user));
             
             // AuthContext 업데이트
             // login 함수 대신 checkAuth 호출하여 상태 업데이트
