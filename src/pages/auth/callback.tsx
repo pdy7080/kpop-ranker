@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { useAuth } from '@/contexts/AuthContext';
-import { authApi } from '@/lib/api_fixed';
+import { authAPI } from '@/lib/api';
 import { motion } from 'framer-motion';
 import { FaSpinner } from 'react-icons/fa';
 
@@ -81,9 +81,9 @@ const AuthCallbackPage: React.FC = () => {
         
         let response;
         if (provider === 'google') {
-          response = await authApi.googleCallback(code as string);
+          response = await authAPI.googleCallback(code as string);
         } else {
-          response = await authApi.kakaoCallback(code as string);
+          response = await authAPI.kakaoCallback(code as string);
         }
         
         // 디버깅 로그 - API 응답 (프로덕션에서는 비활성화)
