@@ -45,11 +45,11 @@ api.interceptors.response.use(
   }
 );
 
-// Trending API v16 - 차트 독립성 및 실시간 데이터
+// Trending API - 표준 엔드포인트 사용
 export const trendingApi = {
   getTrending: async (type = 'hot', limit = 20) => {
     try {
-      const response = await api.get('/api/trending/v16', {
+      const response = await api.get('/api/trending', {
         params: { type, limit }
       });
       return response.data;
@@ -83,11 +83,11 @@ export const artistAPI = {
   }
 };
 
-// Track API v15 - 차트 독립성 지원 (수정된 API 사용)
+// Track API - 표준 엔드포인트 사용
 export const trackAPI = {
   getDetails: async (artist: string, title: string) => {
     const response = await api.get(
-      `/api/track/v15/${encodeURIComponent(artist)}/${encodeURIComponent(title)}`
+      `/api/track/${encodeURIComponent(artist)}/${encodeURIComponent(title)}`
     );
     return response.data;
   },
