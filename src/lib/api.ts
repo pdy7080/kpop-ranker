@@ -72,20 +72,20 @@ export const authAPI = {
   },
   // OAuth URLs
   getGoogleOAuthUrl: async () => {
-    const response = await api.get('/api/auth/google/url');
+    const response = await api.get('/api/auth/oauth/google/url');
     return response.data;
   },
   getKakaoOAuthUrl: async () => {
-    const response = await api.get('/api/auth/kakao/url');
+    const response = await api.get('/api/auth/oauth/kakao/url');
     return response.data;
   },
   // OAuth Callbacks
   googleCallback: async (code: string) => {
-    const response = await api.post('/api/auth/google/callback', { code });
+    const response = await api.post('/api/auth/oauth/google/callback', { code });
     return response.data;
   },
   kakaoCallback: async (code: string) => {
-    const response = await api.post('/api/auth/kakao/callback', { code });
+    const response = await api.post('/api/auth/oauth/kakao/callback', { code });
     return response.data;
   },
 };
