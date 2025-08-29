@@ -15,6 +15,36 @@ const api = axios.create({
   withCredentials: false
 });
 
+// API 호출 로깅 및 인증 헤더 추가
+api.interceptors.request.use((config) => {
+  // 인증 토큰 추가 (포트폴리오, 인증 관련 API만)
+  const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
+  const userEmail = typeof window !== 'undefined' ? localStorage.getItem('user_email') : null;
+  
+  const authRequiredPaths = ['/api/portfolio', '/api/auth/user', '/api/auth/status', '/api/auth/logout'];
+  const requiresAuth = authRequiredPaths.some(path => config.url?.includes(path));
+  
+  if (requiresAuth && token) {
+    config.headers.Authorization = `Bearer ${token}`;
+    console.log(`🔐 Auth Header Added: Bearer ${token.substring(0, 10)}...`);
+  }
+  
+  console.log(`🔍 API Request: ${config.method?.toUpperCase()} ${config.baseURL}${config.url}`);
+  return config;
+});
+
+// 응답 로깅 및 에러 처리
+api.interceptors.response.use(
+  (response) => {
+    console.log(`✅ API Response: ${response.config.url}`, response.data);
+    return response;
+  },
+  (error) => {
+    console.error(`❌ API Error: ${error.config?.url}`, error.message);
+    return Promise.reject(error);
+  }
+);
+
 // Auth API
 export const authAPI = {
   login: async (email: string, password?: string) => {
@@ -85,36 +115,6 @@ export const portfolioAPI = {
   },
 };
 
-// API 호출 로깅 및 인증 헤더 추가
-api.interceptors.request.use((config) => {
-  // 인증 토큰 추가 (포트폴리오, 인증 관련 API만)
-  const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
-  const userEmail = typeof window !== 'undefined' ? localStorage.getItem('user_email') : null;
-  
-  const authRequiredPaths = ['/api/portfolio', '/api/auth/user', '/api/auth/status', '/api/auth/logout'];
-  const requiresAuth = authRequiredPaths.some(path => config.url?.includes(path));
-  
-  if (requiresAuth && token) {
-    config.headers.Authorization = `Bearer ${token}`;
-    console.log(`🔐 Auth Header Added: Bearer ${token.substring(0, 10)}...`);
-  }
-  
-  console.log(`🔍 API Request: ${config.method?.toUpperCase()} ${config.baseURL}${config.url}`);
-  return config;
-});
-
-// 응답 로깅 및 에러 처리
-api.interceptors.response.use(
-  (response) => {
-    console.log(`✅ API Response: ${response.config.url}`, response.data);
-    return response;
-  },
-  (error) => {
-    console.error(`❌ API Error: ${error.config?.url}`, error.message);
-    return Promise.reject(error);
-  }
-);
-
 // Trending API - 표준 엔드포인트 사용
 export const trendingApi = {
   getTrending: async (type = 'hot', limit = 20) => {
@@ -174,111 +174,6 @@ export const trackAPI = {
       `/api/charts/summary/${encodeURIComponent(artist)}/${encodeURIComponent(title)}`
     );
     return response.data;
-  }
-};
-
-// Portfolio API
-export const portfolioAPI = {
-  list: async () => {
-    try {
-      const response = await api.get('/api/portfolio');
-      return response.data;
-    } catch (error) {
-      console.error('Portfolio get error:', error);
-      return { success: false, portfolio: [], requireAuth: true };
-    }
-  },
-  
-  get: async () => {
-    try {
-      const response = await api.get('/api/portfolio');
-      return response.data;
-    } catch (error) {
-      console.error('Portfolio get error:', error);
-      return { success: false, items: [], requireAuth: true };
-    }
-  },
-  
-  add: async (item: { artist: string; track: string; image_url?: string }) => {
-    const response = await api.post('/api/portfolio', item);
-    return response.data;
-  },
-  
-  remove: async (itemId: string) => {
-    const response = await api.delete(`/api/portfolio/${itemId}`);
-    return response.data;
-  },
-  
-  clear: async () => {
-    const response = await api.delete('/api/portfolio/clear');
-    return response.data;
-  }
-};
-
-// Auth API
-export const authAPI = {
-  login: async (email: string, password: string) => {
-    const response = await api.post('/api/auth/login', { email, password });
-    return response.data;
-  },
-  
-  signup: async (email: string, password: string, name?: string) => {
-    const response = await api.post('/api/auth/signup', { email, password, name });
-    return response.data;
-  },
-  
-  demoLogin: async (name: string, email?: string) => {
-    // 데모 로그인은 클라이언트에서 처리
-    const demoUser = {
-      user_id: email || `demo_${Date.now()}`,
-      email: email || 'demo@kpopranker.com',
-      name: name,
-      provider: 'demo'
-    };
-    
-    // 로컬 스토리지에 저장
-    localStorage.setItem('auth_token', 'demo_token');
-    localStorage.setItem('user_info', JSON.stringify(demoUser));
-    localStorage.setItem('user_email', demoUser.email);
-    
-    return { success: true, user: demoUser };
-  },
-  
-  logout: async () => {
-    const response = await api.post('/api/auth/logout');
-    return response.data;
-  },
-  
-  getStatus: async () => {
-    try {
-      const response = await api.get('/api/auth/status');
-      return response.data;
-    } catch {
-      return { authenticated: false };
-    }
-  },
-  
-  getUser: async () => {
-    const response = await api.get('/api/auth/user');
-    return response.data;
-  },
-  
-  getGoogleOAuthUrl: async () => {
-    try {
-      const response = await api.get('/api/auth/google/url');
-      return response.data;
-    } catch {
-      return { configured: false };
-    }
-  },
-  
-  getKakaoOAuthUrl: async () => {
-    try {
-      const response = await api.get('/api/auth/kakao/url');
-      return response.data;
-    } catch {
-      return { configured: false };
-    }
   }
 };
 
