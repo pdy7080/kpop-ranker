@@ -1,25 +1,180 @@
-import React from 'react';
-import Link from 'next/link';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
+import Link from 'next/link';
 
 export default function AdminIndex() {
   const router = useRouter();
-  
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+
+  // Admin 비밀번호 (환경변수 또는 하드코딩)
+  const ADMIN_PASSWORD = process.env.NEXT_PUBLIC_ADMIN_PASSWORD || 'admin2024!';
+
+  useEffect(() => {
+    // 로컬 스토리지에서 인증 상태 확인
+    const authStatus = localStorage.getItem('adminAuthenticated');
+    if (authStatus === 'true') {
+      setIsAuthenticated(true);
+    }
+  }, []);
+
+  const handleLogin = (e) => {
+    e.preventDefault();
+    if (password === ADMIN_PASSWORD) {
+      localStorage.setItem('adminAuthenticated', 'true');
+      setIsAuthenticated(true);
+      setError('');
+    } else {
+      setError('비밀번호가 틀렸습니다.');
+    }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('adminAuthenticated');
+    setIsAuthenticated(false);
+    setPassword('');
+  };
+
+  if (!isAuthenticated) {
+    return (
+      <div style={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        minHeight: '100vh',
+        backgroundColor: '#f0f2f5',
+        fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+      }}>
+        <div style={{
+          backgroundColor: 'white',
+          padding: '40px',
+          borderRadius: '8px',
+          boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
+          width: '100%',
+          maxWidth: '400px'
+        }}>
+          <h1 style={{
+            fontSize: '24px',
+            fontWeight: 'bold',
+            marginBottom: '30px',
+            textAlign: 'center',
+            color: '#1a1a1a'
+          }}>
+            🎵 KPOP Ranker Admin
+          </h1>
+          
+          <form onSubmit={handleLogin}>
+            <div style={{ marginBottom: '20px' }}>
+              <label style={{
+                display: 'block',
+                marginBottom: '8px',
+                fontSize: '14px',
+                color: '#495057'
+              }}>
+                관리자 비밀번호
+              </label>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="비밀번호를 입력하세요"
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  fontSize: '14px',
+                  border: '1px solid #dee2e6',
+                  borderRadius: '4px',
+                  boxSizing: 'border-box'
+                }}
+                autoFocus
+              />
+            </div>
+            
+            {error && (
+              <div style={{
+                padding: '10px',
+                marginBottom: '20px',
+                backgroundColor: '#f8d7da',
+                color: '#721c24',
+                borderRadius: '4px',
+                fontSize: '14px'
+              }}>
+                {error}
+              </div>
+            )}
+            
+            <button
+              type="submit"
+              style={{
+                width: '100%',
+                padding: '12px',
+                backgroundColor: '#007bff',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                fontSize: '16px',
+                fontWeight: 'bold',
+                cursor: 'pointer'
+              }}
+            >
+              로그인
+            </button>
+          </form>
+          
+          <div style={{
+            marginTop: '20px',
+            padding: '15px',
+            backgroundColor: '#e7f3ff',
+            borderRadius: '4px',
+            fontSize: '13px',
+            color: '#004085'
+          }}>
+            <strong>힌트:</strong> 기본 비밀번호는 admin2024! 입니다.
+            <br/>프로덕션 환경에서는 .env 파일에서 변경하세요.
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div style={{ 
       padding: '40px', 
       maxWidth: '1200px', 
       margin: '0 auto',
-      fontFamily: 'Arial, sans-serif'
+      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
     }}>
-      <h1 style={{ 
-        fontSize: '32px', 
-        fontWeight: 'bold', 
-        marginBottom: '40px',
-        color: '#333'
+      {/* 헤더 with 로그아웃 */}
+      <div style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: '40px'
       }}>
-        🎵 KPOP Ranker Admin
-      </h1>
+        <h1 style={{ 
+          fontSize: '32px', 
+          fontWeight: 'bold', 
+          color: '#1a1a1a'
+        }}>
+          🎵 KPOP Ranker Admin
+        </h1>
+        <button
+          onClick={handleLogout}
+          style={{
+            padding: '10px 20px',
+            backgroundColor: '#dc3545',
+            color: 'white',
+            border: 'none',
+            borderRadius: '4px',
+            fontSize: '14px',
+            fontWeight: '500',
+            cursor: 'pointer'
+          }}
+        >
+          로그아웃
+        </button>
+      </div>
       
       <div style={{ 
         display: 'grid', 
@@ -29,9 +184,10 @@ export default function AdminIndex() {
         {/* 중복 관리 시스템 (새로운 통합 버전) */}
         <div style={{
           padding: '30px',
-          backgroundColor: '#f8f9fa',
+          backgroundColor: '#ffffff',
           borderRadius: '8px',
-          border: '2px solid #28a745'
+          border: '2px solid #28a745',
+          boxShadow: '0 2px 4px rgba(0,0,0,0.08)'
         }}>
           <h2 style={{ 
             fontSize: '24px', 
@@ -55,7 +211,8 @@ export default function AdminIndex() {
               border: 'none',
               borderRadius: '4px',
               cursor: 'pointer',
-              fontWeight: 'bold'
+              fontWeight: 'bold',
+              width: '100%'
             }}>
               중복 관리 시작 →
             </button>
@@ -70,9 +227,10 @@ export default function AdminIndex() {
         {/* 차트 업데이트 현황 */}
         <div style={{
           padding: '30px',
-          backgroundColor: '#f8f9fa',
+          backgroundColor: '#ffffff',
           borderRadius: '8px',
-          border: '1px solid #dee2e6'
+          border: '1px solid #dee2e6',
+          boxShadow: '0 2px 4px rgba(0,0,0,0.08)'
         }}>
           <h2 style={{ 
             fontSize: '24px', 
@@ -89,7 +247,7 @@ export default function AdminIndex() {
             8개 차트 크롤링 상태 모니터링
           </p>
           <button
-            onClick={() => window.open('http://localhost:5000/api/chart/update-status', '_blank')}
+            onClick={() => window.open(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/chart/update-status`, '_blank')}
             style={{
               padding: '12px 24px',
               backgroundColor: '#007bff',
@@ -97,7 +255,8 @@ export default function AdminIndex() {
               border: 'none',
               borderRadius: '4px',
               cursor: 'pointer',
-              fontWeight: 'bold'
+              fontWeight: 'bold',
+              width: '100%'
             }}
           >
             API 상태 확인 →
@@ -107,9 +266,10 @@ export default function AdminIndex() {
         {/* 데이터베이스 통계 */}
         <div style={{
           padding: '30px',
-          backgroundColor: '#f8f9fa',
+          backgroundColor: '#ffffff',
           borderRadius: '8px',
-          border: '1px solid #dee2e6'
+          border: '1px solid #dee2e6',
+          boxShadow: '0 2px 4px rgba(0,0,0,0.08)'
         }}>
           <h2 style={{ 
             fontSize: '24px', 
@@ -128,74 +288,24 @@ export default function AdminIndex() {
           <div style={{ fontSize: '14px', color: '#666' }}>
             • 총 트랙 수: 10,000+<br/>
             • 활성 매핑: 확인 필요<br/>
-            • AI 제안: 19개 대기
+            • AI 제안: 대기 중
           </div>
         </div>
       </div>
 
-      {/* 이전 기능 목록 (참고용) */}
+      {/* 시스템 정보 */}
       <div style={{
-        marginTop: '60px',
+        marginTop: '40px',
         padding: '20px',
-        backgroundColor: '#f0f8ff',
+        backgroundColor: '#f8f9fa',
         borderRadius: '8px',
-        border: '1px solid #b0d4f1'
+        fontSize: '13px',
+        color: '#6c757d'
       }}>
-        <h3 style={{ color: '#004085', marginBottom: '10px' }}>
-          📁 이전 기능 페이지 (Legacy)
-        </h3>
-        <p style={{ color: '#004085', fontSize: '14px' }}>
-          새로운 통합 시스템이 모든 기능을 포함합니다. 이전 페이지들은 참고용으로만 유지됩니다.
-        </p>
-        <div style={{ 
-          display: 'flex', 
-          gap: '10px', 
-          marginTop: '15px',
-          flexWrap: 'wrap'
-        }}>
-          <button 
-            onClick={() => router.push('/admin/similarity')}
-            style={{
-              padding: '8px 16px',
-              backgroundColor: '#e7f3ff',
-              color: '#004085',
-              border: '1px solid #b0d4f1',
-              borderRadius: '4px',
-              cursor: 'pointer',
-              fontSize: '14px'
-            }}
-          >
-            유사도 분석
-          </button>
-          <button 
-            onClick={() => router.push('/admin/correct-duplicates')}
-            style={{
-              padding: '8px 16px',
-              backgroundColor: '#e7f3ff',
-              color: '#004085',
-              border: '1px solid #b0d4f1',
-              borderRadius: '4px',
-              cursor: 'pointer',
-              fontSize: '14px'
-            }}
-          >
-            중복 수정
-          </button>
-          <button 
-            onClick={() => router.push('/admin/real-duplicates')}
-            style={{
-              padding: '8px 16px',
-              backgroundColor: '#e7f3ff',
-              color: '#004085',
-              border: '1px solid #b0d4f1',
-              borderRadius: '4px',
-              cursor: 'pointer',
-              fontSize: '14px'
-            }}
-          >
-            실제 중복
-          </button>
-        </div>
+        <strong>시스템 정보</strong><br/>
+        • 환경: {process.env.NODE_ENV === 'production' ? '프로덕션' : '개발'}<br/>
+        • API: {process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}<br/>
+        • 버전: v1.0.0
       </div>
     </div>
   );
