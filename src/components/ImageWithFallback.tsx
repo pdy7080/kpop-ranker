@@ -67,26 +67,13 @@ const ImageWithFallback: React.FC<ImageWithFallbackProps> = ({
     const encodedArtist = encodeURIComponent(safeArtist);
     const encodedTrack = encodeURIComponent(safeTrack);
     
-    // 🚀 강제로 새로운 API 사용 (테스트 모드)
+    // 방지 단순화: 존재하는 API만 사용
     if (attempt === 0) {
-      switch (finalQuality) {
-        case 'high':
-          // 고해상도: track_images 폴더의 600x600 이미지 사용
-          return `${baseUrl}/api/track-image-detail/${encodedArtist}/${encodedTrack}`;
-        case 'medium':
-          // 중간 해상도: track_images 폴더 우선, 없으면 기존 API
-          return `${baseUrl}/api/track-image-thumb/${encodedArtist}/${encodedTrack}`;
-        case 'low':
-        default:
-          // 기존 API 사용
-          return `${baseUrl}/api/album-image-smart/${encodedArtist}/${encodedTrack}`;
-      }
-    } else if (attempt === 1) {
-      // 첫 번째 폴백: 기존 API
+      // 기본 이미지 API 사용
       return `${baseUrl}/api/album-image-smart/${encodedArtist}/${encodedTrack}`;
     } else {
       // 최종 폴백: SVG
-      return '/images/default-album.svg';
+      return '/default-album.svg';
     }
   };
 
@@ -97,7 +84,7 @@ const ImageWithFallback: React.FC<ImageWithFallbackProps> = ({
     if (errorCache.has(cacheKey)) {
       setHasError(true);
       setIsLoading(false);
-      setCurrentSrc('/images/default-album.svg');
+      setCurrentSrc('/default-album.svg');
       return;
     }
 
@@ -106,13 +93,11 @@ const ImageWithFallback: React.FC<ImageWithFallbackProps> = ({
     setHasError(false);
     setIsLoading(true);
     
-    // 🔍 디버깅 로그 (테스트용)
-    console.log('🎯 이미지 디버깅:', {
+    // 🔍 이미지 로드 테스트 (우선순위: album-image-smart → SVG)
+    console.log('🎯 이미지 요청:', {
       artist: safeArtist,
       track: safeTrack, 
-      quality: finalQuality,
-      url: imageUrl,
-      attempt: fallbackAttempt
+      url: imageUrl
     });
 
     return () => {
@@ -134,7 +119,7 @@ const ImageWithFallback: React.FC<ImageWithFallbackProps> = ({
     
     const nextAttempt = fallbackAttempt + 1;
     
-    if (nextAttempt <= 2) {
+    if (nextAttempt <= 1) {
       // 다음 폴백 시도
       const nextUrl = getImageUrl(nextAttempt);
       setCurrentSrc(nextUrl);
@@ -168,7 +153,7 @@ const ImageWithFallback: React.FC<ImageWithFallbackProps> = ({
     );
   };
 
-  if (hasError && currentSrc === '/images/default-album.svg') {
+  if (hasError && currentSrc === '/default-album.svg') {
     return getFallbackContent();
   }
 
