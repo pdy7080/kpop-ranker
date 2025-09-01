@@ -92,6 +92,7 @@ const TrendingList: React.FC<TrendingListProps> = ({
                     artist={track.artist}
                     track={track.track}
                     className="w-full h-full object-cover"
+                    quality="medium"
                   />
                   
                   {/* Hover Effect Overlay */}
@@ -172,6 +173,7 @@ const TrendingList: React.FC<TrendingListProps> = ({
                 artist={track.artist}
                 track={track.track}
                 className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                quality="medium"
               />
             </div>
 

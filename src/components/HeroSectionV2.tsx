@@ -84,6 +84,7 @@ const HeroSectionV2: React.FC<HeroSectionV2Props> = ({ topTracks, onTrackClick }
                       track={champion.track}
                       className="w-full h-full object-cover"
                       priority
+                      quality="high"
                     />
                     
                     {/* Strong Gradient for Text Readability */}
@@ -141,6 +142,7 @@ const HeroSectionV2: React.FC<HeroSectionV2Props> = ({ topTracks, onTrackClick }
                     artist={second.artist}
                     track={second.track}
                     className="w-full h-full object-cover"
+                    quality="high"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent" />
                 </div>
@@ -190,6 +192,7 @@ const HeroSectionV2: React.FC<HeroSectionV2Props> = ({ topTracks, onTrackClick }
                     artist={third.artist}
                     track={third.track}
                     className="w-full h-full object-cover"
+                    quality="high"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent" />
                 </div>

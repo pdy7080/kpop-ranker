@@ -89,6 +89,7 @@ const TrendingListV2: React.FC<TrendingListV2Props> = ({
                     artist={track.artist}
                     track={track.track}
                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                    quality="medium"
                   />
                   
                   {/* Strong Gradient for Text */}
@@ -166,6 +167,7 @@ const TrendingListV2: React.FC<TrendingListV2Props> = ({
                 artist={track.artist}
                 track={track.track}
                 className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                quality="medium"
               />
             </div>
 

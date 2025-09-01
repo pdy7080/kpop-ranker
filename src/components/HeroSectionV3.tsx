@@ -63,6 +63,7 @@ const HeroSectionV3: React.FC<HeroSectionV3Props> = ({ topTracks, onTrackClick }
                   artist={champion.artist}
                   track={champion.track}
                   className="absolute inset-0 w-full h-full object-cover"
+                  quality="high"
                   priority
                 />
                 
@@ -112,6 +113,7 @@ const HeroSectionV3: React.FC<HeroSectionV3Props> = ({ topTracks, onTrackClick }
                     artist={second.artist}
                     track={second.track}
                     className="absolute inset-0 w-full h-full object-cover"
+                    quality="high"
                   />
                   
                   <div className="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-transparent" />
@@ -157,6 +159,7 @@ const HeroSectionV3: React.FC<HeroSectionV3Props> = ({ topTracks, onTrackClick }
                     artist={third.artist}
                     track={third.track}
                     className="absolute inset-0 w-full h-full object-cover"
+                    quality="high"
                   />
                   
                   <div className="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-transparent" />

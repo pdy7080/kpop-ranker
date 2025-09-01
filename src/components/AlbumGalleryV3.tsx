@@ -90,6 +90,7 @@ const AlbumGalleryV3: React.FC<AlbumGalleryV3Props> = ({
                     artist={track.artist}
                     track={track.track}
                     className="absolute inset-0 w-full h-full object-cover"
+                    quality="medium"
                   />
                   
                   {/* Gradient Overlay for Text */}

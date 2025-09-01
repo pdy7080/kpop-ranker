@@ -71,6 +71,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({ topTracks, onTrackClick }) =>
                   track={champion.track}
                   className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-700"
                   priority
+                  quality="high"
                 />
                 
                 {/* Gradient Overlay */}
@@ -134,6 +135,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({ topTracks, onTrackClick }) =>
                     artist={track.artist}
                     track={track.track}
                     className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-500"
+                    quality="medium"
                   />
                   
                   {/* Gradient Overlay */}

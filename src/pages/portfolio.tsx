@@ -296,6 +296,7 @@ export default function PortfolioPage() {
                           width={60}
                           height={60}
                           className="rounded-lg"
+                          quality="medium"
                         />
                         <div className="flex-grow">
                           <h3 className="font-semibold truncate">{item.title}</h3>
@@ -348,6 +349,7 @@ export default function PortfolioPage() {
                         width={200}
                         height={200}
                         className="rounded-lg w-full"
+                        quality="high"
                       />
                       <button
                         onClick={(e) => {
@@ -395,6 +397,7 @@ export default function PortfolioPage() {
                         width={80}
                         height={80}
                         className="rounded-lg"
+                        quality="medium"
                       />
                       
                       <div className="flex-grow">

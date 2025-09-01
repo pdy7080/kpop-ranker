@@ -298,11 +298,13 @@ export default function TrackDetailPage() {
               >
                 <div className="relative group">
                   <div className="w-80 h-80 md:w-96 md:h-96 rounded-2xl overflow-hidden shadow-2xl">
-                    <ImageWithFallback
-                      artist={trackInfo.artist}
-                      track={currentTrackTitle}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                    />
+                     <ImageWithFallback
+                       artist={trackInfo.artist}
+                       track={currentTrackTitle}
+                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                       isDetailView={true}
+                       priority={true}
+                     />
                     
                     {/* Play Overlay */}
                     <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 

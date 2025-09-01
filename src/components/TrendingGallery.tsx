@@ -61,6 +61,7 @@ const TrendingGallery: React.FC<TrendingGalleryProps> = ({ trendingTracks }) => 
                     track={track.track}
                     className="w-full h-64 md:h-80 object-cover transition-all duration-500 group-hover:scale-105"
                     priority={index < 6}
+                    quality="medium"
                   />
                   
                   <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>

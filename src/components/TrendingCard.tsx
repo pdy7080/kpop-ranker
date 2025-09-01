@@ -94,6 +94,7 @@ const TrendingCard: React.FC<TrendingCardProps> = ({ track, index }) => {
                 artist={track.unified_artist}
                 track={track.unified_track}
                 className="w-full h-full object-cover"
+                quality="medium"
               />
             </div>
           </div>

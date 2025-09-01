@@ -119,6 +119,7 @@ const AlbumGalleryV2: React.FC<AlbumGalleryV2Props> = ({
                       artist={track.artist}
                       track={track.track}
                       className="w-full h-full object-cover"
+                      quality="medium"
                     />
                     
                     {/* Gradient Overlay - Bottom only */}

@@ -99,6 +99,7 @@ const AlbumGallery: React.FC<AlbumGalleryProps> = ({
                     artist={track.artist}
                     track={track.track}
                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                    quality="medium"
                   />
                   
                   {/* Hover Overlay */}
