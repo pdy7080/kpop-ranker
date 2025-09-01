@@ -67,12 +67,15 @@ const ImageWithFallback: React.FC<ImageWithFallbackProps> = ({
     const encodedArtist = encodeURIComponent(safeArtist);
     const encodedTrack = encodeURIComponent(safeTrack);
     
-    // 방지 단순화: 존재하는 API만 사용
+    // 🚀 NEW: 고화질 우선 API 사용
     if (attempt === 0) {
-      // 기본 이미지 API 사용
+      // 1순위: 고화질 트랙 이미지 (600x600)
+      return `${baseUrl}/api/track-image-detail/${encodedArtist}/${encodedTrack}`;
+    } else if (attempt === 1) {
+      // 2순위: 기존 이미지 API (폴백)
       return `${baseUrl}/api/album-image-smart/${encodedArtist}/${encodedTrack}`;
     } else {
-      // 최종 폴백: SVG
+      // 3순위: SVG 폴백
       return '/default-album.svg';
     }
   };
@@ -93,10 +96,12 @@ const ImageWithFallback: React.FC<ImageWithFallbackProps> = ({
     setHasError(false);
     setIsLoading(true);
     
-    // 🔍 이미지 로드 테스트 (우선순위: album-image-smart → SVG)
-    console.log('🎯 이미지 요청:', {
+    // 🔍 이미지 로드 테스트 (우선순위: track-image-detail → album-image-smart → SVG)
+    console.log('🎯 고화질 이미지 요청:', {
       artist: safeArtist,
       track: safeTrack, 
+      attempt: 0,
+      api: 'track-image-detail',
       url: imageUrl
     });
 
@@ -119,8 +124,8 @@ const ImageWithFallback: React.FC<ImageWithFallbackProps> = ({
     
     const nextAttempt = fallbackAttempt + 1;
     
-    if (nextAttempt <= 1) {
-      // 다음 폴백 시도
+    if (nextAttempt <= 2) {
+      // 다음 폴백 시도 (track-image-detail → album-image-smart → SVG)
       const nextUrl = getImageUrl(nextAttempt);
       setCurrentSrc(nextUrl);
       setFallbackAttempt(nextAttempt);
