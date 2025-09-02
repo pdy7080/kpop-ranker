@@ -48,7 +48,8 @@ export default function Home() {
     try {
       setIsLoading(true);
       
-      const response = await fetch(`${API_URL}/api/trending?limit=20`);
+      // 더 빠른 이미지 로딩을 위한 추가 파라미터
+      const response = await fetch(`${API_URL}/api/trending?limit=20&preload_images=true`);
       
       if (response.ok) {
         const data = await response.json();
@@ -58,8 +59,9 @@ export default function Home() {
           const processedTracks = data.trending.map((track: any) => {
             let imageUrl = track.image_url;
             
+            // 최적화: 이미지 URL 제대로 생성
             if (!imageUrl || !track.has_real_image) {
-              imageUrl = `${API_URL}/api/album-image-smart/${encodeURIComponent(track.artist)}/${encodeURIComponent(track.track)}`;
+              imageUrl = `${API_URL}/api/track-image-detail/${encodeURIComponent(track.artist)}/${encodeURIComponent(track.track)}`;
             } else if (!imageUrl.startsWith('http')) {
               imageUrl = imageUrl.startsWith('/') ? `${API_URL}${imageUrl}` : imageUrl;
             }
@@ -68,6 +70,14 @@ export default function Home() {
               ...track,
               image_url: imageUrl
             };
+          });
+          
+          // 이미지 프리로드
+          processedTracks.forEach((track, index) => {
+            if (index < 10) { // 상위 10개만 프리로드
+              const img = new Image();
+              img.src = track.image_url;
+            }
           });
           
           setTrendingTracks(processedTracks);

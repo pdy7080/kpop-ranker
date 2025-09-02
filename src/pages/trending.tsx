@@ -60,7 +60,8 @@ export default function TrendingPage() {
   const fetchTrendingData = async () => {
     try {
       setIsLoading(true);
-      const response = await fetch(`${API_URL}/api/trending?limit=${limit}`);
+      // 성능 최적화: 이미지 프리로드 파라미터 추가
+      const response = await fetch(`${API_URL}/api/trending?limit=${limit}&preload_images=true`);
       
       if (response.ok) {
         const data = await response.json();
@@ -70,8 +71,9 @@ export default function TrendingPage() {
           const processedTracks = data.trending.map((track: any) => {
             let imageUrl = track.image_url;
             
+            // 최적화: 더 빠른 이미지 API 사용
             if (!imageUrl || !track.has_real_image) {
-              imageUrl = `${API_URL}/api/album-image-smart/${encodeURIComponent(track.artist)}/${encodeURIComponent(track.track)}`;
+              imageUrl = `${API_URL}/api/track-image-detail/${encodeURIComponent(track.artist)}/${encodeURIComponent(track.track)}`;
             } else if (!imageUrl.startsWith('http')) {
               imageUrl = imageUrl.startsWith('/') ? `${API_URL}${imageUrl}` : imageUrl;
             }
@@ -81,6 +83,17 @@ export default function TrendingPage() {
               image_url: imageUrl
             };
           });
+          
+          // 지연된 이미지 프리로드 (스크롤 성능 개선)
+          setTimeout(() => {
+            processedTracks.forEach((track, index) => {
+              if (index < 20) { // 첫 20개 이미지 프리로드
+                const img = new Image();
+                img.src = track.image_url;
+                // 캐시에 저장하기 위해 로드 후 즉시 해제하지 않음
+              }
+            });
+          }, 100); // 100ms 후 백그라운드에서 프리로드
           
           setTrendingTracks(processedTracks);
           setFilteredTracks(processedTracks);

@@ -139,22 +139,17 @@ const InsightsPage: React.FC = () => {
     recommendations: language === 'ko' ? 'AI 추천' : 'AI Recommendations'
   };
 
-  // AI 분석 텍스트를 표시하는 컴포넌트
-  const AIAnalysisCard = ({ title, content, icon }: { title: string; content?: string; icon: React.ReactNode }) => {
+  // 간결한 전문가 평론 컴포넌트
+  const ExpertInsight = ({ content }: { content?: string }) => {
     if (!content) return null;
     
     return (
-      <motion.div 
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="bg-gradient-to-r from-purple-600/20 to-pink-600/20 backdrop-blur-md rounded-xl p-4 mb-4 border border-purple-500/30"
-      >
-        <div className="flex items-center gap-2 mb-3">
-          {icon}
-          <h4 className="text-white font-semibold text-sm">{title}</h4>
+      <div className="bg-gradient-to-r from-blue-500/15 to-purple-500/15 rounded-lg p-3 mt-3 border-l-3 border-blue-400">
+        <div className="flex items-start gap-2">
+          <Brain className="w-4 h-4 text-blue-400 mt-0.5 flex-shrink-0" />
+          <p className="text-blue-100 text-sm font-medium leading-snug">{content}</p>
         </div>
-        <p className="text-gray-200 text-sm leading-relaxed">{content}</p>
-      </motion.div>
+      </div>
     );
   };
 
@@ -255,11 +250,7 @@ const InsightsPage: React.FC = () => {
 
                           {/* AI Expert Analysis */}
                           {track.expert_comment && (
-                            <AIAnalysisCard
-                              title="💬 전문가 분석"
-                              content={track.expert_comment}
-                              icon={<Brain className="w-4 h-4 text-purple-400" />}
-                            />
+                            <ExpertInsight content={track.expert_comment} />
                           )}
 
                           {/* Trend Prediction */}
@@ -314,11 +305,7 @@ const InsightsPage: React.FC = () => {
 
                           {/* Expert Insight */}
                           {star.expert_insight && (
-                            <AIAnalysisCard
-                              title="🔍 전문가 인사이트"
-                              content={star.expert_insight}
-                              icon={<MessageSquare className="w-4 h-4 text-yellow-400" />}
-                            />
+                            <ExpertInsight content={star.expert_insight} />
                           )}
                         </motion.div>
                       ))}
@@ -402,32 +389,26 @@ const InsightsPage: React.FC = () => {
                       </div>
                     </div>
 
-                    {/* AI Market Analysis */}
-                    <div className="space-y-4">
-                      {marketPulse.current_trends && (
-                        <AIAnalysisCard
-                          title="📈 현재 트렌드"
-                          content={marketPulse.current_trends}
-                          icon={<TrendingUp className="w-4 h-4 text-blue-400" />}
-                        />
-                      )}
-                      
-                      {marketPulse.competitive_landscape && (
-                        <AIAnalysisCard
-                          title="🏢 경쟁 환경"
-                          content={marketPulse.competitive_landscape}
-                          icon={<Users className="w-4 h-4 text-green-400" />}
-                        />
-                      )}
-                      
-                      {marketPulse.emerging_patterns && (
-                        <AIAnalysisCard
-                          title="🔮 신흥 패턴"
-                          content={marketPulse.emerging_patterns}
-                          icon={<Sparkles className="w-4 h-4 text-purple-400" />}
-                        />
-                      )}
-                    </div>
+                    {/* 시장 분석 요약 */}
+                    {(marketPulse.current_trends || marketPulse.competitive_landscape || marketPulse.emerging_patterns) && (
+                      <div className="bg-white/5 rounded-xl p-4">
+                        <h4 className="text-white font-semibold mb-3 flex items-center gap-2">
+                          <BarChart3 className="w-4 h-4 text-blue-400" />
+                          시장 분석 요약
+                        </h4>
+                        <div className="space-y-2 text-sm">
+                          {marketPulse.current_trends && (
+                            <div className="text-blue-200">• {marketPulse.current_trends}</div>
+                          )}
+                          {marketPulse.competitive_landscape && (
+                            <div className="text-green-200">• {marketPulse.competitive_landscape}</div>
+                          )}
+                          {marketPulse.emerging_patterns && (
+                            <div className="text-purple-200">• {marketPulse.emerging_patterns}</div>
+                          )}
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   {/* Genre/Label Distribution if available */}
