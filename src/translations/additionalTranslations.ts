@@ -167,6 +167,22 @@ export const additionalTranslations = {
     'chart.name.youtube': 'YouTube',
     'chart.name.billboard': 'Billboard',
     
+    // AI Insights
+    'nav.insights': 'AI 인사이트',
+    'nav.ai_insights': 'AI 인사이트',
+    'insights.title': 'K-POP 인사이트',
+    'insights.subtitle': '실시간 차트 분석과 AI 기반 시장 예측',
+    'insights.daily': '일일 동향',
+    'insights.market': '시장 분석',
+    'insights.recommendations': 'AI 추천',
+    'insights.new_entries': '신규 진입',
+    'insights.big_movers': '급상승',
+    'insights.chart_leaders': '차트 1위',
+    'insights.market_summary': '시장 요약',
+    'insights.artists_to_watch': '주목할 아티스트',
+    'insights.hidden_gems': '숨은 보석',
+    'insights.comeback_predictions': '컴백 예측',
+
     // Toast Messages
     'toast.added.portfolio': '포트폴리오에 추가되었습니다',
     'toast.removed.portfolio': '포트폴리오에서 제거되었습니다',
@@ -345,6 +361,22 @@ export const additionalTranslations = {
     'chart.name.youtube': 'YouTube',
     'chart.name.billboard': 'Billboard',
     
+    // AI Insights
+    'nav.insights': 'AI Insights',
+    'nav.ai_insights': 'AI Insights',
+    'insights.title': 'K-POP Insights',
+    'insights.subtitle': 'Real-time chart analysis and AI-powered market predictions',
+    'insights.daily': 'Daily Trends',
+    'insights.market': 'Market Analysis',
+    'insights.recommendations': 'AI Recommendations',
+    'insights.new_entries': 'New Entries',
+    'insights.big_movers': 'Big Movers',
+    'insights.chart_leaders': 'Chart Leaders',
+    'insights.market_summary': 'Market Summary',
+    'insights.artists_to_watch': 'Artists to Watch',
+    'insights.hidden_gems': 'Hidden Gems',
+    'insights.comeback_predictions': 'Comeback Predictions',
+
     // Toast Messages
     'toast.added.portfolio': 'Added to portfolio',
     'toast.removed.portfolio': 'Removed from portfolio',

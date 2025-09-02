@@ -225,4 +225,28 @@ export const statisticsAPI = {
   }
 };
 
+// Insights API
+export const insightsAPI = {
+  getDaily: async () => {
+    const response = await api.get('/api/insights/daily');
+    return response.data;
+  },
+  
+  getMarketPulse: async () => {
+    const response = await api.get('/api/insights/market-pulse');
+    return response.data;
+  },
+  
+  getRecommendations: async () => {
+    const response = await api.get('/api/insights/recommendations');
+    return response.data;
+  },
+  
+  // AI 분석 결과 가져오기 (저장된 분석 결과)
+  getAIAnalysis: async () => {
+    const response = await api.get('/api/insights/ai-analysis');
+    return response.data;
+  }
+};
+
 export default api;

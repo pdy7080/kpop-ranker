@@ -33,7 +33,7 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, onClose }) => {
     { href: '/', icon: FaHome, label: t('nav.home') },
     { href: '/portfolio', icon: FaBriefcase, label: t('nav.portfolio') },
     { href: '/trending', icon: FaChartLine, label: t('nav.trending') },
-    { href: '/insights', icon: FaBrain, label: t('nav.insights') },
+    { href: '/insights', icon: FaBrain, label: t('nav.ai_insights') },
     { href: '/about', icon: FaInfoCircle, label: t('nav.about') },
   ];
 

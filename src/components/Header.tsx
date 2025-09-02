@@ -74,6 +74,19 @@ const Header: React.FC = () => {
                 </motion.div>
               </Link>
               
+              <Link href="/insights">
+                <motion.div 
+                  className="flex items-center space-x-2 text-gray-300 hover:text-white transition-all cursor-pointer group"
+                  whileHover={{ y: -2 }}
+                >
+                  <HiSparkles className="w-4 h-4 group-hover:text-yellow-400 transition-colors" />
+                  <span className="relative">
+                    {t('nav.insights')}
+                    <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-purple-500 to-pink-500 group-hover:w-full transition-all duration-300" />
+                  </span>
+                </motion.div>
+              </Link>
+              
               <Link href="/about">
                 <motion.div 
                   className="flex items-center space-x-2 text-gray-300 hover:text-white transition-all cursor-pointer group"
