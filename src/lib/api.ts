@@ -107,9 +107,9 @@ export const portfolioAPI = {
     });
     return response.data;
   },
-  remove: async (artist: string, track: string) => {
+  remove: async (itemId: string | number) => {
     const response = await api.delete('/api/portfolio/remove', {
-      data: { artist, track }
+      data: { id: Number(itemId) }
     });
     return response.data;
   },

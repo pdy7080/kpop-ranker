@@ -282,7 +282,7 @@ export default function PortfolioPage() {
                 <div className="mt-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {portfolioItems.slice(0, 6).map((item, idx) => (
                     <motion.div
-                      key={item.id}
+                      key={`analytics-preview-${item.id}-${idx}`}
                       initial={{ opacity: 0, scale: 0.9 }}
                       animate={{ opacity: 1, scale: 1 }}
                       transition={{ delay: idx * 0.05 }}
@@ -335,7 +335,7 @@ export default function PortfolioPage() {
               >
                 {portfolioItems.map((item, idx) => (
                   <motion.div
-                    key={item.id}
+                    key={`grid-${item.id}-${idx}`}
                     initial={{ opacity: 0, scale: 0.9 }}
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ delay: idx * 0.02 }}
@@ -383,7 +383,7 @@ export default function PortfolioPage() {
               >
                 {portfolioItems.map((item, idx) => (
                   <motion.div
-                    key={item.id}
+                    key={`list-${item.id}-${idx}`}
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: idx * 0.02 }}
@@ -409,8 +409,8 @@ export default function PortfolioPage() {
                             Added {new Date(item.added_at).toLocaleDateString()}
                           </span>
                           <div className="flex gap-1">
-                            {Object.entries(item.charts || {}).slice(0, 3).map(([chart, rank]) => (
-                              <span key={chart} className="text-xs px-2 py-1 bg-gray-700 rounded">
+                            {Object.entries(item.charts || {}).slice(0, 3).map(([chart, rank], chartIdx) => (
+                              <span key={`${item.id}-${chart}-${chartIdx}`} className="text-xs px-2 py-1 bg-gray-700 rounded">
                                 {chart}: #{rank}
                               </span>
                             ))}

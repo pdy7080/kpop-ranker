@@ -23,6 +23,7 @@ interface ChartData {
   views?: string;
   last_updated?: string;
   last_updated_formatted?: string;
+  video_url?: string;  // YouTube 비디오 URL 추가
 }
 
 interface TrackInfo {
@@ -49,6 +50,7 @@ interface TrackInfo {
     youtube?: string;
     apple_music?: string;
   };
+  youtube_url?: string;  // 실제 YouTube 비디오 URL 추가
   total_charts?: number;
 }
 
@@ -57,10 +59,10 @@ const CHART_COLORS: { [key: string]: string } = {
   genie: '#1E40AF', 
   bugs: '#F97316',
   flo: '#AA40FC',
-  vibe: '#EC4899',
   spotify: '#1DB954',
   youtube: '#FF0000',
-  billboard: '#1F2937'
+  apple_music: '#000000',  // Apple Music 블랙
+  salam: '#FF6B35'         // Salam 오렉지
 };
 
 const CHART_NAMES: { [key: string]: string } = {
@@ -68,10 +70,10 @@ const CHART_NAMES: { [key: string]: string } = {
   genie: 'Genie',
   bugs: 'Bugs',
   flo: 'FLO',
-  vibe: 'Vibe',
   spotify: 'Spotify',
   youtube: 'YouTube',
-  billboard: 'Billboard'
+  apple_music: 'Apple Music',  // 새로운 차트
+  salam: 'Salam'               // 새로운 차트
 };
 
 const formatViews = (views: string | number): string => {
@@ -161,20 +163,25 @@ export default function TrackDetailPage() {
     }
   };
 
-  // YouTube 뛰어가기 기능 추가
+  // YouTube 뮤직비디오 열기 - 검색 방식 (안정적)
   const handleWatchOnYouTube = () => {
     if (trackInfo?.artist && currentTrackTitle) {
-      const searchQuery = `${trackInfo.artist} ${currentTrackTitle} official MV`.replace(/[()]/g, '');
+      const searchQuery = `${trackInfo.artist} ${currentTrackTitle} official MV`.replace(/[()\[\]]/g, '');
       const youtubeUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(searchQuery)}`;
       window.open(youtubeUrl, '_blank');
     }
   };
 
-  // 1. Spotify에서 트랙 재생
+  // 1. Spotify에서 트랙 재생 - 직접 검색 연결 개선
   const handlePlayTrack = () => {
     const currentTrackTitle = trackInfo?.track || trackInfo?.title || (title as string) || '';
     if (trackInfo?.artist && currentTrackTitle) {
-      const searchQuery = `${trackInfo.artist} ${currentTrackTitle}`.replace(/[()]/g, '');
+      // 더 정확한 Spotify 링크 생성
+      const searchQuery = `track:"${currentTrackTitle}" artist:"${trackInfo.artist}"`
+        .replace(/[()\[\]]/g, '')  // 특수문자 제거
+        .replace(/\s+/g, ' ')      // 공백 정리
+        .trim();
+      
       const spotifyUrl = `https://open.spotify.com/search/${encodeURIComponent(searchQuery)}`;
       window.open(spotifyUrl, '_blank');
     }
@@ -490,7 +497,7 @@ export default function TrackDetailPage() {
                                    text-white rounded-lg transition-all flex items-center justify-center gap-2"
                         >
                           <Play className="w-4 h-4" />
-                          Watch MV
+                          Search MV
                         </button>
                       )}
 

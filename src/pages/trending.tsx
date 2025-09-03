@@ -37,7 +37,8 @@ const chartFilters: ChartFilter[] = [
   { id: 'spotify', name: 'Spotify', icon: '🎧', color: 'bg-green-600' },
   { id: 'youtube', name: 'YouTube', icon: '📺', color: 'bg-red-600' },
   { id: 'flo', name: 'FLO', icon: '🌊', color: 'bg-blue-600' },
-  { id: 'vibe', name: 'Vibe', icon: '💜', color: 'bg-purple-600' },
+  { id: 'apple_music', name: 'Apple Music', icon: '🍎', color: 'bg-gray-800' },
+  { id: 'salam', name: 'Salam', icon: '🎵', color: 'bg-orange-500' },
 ];
 
 export default function TrendingPage() {
@@ -47,7 +48,7 @@ export default function TrendingPage() {
   const [selectedChart, setSelectedChart] = useState<string>('all');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [isLoading, setIsLoading] = useState(true);
-  const [limit, setLimit] = useState(50);
+  const [limit, setLimit] = useState(20); // 50 → 20로 초기 로딩 감소
 
   useEffect(() => {
     fetchTrendingData();
@@ -60,18 +61,18 @@ export default function TrendingPage() {
   const fetchTrendingData = async () => {
     try {
       setIsLoading(true);
-      // 성능 최적화: 이미지 프리로드 파라미터 추가
-      const response = await fetch(`${API_URL}/api/trending?limit=${limit}&preload_images=true`);
+      // 성능 최적화: 빠른 API 사용 및 이미지 지연 로딩
+      const response = await fetch(`${API_URL}/api/trending?limit=${limit}&fast=true`);
       
       if (response.ok) {
         const data = await response.json();
         console.log('Trending data:', data);
         
         if (data?.trending && Array.isArray(data.trending)) {
-          const processedTracks = data.trending.map((track: any) => {
+          const processedTracks = data.trending.map((track: any, index: number) => {
             let imageUrl = track.image_url;
             
-            // 최적화: 더 빠른 이미지 API 사용
+            // 최적화: 상위 10개만 즉시 이미지 처리
             if (!imageUrl || !track.has_real_image) {
               imageUrl = `${API_URL}/api/track-image-detail/${encodeURIComponent(track.artist)}/${encodeURIComponent(track.track)}`;
             } else if (!imageUrl.startsWith('http')) {

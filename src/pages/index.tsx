@@ -41,29 +41,38 @@ export default function Home() {
 
   useEffect(() => {
     fetchData();
-    fetchStats();
+    // fetchStats()는 fetchData 내부에서 병렬 처리되므로 제거
   }, []);
 
   const fetchData = async () => {
     try {
       setIsLoading(true);
       
-      // 더 빠른 이미지 로딩을 위한 추가 파라미터
-      const response = await fetch(`${API_URL}/api/trending?limit=20&preload_images=true`);
+      // 병렬 호출로 최적화
+      const [trendingResponse, statsResponse] = await Promise.all([
+        fetch(`${API_URL}/api/trending?limit=10&fast=true`), // 초기 로딩은 10개만
+        statisticsAPI.getStatistics()
+      ]);
       
-      if (response.ok) {
-        const data = await response.json();
+      if (trendingResponse.ok) {
+        const data = await trendingResponse.json();
         console.log('Trending API Response:', data);
         
         if (data?.trending && Array.isArray(data.trending)) {
-          const processedTracks = data.trending.map((track: any) => {
+          const processedTracks = data.trending.map((track: any, index: number) => {
             let imageUrl = track.image_url;
             
-            // 최적화: 이미지 URL 제대로 생성
+            // 최적화: 상위 5개만 즉시 이미지 로딩
             if (!imageUrl || !track.has_real_image) {
               imageUrl = `${API_URL}/api/track-image-detail/${encodeURIComponent(track.artist)}/${encodeURIComponent(track.track)}`;
             } else if (!imageUrl.startsWith('http')) {
               imageUrl = imageUrl.startsWith('/') ? `${API_URL}${imageUrl}` : imageUrl;
+            }
+            
+            // 상위 5개만 프리로드
+            if (index < 5) {
+              const img = new Image();
+              img.src = imageUrl;
             }
             
             return {
@@ -72,69 +81,32 @@ export default function Home() {
             };
           });
           
-          // 이미지 프리로드
-          processedTracks.forEach((track, index) => {
-            if (index < 10) { // 상위 10개만 프리로드
-              const img = new Image();
-              img.src = track.image_url;
-            }
-          });
-          
           setTrendingTracks(processedTracks);
           setTopTracks(processedTracks.slice(0, 3));
           console.log('Processed tracks:', processedTracks.length);
         }
       }
-    } catch (error) {
-      console.error('Error fetching trending:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const fetchStats = async () => {
-    try {
-      // 통계 API 호출
-      const statsResponse = await statisticsAPI.getStatistics();
-      console.log('Statistics Response:', statsResponse);
       
-      if (statsResponse?.statistics?.summary) {
-        const summary = statsResponse.statistics.summary;
-        
-        // 유니크한 값 사용 (중복 제거된 데이터)
-        const uniqueArtists = summary.unique_artists || 150;  // 실제 예상값
-        const uniqueTracks = summary.unique_tracks || 350;    // 실제 예상값
-        const activeCharts = summary.active_charts || 8;
-        
-        console.log('📊 유니크 통계:', {
-          artists: uniqueArtists,
-          tracks: uniqueTracks,
-          charts: activeCharts
-        });
-        
+      // 통계 데이터 처리
+      if (statsResponse) {
         setStats({
-          totalTracks: uniqueTracks,  // unique_tracks 사용
-          totalArtists: uniqueArtists, // unique_artists 사용
-          activeCharts: activeCharts,
-          lastUpdate: summary.last_update || ''
-        });
-        
-        // 차트 상태 API는 참고용으로만 호출 (덮어쓰지 않음)
-        const chartData = await chartStatusAPI.getUpdateStatus();
-        console.log('Chart Status Response (참고용):', {
-          total_tracks_cumulative: chartData?.total_tracks,
-          charts_count: chartData?.charts?.length
+          totalTracks: statsResponse.total_tracks || 350,
+          totalArtists: statsResponse.total_artists || 150,
+          activeCharts: 8,
+          lastUpdate: statsResponse.last_update || ''
         });
       }
     } catch (error) {
-      console.error('Error fetching statistics:', error);
-      // 에러 시 기본값 설정 (실제 예상값)
+      console.error('Error fetching data:', error);
+      // 에러 시 기본값 설정
       setStats({
         totalTracks: 350,
         totalArtists: 150,
         activeCharts: 8,
         lastUpdate: ''
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 

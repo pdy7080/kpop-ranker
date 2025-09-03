@@ -407,7 +407,7 @@ export default function ArtistPage() {
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
                     {sortedTracks.slice(0, 6).map((track, idx) => (
                       <motion.div
-                        key={track.title}
+                        key={`overview-${track.title}-${idx}`}
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: idx * 0.1 }}
@@ -447,8 +447,8 @@ export default function ArtistPage() {
                 <div>
                   <h3 className="text-2xl font-bold text-white mb-6">차트별 활동 현황</h3>
                   <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-8 gap-3 md:gap-4">
-                    {chartDominance.map(chart => (
-                      <div key={chart.name} className="text-center bg-gray-800/30 rounded-xl p-4 border border-gray-700">
+                    {chartDominance.map((chart, idx) => (
+                      <div key={`chart-dominance-${chart.name}-${idx}`} className="text-center bg-gray-800/30 rounded-xl p-4 border border-gray-700">
                         <div className={`text-3xl mb-2 ${chart.info.bgColor} rounded-lg p-3 inline-block`}>
                           {chart.info.icon}
                         </div>
@@ -652,8 +652,8 @@ export default function ArtistPage() {
                     차트별 활동 현황
                   </h3>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    {chartDominance.map(chart => (
-                      <div key={chart.name} className="text-center">
+                    {chartDominance.map((chart, idx) => (
+                      <div key={`insights-chart-${chart.name}-${idx}`} className="text-center">
                         <div className={`text-3xl mb-2 ${chart.info.bgColor} rounded-lg p-3 inline-block`}>
                           {chart.info.icon}
                         </div>
