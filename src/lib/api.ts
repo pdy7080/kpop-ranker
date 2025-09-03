@@ -124,7 +124,7 @@ export const trendingApi = {
   getTrending: async (type = 'hot', limit = 20) => {
     try {
       // 기존: '/api/trending' → 캐시: '/cache/api/trending'
-      const response = await api.get('/api/cached/api/trending', {
+      const response = await api.get('/cache/api/trending', {
         params: { type, limit }
       });
       console.log('🚀 캐시 기반 트렌딩 API 사용 - 94% 빨라짐!');
