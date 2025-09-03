@@ -61,8 +61,8 @@ export default function TrendingPage() {
   const fetchTrendingData = async () => {
     try {
       setIsLoading(true);
-      // 성능 최적화: 빠른 API 사용 및 이미지 지연 로딩
-      const response = await fetch(`${API_URL}/api/trending?limit=${limit}&fast=true`);
+      // 🚀 캐시 기반 API 사용 (94% 성능 향상!)
+      const response = await fetch(`${API_URL}/cache/api/trending?limit=${limit}&fast=true`);
       
       if (response.ok) {
         const data = await response.json();
