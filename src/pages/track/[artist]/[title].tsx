@@ -144,8 +144,21 @@ export default function TrackDetailPage() {
       
       console.log('📊 Track data received:', response);
       
+      // v16 API 응답 처리 - response.track이 있으면 그것을 사용, 없으면 response 자체 사용
       if (response) {
-        setTrackInfo(response);
+        const trackData = response.track || response;
+        
+        // chart_positions을 charts 배열로 변환
+        if (trackData.chart_positions && !trackData.charts) {
+          trackData.charts = Object.entries(trackData.chart_positions).map(([chart, data]: [string, any]) => ({
+            chart,
+            rank: data.rank || data,
+            last_updated: data.updated,
+            views: data.views
+          }));
+        }
+        
+        setTrackInfo(trackData);
       } else {
         setError(t('search.no.results'));
       }
