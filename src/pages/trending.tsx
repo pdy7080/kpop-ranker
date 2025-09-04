@@ -6,16 +6,37 @@ import { motion } from 'framer-motion';
 import { 
   TrendingUp, Grid3x3, List, Sparkles, Clock, Filter
 } from 'lucide-react';
+import { trendingApi, chartIndividualAPI } from '@/lib/api';
+import ChartIndividual from '@/components/ChartIndividual';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
-// 최적화된 API 클라이언트
+// 차트 필터 정의
+interface ChartFilter {
+  id: string;
+  name: string;
+  icon: string;
+  color: string;
+}
+
+const chartFilters: ChartFilter[] = [
+  { id: 'all', name: '통합', icon: '🌍', color: 'bg-gradient-to-r from-purple-500 to-pink-500' },
+  { id: 'melon', name: 'Melon', icon: '🍈', color: 'bg-green-500' },
+  { id: 'genie', name: 'Genie', icon: '🧞', color: 'bg-blue-500' },
+  { id: 'bugs', name: 'Bugs', icon: '🐛', color: 'bg-red-500' },
+  { id: 'spotify', name: 'Spotify', icon: '🎧', color: 'bg-green-600' },
+  { id: 'flo', name: 'FLO', icon: '🌊', color: 'bg-blue-600' },
+  // YouTube는 별도 처리가 필요하므로 주석
+  // { id: 'youtube', name: 'YouTube', icon: '📺', color: 'bg-red-600' },
+];
+
+// 최적화된 API 클라이언트 (기존 로직 유지)
 const optimizedTrendingAPI = {
   async getTrending(limit = 50) {
     const startTime = Date.now();
     
     try {
-      // 최적화된 캐시 API 사용
+      // 최적화된 캐시 API 사용 (기존 성능 유지)
       const response = await fetch(`${API_URL}/cache/api/trending?limit=${limit}&fast=true`);
       
       if (!response.ok) {
@@ -62,7 +83,7 @@ const optimizedTrendingAPI = {
   }
 };
 
-// 최적화된 트랙 카드 컴포넌트
+// 최적화된 트랙 카드 컴포넌트 (기존 로직 유지)
 const OptimizedTrackCard = memo(({ 
   track, 
   index, 
@@ -77,7 +98,7 @@ const OptimizedTrackCard = memo(({
   const [imageLoaded, setImageLoaded] = useState(false);
   const [imageError, setImageError] = useState(false);
 
-  // 이미지 URL 최적화
+  // 이미지 URL 최적화 (기존 로직 유지)
   const imageUrl = useMemo(() => {
     if (track.has_real_image && track.image_url) {
       return track.image_url.startsWith('http') 
@@ -87,7 +108,7 @@ const OptimizedTrackCard = memo(({
     return null;
   }, [track.has_real_image, track.image_url]);
 
-  // 차트 정보 최적화
+  // 차트 정보 최적화 (기존 로직 유지)
   const chartInfo = useMemo(() => {
     const chartColors: Record<string, string> = {
       melon: 'bg-green-500',
@@ -179,7 +200,7 @@ const OptimizedTrackCard = memo(({
     );
   }
 
-  // Grid 모드
+  // Grid 모드 (기존 로직 유지)
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.9 }}
@@ -257,7 +278,7 @@ const OptimizedTrackCard = memo(({
   );
 });
 
-// 가상 스크롤 컴포넌트 (간소화)
+// 가상 스크롤 컴포넌트 (기존 로직 유지)
 const VirtualizedList = memo(({ 
   tracks, 
   viewMode, 
@@ -309,14 +330,19 @@ const VirtualizedList = memo(({
   );
 });
 
-// 메인 컴포넌트
-export default function OptimizedTrendingPage() {
+// 메인 컴포넌트 (차트 필터 추가)
+export default function TrendingWithFilters() {
   const router = useRouter();
   const [trendingTracks, setTrendingTracks] = useState([]);
+  const [selectedChart, setSelectedChart] = useState<string>('all');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [isLoading, setIsLoading] = useState(true);
   const [loadTime, setLoadTime] = useState(0);
   const [cached, setCached] = useState(false);
+  
+  // 차트별 개별 데이터 상태
+  const [chartData, setChartData] = useState<any>(null);
+  const [isLoadingChart, setIsLoadingChart] = useState(false);
 
   const loadTrendingData = useCallback(async () => {
     try {
@@ -337,6 +363,51 @@ export default function OptimizedTrendingPage() {
     }
   }, []);
 
+  // 차트별 개별 데이터 로딩
+  const fetchChartData = async (chartName: string) => {
+    if (chartName === 'all') return;
+    
+    try {
+      setIsLoadingChart(true);
+      console.log(`📊 Loading chart data: ${chartName}`);
+      
+      const data = await chartIndividualAPI.getChartLatest(chartName);
+      
+      if (data.success) {
+        setChartData(data);
+        console.log(`✅ ${chartName} 차트 데이터 로드 성공`);
+      } else {
+        console.error(`❌ ${chartName} 차트 데이터 오류:`, data.error);
+        setChartData({
+          error: true,
+          message: `${chartName} 차트 데이터를 불러올 수 없습니다.`
+        });
+      }
+    } catch (error) {
+      console.error(`❌ ${chartName} 차트 데이터 로딩 실패:`, error);
+      
+      setChartData({
+        error: true,
+        message: `${chartName} 차트를 일시적으로 사용할 수 없습니다.`
+      });
+    } finally {
+      setIsLoadingChart(false);
+    }
+  };
+
+  const handleChartFilter = (chartId: string) => {
+    console.log(`🎯 Chart filter selected: ${chartId}`);
+    setSelectedChart(chartId);
+    
+    if (chartId === 'all') {
+      // 통합 차트 표시 (기존 트렌딩 데이터)
+      setChartData(null);
+    } else {
+      // 개별 차트 데이터 로딩
+      fetchChartData(chartId);
+    }
+  };
+
   const handleTrackClick = useCallback((artist: string, track: string) => {
     router.push(`/track/${encodeURIComponent(artist)}/${encodeURIComponent(track)}`);
   }, [router]);
@@ -349,7 +420,7 @@ export default function OptimizedTrendingPage() {
     <Layout>
       <Head>
         <title>트렌딩 - KPOP Ranker</title>
-        <meta name="description" content="실시간 K-POP 트렌드 분석 - 최적화됨" />
+        <meta name="description" content="실시간 K-POP 트렌드 분석 - 차트별 조회 가능" />
         <link rel="preconnect" href={API_URL} />
       </Head>
 
@@ -383,6 +454,38 @@ export default function OptimizedTrendingPage() {
             </div>
           </motion.div>
 
+          {/* 🆕 차트 필터 탭 추가 */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-8"
+          >
+            <div className="flex flex-wrap justify-center gap-3">
+              {chartFilters.map((filter, index) => (
+                <motion.button
+                  key={filter.id}
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: index * 0.1 }}
+                  onClick={() => handleChartFilter(filter.id)}
+                  className={`
+                    px-4 py-2 rounded-full text-sm font-semibold transition-all duration-200 flex items-center gap-2
+                    ${selectedChart === filter.id
+                      ? `${filter.color} text-white scale-105 shadow-lg`
+                      : 'bg-white/10 text-gray-300 hover:bg-white/20 hover:scale-105'
+                    }
+                  `}
+                >
+                  <span>{filter.icon}</span>
+                  <span>{filter.name}</span>
+                  {selectedChart === filter.id && filter.id !== 'all' && isLoadingChart && (
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin ml-2" />
+                  )}
+                </motion.button>
+              ))}
+            </div>
+          </motion.div>
+
           {/* 뷰 모드 및 통계 */}
           <motion.div
             initial={{ opacity: 0 }}
@@ -391,7 +494,11 @@ export default function OptimizedTrendingPage() {
           >
             <div className="text-white">
               <span className="text-lg font-semibold">
-                {trendingTracks.length}개 트랙
+                {selectedChart === 'all' ? (
+                  `${trendingTracks.length}개 통합 트랙`
+                ) : (
+                  `${chartData?.tracks?.length || 0}개 ${selectedChart.toUpperCase()} 트랙`
+                )}
               </span>
               {!isLoading && (
                 <span className="text-gray-400 ml-2">
@@ -430,19 +537,50 @@ export default function OptimizedTrendingPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
           >
-            {isLoading ? (
+            {isLoading || (selectedChart !== 'all' && isLoadingChart) ? (
               <div className="flex justify-center items-center min-h-96">
                 <div className="text-white text-xl flex items-center gap-3">
                   <div className="w-8 h-8 border-4 border-purple-500 border-t-transparent rounded-full animate-spin" />
-                  최적화된 데이터 로딩 중...
+                  {selectedChart === 'all' ? '통합 트렌딩 로딩 중...' : `${selectedChart.toUpperCase()} 차트 로딩 중...`}
                 </div>
               </div>
-            ) : (
+            ) : selectedChart === 'all' ? (
+              // 통합 차트 표시 (기존 트렌딩)
               <VirtualizedList
                 tracks={trendingTracks}
                 viewMode={viewMode}
                 onTrackClick={handleTrackClick}
               />
+            ) : chartData?.error ? (
+              // 차트 로딩 에러
+              <div className="text-center py-20">
+                <div className="text-6xl mb-4">😞</div>
+                <h3 className="text-xl font-bold text-white mb-2">차트 데이터 로딩 실패</h3>
+                <p className="text-gray-300 mb-4">{chartData.message}</p>
+                <button
+                  onClick={() => fetchChartData(selectedChart)}
+                  className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                >
+                  다시 시도
+                </button>
+              </div>
+            ) : chartData?.tracks ? (
+              // 개별 차트 표시
+              <ChartIndividual
+                chartName={selectedChart}
+                displayName={chartFilters.find(f => f.id === selectedChart)?.name || selectedChart}
+                tracks={chartData.tracks}
+                lastUpdate={chartData.last_update}
+                isYoutube={selectedChart === 'youtube'}
+                onTrackClick={handleTrackClick}
+              />
+            ) : (
+              // 데이터 없음
+              <div className="text-center py-20">
+                <div className="text-6xl mb-4">📊</div>
+                <h3 className="text-xl font-bold text-white mb-2">데이터가 없습니다</h3>
+                <p className="text-gray-300">선택한 차트의 데이터를 찾을 수 없습니다.</p>
+              </div>
             )}
           </motion.div>
 
@@ -450,7 +588,8 @@ export default function OptimizedTrendingPage() {
           {process.env.NODE_ENV === 'development' && loadTime > 0 && (
             <div className="fixed bottom-4 right-4 bg-black/80 text-white text-xs p-3 rounded-lg border border-purple-500/30">
               <div>로딩: {loadTime}ms</div>
-              <div>트랙: {trendingTracks.length}개</div>
+              <div>차트: {selectedChart}</div>
+              <div>트랙: {selectedChart === 'all' ? trendingTracks.length : chartData?.tracks?.length || 0}개</div>
               <div>캐시: {cached ? '적용' : '미적용'}</div>
             </div>
           )}
@@ -460,7 +599,7 @@ export default function OptimizedTrendingPage() {
   );
 }
 
-// CSS 추가
+// CSS 추가 (기존 유지)
 const additionalStyles = `
   .line-clamp-2 {
     overflow: hidden;
