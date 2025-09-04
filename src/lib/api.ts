@@ -134,28 +134,67 @@ export const trendingApi = {
   }
 };
 
-// Artist API - 캐시 완전 제거
+// Artist API - v13 캐시 시스템 적용
 export const artistAPI = {
   getDetails: async (name: string) => {
-    // 캐시 API 제거, 직접 호출만
-    const response = await api.get(`/api/artist/${encodeURIComponent(name)}/complete`);
+    try {
+      // v13 API 우선 시도 (캐시 시스템)
+      const response = await api.get(`/api/artist/v13/${encodeURIComponent(name)}/complete`);
+      return response.data;
+    } catch (error) {
+      console.warn('v13 API failed, falling back to v12:', error);
+      // 폴백: 기존 API 사용
+      const response = await api.get(`/api/artist/${encodeURIComponent(name)}/complete`);
+      return response.data;
+    }
+  },
+  
+  // 캐시 무효화 (관리자용)
+  invalidateCache: async (artistName?: string) => {
+    const response = await api.post('/api/artist/v13/cache/invalidate', {
+      artist: artistName
+    });
+    return response.data;
+  },
+  
+  // 인기 아티스트 조회
+  getPopular: async (limit: number = 20) => {
+    const response = await api.get('/api/artist/v13/popular', {
+      params: { limit }
+    });
     return response.data;
   }
 };
 
-// Track API
+// Track API - v16 캐시 시스템 적용
 export const trackAPI = {
   getDetails: async (artist: string, title: string) => {
-    const response = await api.get(
-      `/api/track/${encodeURIComponent(artist)}/${encodeURIComponent(title)}`
-    );
-    return response.data;
+    try {
+      // v16 API 우선 시도 (캐시 시스템)
+      const response = await api.get(
+        `/api/track/v16/${encodeURIComponent(artist)}/${encodeURIComponent(title)}`
+      );
+      return response.data;
+    } catch (error) {
+      console.warn('v16 API failed, falling back to v15:', error);
+      // 폴백: 기존 API 사용
+      const response = await api.get(
+        `/api/track/${encodeURIComponent(artist)}/${encodeURIComponent(title)}`
+      );
+      return response.data;
+    }
   },
   
   getTrackDetail: async (artist: string, title: string) => {
-    const response = await api.get(
-      `/api/track/${encodeURIComponent(artist)}/${encodeURIComponent(title)}`
-    );
+    // getDetails와 동일
+    return trackAPI.getDetails(artist, title);
+  },
+  
+  // 인기 트랙 조회
+  getPopular: async (limit: number = 20) => {
+    const response = await api.get('/api/track/v16/popular', {
+      params: { limit }
+    });
     return response.data;
   }
 };
