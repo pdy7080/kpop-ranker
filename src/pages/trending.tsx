@@ -4,21 +4,13 @@ import { useRouter } from 'next/router';
 import Layout from '@/components/Layout';
 import { motion } from 'framer-motion';
 import { 
-  TrendingUp, Grid3x3, List, Sparkles, Clock, Filter
+  TrendingUp, Grid3x3, List, Sparkles
 } from 'lucide-react';
-import { trendingApi, chartIndividualAPI } from '@/lib/api';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
 // 차트 필터 정의 - YouTube 제거
-interface ChartFilter {
-  id: string;
-  name: string;
-  icon: string;
-  color: string;
-}
-
-const chartFilters: ChartFilter[] = [
+const chartFilters = [
   { id: 'all', name: '통합', icon: '🌍', color: 'bg-gradient-to-r from-purple-500 to-pink-500' },
   { id: 'melon', name: 'Melon', icon: '🍈', color: 'bg-green-500' },
   { id: 'genie', name: 'Genie', icon: '🧞', color: 'bg-blue-500' },
@@ -29,59 +21,8 @@ const chartFilters: ChartFilter[] = [
   { id: 'lastfm', name: 'Last.fm', icon: '🎵', color: 'bg-red-800' },
 ];
 
-// 최적화된 API 클라이언트
-const optimizedTrendingAPI = {
-  async getTrending(limit = 50) {
-    const startTime = Date.now();
-    
-    try {
-      const response = await fetch(`${API_URL}/cache/api/trending?limit=${limit}&fast=true`);
-      
-      if (!response.ok) {
-        throw new Error(`API Error: ${response.status}`);
-      }
-      
-      const data = await response.json();
-      const loadTime = Date.now() - startTime;
-      
-      return {
-        trending: data.trending || [],
-        loadTime,
-        cached: data.cached || false,
-        success: true
-      };
-      
-    } catch (error) {
-      console.error('Trending API error:', error);
-      
-      try {
-        const fallbackResponse = await fetch(`${API_URL}/api/trending?limit=${limit}`);
-        if (fallbackResponse.ok) {
-          const fallbackData = await fallbackResponse.json();
-          return {
-            trending: fallbackData.trending || [],
-            loadTime: Date.now() - startTime,
-            cached: false,
-            success: true,
-            fallback: true
-          };
-        }
-      } catch (fallbackError) {
-        console.error('Fallback API also failed:', fallbackError);
-      }
-      
-      return {
-        trending: [],
-        loadTime: Date.now() - startTime,
-        success: false,
-        error: error.message
-      };
-    }
-  }
-};
-
-// 최적화된 트랙 카드 컴포넌트 - 모바일 가독성 개선
-const OptimizedTrackCard = memo(({ 
+// 트랙 카드 컴포넌트 - 모바일 최적화
+const TrackCard = memo(({ 
   track, 
   index, 
   viewMode, 
@@ -98,33 +39,24 @@ const OptimizedTrackCard = memo(({
   const imageUrl = useMemo(() => {
     if (track.image_url) return track.image_url;
     if (track.album_image) return track.album_image;
-    const encodedArtist = encodeURIComponent(track.artist || track.unified_artist || '');
-    const encodedTrack = encodeURIComponent(track.track || track.title || track.unified_track || '');
-    return `${API_URL}/api/album-image-smart/${encodedArtist}/${encodedTrack}`;
+    const artist = encodeURIComponent(track.artist || track.unified_artist || '');
+    const title = encodeURIComponent(track.track || track.title || track.unified_track || '');
+    return `${API_URL}/api/album-image-smart/${artist}/${title}`;
   }, [track]);
   
-  const getTrendIcon = () => {
-    if (track.trend === 'up' || track.is_rising) {
-      return <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4 text-green-400" />;
-    }
-    if (track.trend === 'new' || track.is_new) {
-      return <Sparkles className="w-3 h-3 sm:w-4 sm:h-4 text-yellow-400" />;
-    }
-    return null;
-  };
-  
   const formatScore = (score: number) => {
+    if (!score) return '0';
     if (score >= 1000) return `${(score / 1000).toFixed(1)}K`;
-    return Math.round(score);
+    return Math.round(score).toString();
   };
   
-  // 리스트 뷰 - 모바일 최적화
+  // 리스트 뷰
   if (viewMode === 'list') {
     return (
       <motion.div
         initial={{ opacity: 0, x: -20 }}
         animate={{ opacity: 1, x: 0 }}
-        transition={{ duration: 0.3, delay: index * 0.02 }}
+        transition={{ duration: 0.3, delay: Math.min(index * 0.02, 0.3) }}
         onClick={onClick}
         className="bg-gray-800/50 backdrop-blur-sm rounded-lg sm:rounded-xl p-3 sm:p-4 hover:bg-gray-800/70 transition-all duration-300 cursor-pointer group"
       >
@@ -144,7 +76,7 @@ const OptimizedTrackCard = memo(({
               )}
               <img
                 src={imageError ? '/images/default-album.svg' : imageUrl}
-                alt={`${track.artist} - ${track.track}`}
+                alt=""
                 className={`w-full h-full object-cover rounded transition-opacity duration-300 ${
                   imageLoaded ? 'opacity-100' : 'opacity-0'
                 }`}
@@ -153,35 +85,25 @@ const OptimizedTrackCard = memo(({
                   setImageError(true);
                   setImageLoaded(true);
                 }}
-                loading={index > 5 ? "lazy" : "eager"}
+                loading="lazy"
               />
             </div>
           </div>
           
           {/* Track Info */}
           <div className="flex-grow min-w-0">
-            <h3 className="font-semibold text-sm sm:text-lg truncate group-hover:text-purple-400 transition-colors">
-              {track.track || track.title || track.unified_track}
+            <h3 className="font-semibold text-sm sm:text-lg text-white truncate group-hover:text-purple-400 transition-colors">
+              {track.track || track.title || track.unified_track || 'Unknown'}
             </h3>
             <p className="text-xs sm:text-sm text-gray-400 truncate">
-              {track.artist || track.unified_artist}
+              {track.artist || track.unified_artist || 'Unknown Artist'}
             </p>
           </div>
           
-          {/* Charts - 모바일에서 숨김 */}
-          <div className="hidden md:flex items-center space-x-2">
-            {Object.entries(track.charts || {}).slice(0, 3).map(([chart, rank]) => (
-              <span key={chart} className="px-2 py-1 bg-gray-700/50 rounded text-xs">
-                {chart}: #{rank}
-              </span>
-            ))}
-          </div>
-          
-          {/* Score & Trend */}
+          {/* Score */}
           <div className="flex items-center space-x-1 sm:space-x-2">
-            {getTrendIcon()}
             <span className="text-xs sm:text-sm font-medium text-gray-300">
-              {formatScore(track.score || 0)}
+              {formatScore(track.score)}
             </span>
           </div>
         </div>
@@ -189,36 +111,29 @@ const OptimizedTrackCard = memo(({
     );
   }
   
-  // 그리드 뷰 - 모바일 가독성 개선
+  // 그리드 뷰 - 가독성 개선
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.9 }}
       animate={{ opacity: 1, scale: 1 }}
-      transition={{ duration: 0.3, delay: index * 0.02 }}
+      transition={{ duration: 0.3, delay: Math.min(index * 0.02, 0.3) }}
       whileHover={{ scale: 1.05 }}
       onClick={onClick}
       className="bg-gray-800/50 backdrop-blur-sm rounded-lg sm:rounded-xl overflow-hidden hover:bg-gray-800/70 transition-all duration-300 cursor-pointer group relative"
     >
       {/* Rank Badge */}
-      <div className="absolute top-1 left-1 sm:top-2 sm:left-2 z-10 bg-black/80 backdrop-blur-sm rounded px-1.5 sm:px-2 py-0.5 sm:py-1">
+      <div className="absolute top-1 left-1 sm:top-2 sm:left-2 z-10 bg-black/90 backdrop-blur-sm rounded px-1.5 sm:px-2 py-0.5 sm:py-1">
         <span className="text-xs sm:text-sm font-bold text-white">#{index + 1}</span>
       </div>
       
-      {/* Trend Icon */}
-      {getTrendIcon() && (
-        <div className="absolute top-1 right-1 sm:top-2 sm:right-2 z-10">
-          {getTrendIcon()}
-        </div>
-      )}
-      
       {/* Album Image */}
-      <div className="aspect-square">
+      <div className="aspect-square relative">
         {!imageLoaded && !imageError && (
           <div className="absolute inset-0 bg-gray-700 animate-pulse" />
         )}
         <img
           src={imageError ? '/images/default-album.svg' : imageUrl}
-          alt={`${track.artist} - ${track.track}`}
+          alt=""
           className={`w-full h-full object-cover transition-opacity duration-300 ${
             imageLoaded ? 'opacity-100' : 'opacity-0'
           }`}
@@ -227,24 +142,24 @@ const OptimizedTrackCard = memo(({
             setImageError(true);
             setImageLoaded(true);
           }}
-          loading={index > 10 ? "lazy" : "eager"}
+          loading="lazy"
         />
       </div>
       
-      {/* Track Info - 배경색 및 텍스트 가독성 개선 */}
-      <div className="bg-gray-900/90 backdrop-blur-sm p-2 sm:p-3">
+      {/* Track Info - 진한 배경, 흰 텍스트 */}
+      <div className="bg-gray-900/95 backdrop-blur-sm p-2 sm:p-3">
         <h3 className="font-semibold text-xs sm:text-sm text-white truncate group-hover:text-purple-400 transition-colors">
-          {track.track || track.title || track.unified_track}
+          {track.track || track.title || track.unified_track || 'Unknown'}
         </h3>
-        <p className="text-xs sm:text-xs text-gray-300 truncate mt-0.5">
-          {track.artist || track.unified_artist}
+        <p className="text-xs text-gray-300 truncate mt-0.5">
+          {track.artist || track.unified_artist || 'Unknown Artist'}
         </p>
         
         {/* Score */}
         <div className="mt-1 flex items-center justify-between">
           <span className="text-xs text-gray-400">Score</span>
           <span className="text-xs sm:text-sm font-medium text-purple-400">
-            {formatScore(track.score || 0)}
+            {formatScore(track.score)}
           </span>
         </div>
       </div>
@@ -252,9 +167,9 @@ const OptimizedTrackCard = memo(({
   );
 });
 
-OptimizedTrackCard.displayName = 'OptimizedTrackCard';
+TrackCard.displayName = 'TrackCard';
 
-// 메인 컴포넌트
+// 메인 트렌딩 페이지 - 완전 CSR
 const TrendingPage = () => {
   const router = useRouter();
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
@@ -262,52 +177,51 @@ const TrendingPage = () => {
   const [trendingData, setTrendingData] = useState<any[]>([]);
   const [chartData, setChartData] = useState<Record<string, any[]>>({});
   const [loading, setLoading] = useState(true);
-  const [loadTime, setLoadTime] = useState(0);
-  const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
   const [searchTerm, setSearchTerm] = useState('');
   
-  // 데이터 로드
+  // 초기 데이터 로드
   useEffect(() => {
-    loadData();
+    loadTrendingData();
   }, []);
   
-  const loadData = async () => {
+  const loadTrendingData = async () => {
     setLoading(true);
-    const startTime = Date.now();
-    
-    // 트렌딩 데이터 로드
-    const result = await optimizedTrendingAPI.getTrending(50);
-    
-    if (result.success && result.trending) {
-      setTrendingData(result.trending);
-      setChartData({ all: result.trending });
-      setLoadTime(result.loadTime || 0);
-      setLastUpdate(new Date());
-    }
-    
-    setLoading(false);
-  };
-  
-  // 개별 차트 데이터 로드
-  const loadChartData = async (chartId: string) => {
-    if (chartId === 'all') return;
-    
     try {
-      // getChartLatest API 사용
-      const result = await chartIndividualAPI.getChartLatest(chartId);
-      if (result && result.tracks) {
-        // 차트별 데이터를 순위와 함께 저장
-        const tracksWithRank = result.tracks.map((track: any, idx: number) => ({
-          ...track,
-          rank_position: idx + 1, // 순위 추가
-          score: (51 - (idx + 1)) * 10 // 간단한 스코어 계산
-        }));
-        setChartData(prev => ({ ...prev, [chartId]: tracksWithRank }));
+      const response = await fetch(`${API_URL}/api/trending?limit=50`);
+      if (response.ok) {
+        const data = await response.json();
+        const trending = data.trending || [];
+        setTrendingData(trending);
+        setChartData({ all: trending });
       }
     } catch (error) {
-      console.error('Chart data load error:', error);
-      // 에러 시 빈 배열 설정
+      console.error('Trending load error:', error);
+      setTrendingData([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  const loadChartData = async (chartId: string) => {
+    if (chartId === 'all' || chartData[chartId]) return;
+    
+    setLoading(true);
+    try {
+      const response = await fetch(`${API_URL}/api/chart/${chartId}/latest`);
+      if (response.ok) {
+        const data = await response.json();
+        const tracks = (data.tracks || []).map((track: any, idx: number) => ({
+          ...track,
+          rank_position: idx + 1,
+          score: (51 - (idx + 1)) * 10
+        }));
+        setChartData(prev => ({ ...prev, [chartId]: tracks }));
+      }
+    } catch (error) {
+      console.error(`Chart ${chartId} load error:`, error);
       setChartData(prev => ({ ...prev, [chartId]: [] }));
+    } finally {
+      setLoading(false);
     }
   };
   
@@ -319,52 +233,41 @@ const TrendingPage = () => {
     
     if (searchTerm) {
       const term = searchTerm.toLowerCase();
-      tracks = tracks.filter(track => 
-        track.artist?.toLowerCase().includes(term) ||
-        track.track?.toLowerCase().includes(term) ||
-        track.title?.toLowerCase().includes(term) ||
-        track.unified_artist?.toLowerCase().includes(term) ||
-        track.unified_track?.toLowerCase().includes(term)
-      );
+      tracks = tracks.filter((track: any) => {
+        const artist = (track.artist || track.unified_artist || '').toLowerCase();
+        const title = (track.track || track.title || track.unified_track || '').toLowerCase();
+        return artist.includes(term) || title.includes(term);
+      });
     }
     
     return tracks;
   }, [trendingData, chartData, selectedChart, searchTerm]);
   
   const handleTrackClick = useCallback((track: any) => {
-    const artist = encodeURIComponent(track.artist || track.unified_artist);
-    const title = encodeURIComponent(track.track || track.title || track.unified_track);
-    router.push(`/track/${artist}/${title}`);
+    const artist = encodeURIComponent(track.artist || track.unified_artist || '');
+    const title = encodeURIComponent(track.track || track.title || track.unified_track || '');
+    if (artist && title) {
+      router.push(`/track/${artist}/${title}`);
+    }
   }, [router]);
   
   const handleChartChange = async (chartId: string) => {
     setSelectedChart(chartId);
-    
-    // 개별 차트 데이터 로드
-    if (chartId !== 'all' && !chartData[chartId]) {
-      setLoading(true);
-      await loadChartData(chartId);
-      setLoading(false);
-    }
+    await loadChartData(chartId);
   };
   
   return (
     <Layout>
       <Head>
         <title>트렌딩 - KPOP Ranker</title>
-        <meta name="description" content="실시간 K-POP 인기 차트 및 트렌딩 음악" />
+        <meta name="description" content="실시간 K-POP 인기 차트" />
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
       </Head>
       
       <div className="min-h-screen py-4 sm:py-8 px-2 sm:px-4">
         <div className="max-w-7xl mx-auto">
           {/* Header */}
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            className="mb-4 sm:mb-8"
-          >
+          <div className="mb-4 sm:mb-8">
             <h1 className="text-2xl sm:text-4xl font-bold mb-1 sm:mb-2">
               <span className="bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
                 실시간 트렌딩
@@ -373,11 +276,11 @@ const TrendingPage = () => {
             <p className="text-sm sm:text-base text-gray-400">
               전 세계 K-POP 차트 실시간 인기 순위
             </p>
-          </motion.div>
+          </div>
           
           {/* Controls */}
           <div className="mb-4 sm:mb-6 space-y-3 sm:space-y-4">
-            {/* Chart Filters - 모바일 스크롤 */}
+            {/* Chart Filters */}
             <div className="overflow-x-auto pb-2">
               <div className="flex gap-2 min-w-max">
                 {chartFilters.map((chart) => (
@@ -411,14 +314,12 @@ const TrendingPage = () => {
                 <button
                   onClick={() => setViewMode('grid')}
                   className={`p-1.5 sm:p-2 rounded ${viewMode === 'grid' ? 'bg-purple-600' : 'bg-gray-800'}`}
-                  aria-label="Grid view"
                 >
                   <Grid3x3 className="w-4 h-4 sm:w-5 sm:h-5" />
                 </button>
                 <button
                   onClick={() => setViewMode('list')}
                   className={`p-1.5 sm:p-2 rounded ${viewMode === 'list' ? 'bg-purple-600' : 'bg-gray-800'}`}
-                  aria-label="List view"
                 >
                   <List className="w-4 h-4 sm:w-5 sm:h-5" />
                 </button>
@@ -428,11 +329,10 @@ const TrendingPage = () => {
           
           {/* Results Count */}
           <div className="mb-3 sm:mb-4 text-xs sm:text-sm text-gray-400">
-            {filteredTracks.length}개 트랙 • 마지막 업데이트: {lastUpdate.toLocaleString('ko-KR')}
-            {loadTime > 0 && <span className="ml-2">({loadTime}ms)</span>}
+            {filteredTracks.length}개 트랙
           </div>
           
-          {/* Loading State */}
+          {/* Tracks */}
           {loading ? (
             <div className={
               viewMode === 'grid' 
@@ -448,14 +348,13 @@ const TrendingPage = () => {
               ))}
             </div>
           ) : (
-            /* Tracks Grid/List */
             <div className={
               viewMode === 'grid' 
                 ? "grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2 sm:gap-4"
                 : "space-y-2 sm:space-y-3"
             }>
               {filteredTracks.map((track, index) => (
-                <OptimizedTrackCard
+                <TrackCard
                   key={`${track.artist}-${track.track}-${index}`}
                   track={track}
                   index={index}
@@ -470,9 +369,7 @@ const TrendingPage = () => {
           {!loading && filteredTracks.length === 0 && (
             <div className="text-center py-10 sm:py-20">
               <p className="text-gray-400 text-sm sm:text-lg">
-                {selectedChart !== 'all' 
-                  ? '이 차트의 데이터를 불러오는 중입니다...' 
-                  : '검색 결과가 없습니다.'}
+                검색 결과가 없습니다.
               </p>
             </div>
           )}
