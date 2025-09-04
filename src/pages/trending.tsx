@@ -21,7 +21,7 @@ const chartFilters = [
   { id: 'lastfm', name: 'Last.fm', icon: '🎵', color: 'bg-red-800' },
 ];
 
-// 트랙 카드 컴포넌트 - 모바일 최적화
+// 트랙 카드 컴포넌트
 const TrackCard = memo(({ 
   track, 
   index, 
@@ -33,20 +33,26 @@ const TrackCard = memo(({
   viewMode: 'grid' | 'list';
   onClick: () => void;
 }) => {
-  const [imageLoaded, setImageLoaded] = useState(false);
   const [imageError, setImageError] = useState(false);
   
-  // 이미지 URL 생성 - API_URL 사용
+  // 이미지 URL 처리 - 백엔드 API 직접 호출
   const imageUrl = useMemo(() => {
-    // 이미 로컬 이미지 또는 전체 URL이 있으면 사용
-    if (track.image_url && (track.image_url.startsWith('http') || track.image_url.startsWith('/'))) {
+    // 1. 이미 전체 URL이 있으면 사용
+    if (track.image_url && track.image_url.startsWith('http')) {
       return track.image_url;
     }
-    if (track.album_image && (track.album_image.startsWith('http') || track.album_image.startsWith('/'))) {
-      return track.album_image;
+    
+    // 2. 상대경로면 백엔드 URL 추가
+    if (track.image_url && track.image_url.startsWith('/')) {
+      // /api/album-image-smart/... 형태면 백엔드 URL 붙이기
+      if (track.image_url.includes('/api/')) {
+        return `${API_URL}${track.image_url}`;
+      }
+      // /static/... 형태면 백엔드 URL 붙이기
+      return `${API_URL}${track.image_url}`;
     }
     
-    // 아티스트와 트랙명으로 스마트 이미지 API 호출
+    // 3. 이미지 URL이 없으면 스마트 API 호출
     const artist = track.artist || track.unified_artist || '';
     const title = track.track || track.title || track.unified_track || '';
     
@@ -58,7 +64,7 @@ const TrackCard = memo(({
     const encodedArtist = encodeURIComponent(artist.replace(/\//g, ''));
     const encodedTitle = encodeURIComponent(title.replace(/\//g, ''));
     
-    // 백엔드 API URL 사용
+    // 백엔드 API 전체 URL
     return `${API_URL}/api/album-image-smart/${encodedArtist}/${encodedTitle}`;
   }, [track]);
   
@@ -79,17 +85,15 @@ const TrackCard = memo(({
         className="bg-gray-800/50 backdrop-blur-sm rounded-lg sm:rounded-xl p-3 sm:p-4 hover:bg-gray-800/70 transition-all duration-300 cursor-pointer group"
       >
         <div className="flex items-center space-x-2 sm:space-x-4">
-          {/* Rank */}
           <div className="flex-shrink-0 w-8 sm:w-12 text-center">
             <span className="text-lg sm:text-2xl font-bold text-purple-400">
               {index + 1}
             </span>
           </div>
           
-          {/* Album Image */}
           <div className="flex-shrink-0">
             <div className="relative w-12 h-12 sm:w-[60px] sm:h-[60px] bg-gray-700 rounded overflow-hidden">
-              {!imageError && (
+              {!imageError ? (
                 <img
                   src={imageUrl}
                   alt=""
@@ -97,8 +101,7 @@ const TrackCard = memo(({
                   onError={() => setImageError(true)}
                   loading="lazy"
                 />
-              )}
-              {imageError && (
+              ) : (
                 <div className="w-full h-full flex items-center justify-center text-gray-500">
                   <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
@@ -108,7 +111,6 @@ const TrackCard = memo(({
             </div>
           </div>
           
-          {/* Track Info */}
           <div className="flex-grow min-w-0">
             <h3 className="font-semibold text-sm sm:text-lg text-white truncate group-hover:text-purple-400 transition-colors">
               {track.track || track.title || track.unified_track || 'Unknown'}
@@ -118,7 +120,6 @@ const TrackCard = memo(({
             </p>
           </div>
           
-          {/* Score */}
           <div className="flex items-center space-x-1 sm:space-x-2">
             <span className="text-xs sm:text-sm font-medium text-gray-300">
               {formatScore(track.score)}
@@ -129,7 +130,7 @@ const TrackCard = memo(({
     );
   }
   
-  // 그리드 뷰 - 가독성 개선
+  // 그리드 뷰
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.9 }}
@@ -139,14 +140,12 @@ const TrackCard = memo(({
       onClick={onClick}
       className="bg-gray-800/50 backdrop-blur-sm rounded-lg sm:rounded-xl overflow-hidden hover:bg-gray-800/70 transition-all duration-300 cursor-pointer group relative"
     >
-      {/* Rank Badge */}
       <div className="absolute top-1 left-1 sm:top-2 sm:left-2 z-10 bg-black/90 backdrop-blur-sm rounded px-1.5 sm:px-2 py-0.5 sm:py-1">
         <span className="text-xs sm:text-sm font-bold text-white">#{index + 1}</span>
       </div>
       
-      {/* Album Image */}
       <div className="aspect-square relative bg-gray-700">
-        {!imageError && (
+        {!imageError ? (
           <img
             src={imageUrl}
             alt=""
@@ -154,8 +153,7 @@ const TrackCard = memo(({
             onError={() => setImageError(true)}
             loading="lazy"
           />
-        )}
-        {imageError && (
+        ) : (
           <div className="w-full h-full flex items-center justify-center text-gray-500">
             <svg className="w-12 h-12" fill="currentColor" viewBox="0 0 20 20">
               <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
@@ -164,7 +162,6 @@ const TrackCard = memo(({
         )}
       </div>
       
-      {/* Track Info - 진한 배경, 흰 텍스트 */}
       <div className="bg-gray-900/95 backdrop-blur-sm p-2 sm:p-3">
         <h3 className="font-semibold text-xs sm:text-sm text-white truncate group-hover:text-purple-400 transition-colors">
           {track.track || track.title || track.unified_track || 'Unknown'}
@@ -173,7 +170,6 @@ const TrackCard = memo(({
           {track.artist || track.unified_artist || 'Unknown Artist'}
         </p>
         
-        {/* Score */}
         <div className="mt-1 flex items-center justify-between">
           <span className="text-xs text-gray-400">Score</span>
           <span className="text-xs sm:text-sm font-medium text-purple-400">
@@ -187,7 +183,7 @@ const TrackCard = memo(({
 
 TrackCard.displayName = 'TrackCard';
 
-// 메인 트렌딩 페이지 - 완전 CSR
+// 메인 트렌딩 페이지
 const TrendingPage = () => {
   const router = useRouter();
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
@@ -197,7 +193,6 @@ const TrendingPage = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   
-  // 초기 데이터 로드
   useEffect(() => {
     loadTrendingData();
   }, []);
@@ -208,7 +203,19 @@ const TrendingPage = () => {
       const response = await fetch(`${API_URL}/api/trending?limit=50`);
       if (response.ok) {
         const data = await response.json();
-        const trending = data.trending || [];
+        let trending = data.trending || [];
+        
+        // 이미지 URL 수정
+        trending = trending.map((track: any) => {
+          if (track.image_url && track.image_url.startsWith('/api/')) {
+            return {
+              ...track,
+              image_url: `${API_URL}${track.image_url}`
+            };
+          }
+          return track;
+        });
+        
         setTrendingData(trending);
         setChartData({ all: trending });
       }
@@ -228,11 +235,19 @@ const TrendingPage = () => {
       const response = await fetch(`${API_URL}/api/chart/${chartId}/latest`);
       if (response.ok) {
         const data = await response.json();
-        const tracks = (data.tracks || []).map((track: any, idx: number) => ({
-          ...track,
-          rank_position: idx + 1,
-          score: (51 - (idx + 1)) * 10
-        }));
+        let tracks = (data.tracks || []).map((track: any, idx: number) => {
+          // 이미지 URL 수정
+          if (track.image_url && track.image_url.startsWith('/api/')) {
+            track.image_url = `${API_URL}${track.image_url}`;
+          }
+          
+          return {
+            ...track,
+            rank_position: idx + 1,
+            score: (51 - (idx + 1)) * 10
+          };
+        });
+        
         setChartData(prev => ({ ...prev, [chartId]: tracks }));
       }
     } catch (error) {
@@ -243,7 +258,6 @@ const TrendingPage = () => {
     }
   };
   
-  // 필터된 트랙
   const filteredTracks = useMemo(() => {
     let tracks = selectedChart === 'all' 
       ? trendingData 
@@ -284,7 +298,6 @@ const TrendingPage = () => {
       
       <div className="min-h-screen py-4 sm:py-8 px-2 sm:px-4">
         <div className="max-w-7xl mx-auto">
-          {/* Header */}
           <div className="mb-4 sm:mb-8">
             <h1 className="text-2xl sm:text-4xl font-bold mb-1 sm:mb-2">
               <span className="bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
@@ -296,9 +309,7 @@ const TrendingPage = () => {
             </p>
           </div>
           
-          {/* Controls */}
           <div className="mb-4 sm:mb-6 space-y-3 sm:space-y-4">
-            {/* Chart Filters */}
             <div className="overflow-x-auto pb-2">
               <div className="flex gap-2 min-w-max">
                 {chartFilters.map((chart) => (
@@ -318,7 +329,6 @@ const TrendingPage = () => {
               </div>
             </div>
             
-            {/* Search & View Toggle */}
             <div className="flex items-center gap-2">
               <input
                 type="text"
@@ -345,12 +355,10 @@ const TrendingPage = () => {
             </div>
           </div>
           
-          {/* Results Count */}
           <div className="mb-3 sm:mb-4 text-xs sm:text-sm text-gray-400">
             {filteredTracks.length}개 트랙
           </div>
           
-          {/* Tracks */}
           {loading ? (
             <div className={
               viewMode === 'grid' 
@@ -383,7 +391,6 @@ const TrendingPage = () => {
             </div>
           )}
           
-          {/* Empty State */}
           {!loading && filteredTracks.length === 0 && (
             <div className="text-center py-10 sm:py-20">
               <p className="text-gray-400 text-sm sm:text-lg">
