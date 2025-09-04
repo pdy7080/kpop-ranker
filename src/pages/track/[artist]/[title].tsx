@@ -172,41 +172,72 @@ export default function TrackDetailPage() {
     }
   };
 
-  // 1. Spotify에서 트랙 재생 - 직접 검색 연결 개선
+  // 1. Spotify에서 트랙 검색 - 모바일 다중 전략
   const handlePlayTrack = () => {
     const currentTrackTitle = trackInfo?.track || trackInfo?.title || (title as string) || '';
     if (trackInfo?.artist && currentTrackTitle) {
-      // 모바일에 최적화된 검색 쿼리 생성
+      // 모바일 환경 감지
       const isMobile = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+      const isAndroid = /Android/.test(navigator.userAgent);
       
-      let searchQuery;
-      if (isMobile) {
-        // 모바일: 간단한 검색 (더 좋은 결과)
-        searchQuery = `${trackInfo.artist} ${currentTrackTitle}`
-          .replace(/[()\[\]]/g, '')  // 특수문자 제거
-          .replace(/\s+/g, ' ')      // 공백 정리
-          .trim();
-      } else {
-        // 데스크톱: 정확한 검색
-        searchQuery = `track:"${currentTrackTitle}" artist:"${trackInfo.artist}"`
-          .replace(/[()\[\]]/g, '')  // 특수문자 제거
-          .replace(/\s+/g, ' ')      // 공백 정리
-          .trim();
-      }
-      
-      const spotifyUrl = `https://open.spotify.com/search/${encodeURIComponent(searchQuery)}`;
-      
-      // 모바일 호환성 개선
+      console.log('🔍 디바이스 정보:', { isMobile, isIOS, isAndroid });
+      console.log('🎧 아티스트:', trackInfo.artist);
+      console.log('🎵 곡제목:', currentTrackTitle);
       
       if (isMobile) {
-        // 모바일: 새 창 시도 후 실패 시 현재 창에서 열기
-        const newWindow = window.open(spotifyUrl, '_blank');
-        if (!newWindow || newWindow.closed || typeof newWindow.closed == 'undefined') {
-          // 팝업 차단되거나 실패 시 현재 창에서 열기
-          window.location.href = spotifyUrl;
+        // 모바일: 여러 방법 시도
+        const cleanArtist = trackInfo.artist.replace(/[()\[\]"']/g, '').trim();
+        const cleanTitle = currentTrackTitle.replace(/[()\[\]"']/g, '').trim();
+        
+        // URL 매개변수 방식 시도 1 - 가장 단순
+        const query1 = `${cleanArtist} ${cleanTitle}`;
+        const url1 = `https://open.spotify.com/search?q=${encodeURIComponent(query1)}`;
+        
+        // URL 매개변수 방식 시도 2 - 공백을 +로 대체
+        const query2 = `${cleanArtist}+${cleanTitle}`;
+        const url2 = `https://open.spotify.com/search?q=${query2}`;
+        
+        // 기존 방식
+        const url3 = `https://open.spotify.com/search/${encodeURIComponent(cleanArtist + ' ' + cleanTitle)}`;
+        
+        console.log('🔗 시도할 URL들:');
+        console.log('1. Query 방식:', url1);
+        console.log('2. Plus 방식:', url2);
+        console.log('3. 기존 방식:', url3);
+        
+        // 모바일에서는 쿼리 방식을 우선 시도
+        let finalUrl = url1;
+        
+        // iOS에서는 다른 방식 시도
+        if (isIOS) {
+          finalUrl = url2;
+          console.log('📱 iOS 감지: Plus 방식 사용');
         }
+        
+        console.log('✅ 최종 URL:', finalUrl);
+        
+        // 모바일에서 열기 시도
+        setTimeout(() => {
+          try {
+            console.log('🚀 모바일에서 Spotify 열기 시도...');
+            window.open(finalUrl, '_blank', 'noopener,noreferrer');
+          } catch (error) {
+            console.log('❌ window.open 실패, location.href 시도');
+            window.location.href = finalUrl;
+          }
+        }, 100);
+        
       } else {
-        // 데스크톱: 기본 새 창
+        // 데스크톱: 기존 정확한 검색
+        const searchQuery = `track:"${currentTrackTitle}" artist:"${trackInfo.artist}"`
+          .replace(/[()\[\]]/g, '')
+          .replace(/\s+/g, ' ')
+          .trim();
+        
+        const spotifyUrl = `https://open.spotify.com/search/${encodeURIComponent(searchQuery)}`;
+        console.log('💻 데스크톱 Spotify URL:', spotifyUrl);
+        
         window.open(spotifyUrl, '_blank');
       }
     }
