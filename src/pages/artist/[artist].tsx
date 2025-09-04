@@ -6,8 +6,12 @@ import ImageWithFallback from '@/components/ImageWithFallback';
 import ChartRankDisplay from '@/components/ChartRankDisplay';
 import { motion, AnimatePresence } from 'framer-motion';
 import { artistAPI } from '@/lib/api';
-import NewsTab from '@/components/NewsTab';
-import GoodsTab from '@/components/GoodsTab';
+// 최적화된 컴포넌트 사용
+import NewsTabOptimized from '@/components/NewsTabOptimized';
+import GoodsTabOptimized from '@/components/GoodsTabOptimized';
+// 기존 컴포넌트 백업
+// import NewsTab from '@/components/NewsTab';
+// import GoodsTab from '@/components/GoodsTab';
 import { 
   Music, TrendingUp, Award, Clock, BarChart3, 
   Globe, Play, Star, Activity, Disc, Mic,
@@ -572,7 +576,7 @@ export default function ArtistPage() {
                 exit={{ opacity: 0, y: -20 }}
                 className="pb-16"
               >
-                <NewsTab artistName={artistInfo.name} />
+                <NewsTabOptimized artistName={artistInfo.name} />
               </motion.div>
             )}
 
@@ -585,7 +589,7 @@ export default function ArtistPage() {
                 exit={{ opacity: 0, y: -20 }}
                 className="pb-16"
               >
-                <GoodsTab artistName={artistInfo.name} />
+                <GoodsTabOptimized artistName={artistInfo.name} />
               </motion.div>
             )}
 
