@@ -187,21 +187,31 @@ export default function TrackDetailPage() {
     }
   };
 
-  // 2. 포트폴리오에 곡 추가
+  // 2. 포트폴리오에 곡 추가 - 인증 상태 확인 및 올바른 토큰 사용
   const handleAddToPortfolio = async () => {
     try {
       const currentTrackTitle = trackInfo?.track || trackInfo?.title || (title as string) || '';
       console.log('🔥 포트폴리오 추가 시도:', { artist: trackInfo?.artist, title: currentTrackTitle });
       
+      // 인증 상태 확인
+      const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
+      
+      if (!token) {
+        alert(t('portfolio.login.description') || '로그인이 필요합니다.');
+        // 로그인 페이지로 이동 또는 로그인 모달 열기
+        router.push('/auth/login');
+        return;
+      }
+      
       const response = await fetch(`${API_URL}/api/portfolio`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': 'Bearer demo_token' // 임시 데모 토큰 사용
+          'Authorization': `Bearer ${token}`  // ✅ 실제 사용자 토큰 사용
         },
         body: JSON.stringify({
           artist: trackInfo?.artist,
-          title: currentTrackTitle  // track → title로 변경
+          track: currentTrackTitle  // ✅ track 필드로 통일
         })
       });
       
@@ -211,10 +221,11 @@ export default function TrackDetailPage() {
       console.log('📊 포트폴리오 API 응답 데이터:', data);
       
       if (data.success) {
-        alert(t('toast.added.portfolio'));
+        alert(t('toast.added.portfolio') || '포트폴리오에 추가되었습니다!');
       } else {
         if (data.requireAuth) {
-          alert(t('portfolio.login.description'));
+          alert(t('portfolio.login.description') || '로그인이 필요합니다.');
+          router.push('/auth/login');
         } else {
           console.error('❌ 포트폴리오 추가 실패:', data);
           alert(data.error || '포트폴리오 추가에 실패했습니다.');
