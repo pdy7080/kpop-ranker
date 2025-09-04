@@ -283,4 +283,40 @@ export const insightsAPI = {
   }
 };
 
+// Chart Individual API - 차트별 개별 데이터 (캐시 기반 최적화)
+export const chartIndividualAPI = {
+  getChartLatest: async (chartName: string) => {
+    // 캐시 기반 API 우선 시도
+    try {
+      const response = await api.get(`/cache/api/chart/${chartName}/latest`, {
+        timeout: 10000  // 10초로 단축 (캐시는 빠른)
+      });
+      return response.data;
+    } catch (error) {
+      // 캐시 API 실패 시 기존 API로 폴백
+      console.warn(`캐시 API 실패, 기존 API 사용: ${chartName}`, error.message);
+      const response = await api.get(`/api/chart/${chartName}/latest`, {
+        timeout: 30000  // 30초 타임아웃
+      });
+      return response.data;
+    }
+  },
+  
+  getChartsList: async () => {
+    const response = await api.get('/api/charts/list');
+    return response.data;
+  },
+  
+  getChartsStatus: async () => {
+    // 캐시 기반 상태 API 우선
+    try {
+      const response = await api.get('/cache/api/charts/status');
+      return response.data;
+    } catch (error) {
+      const response = await api.get('/api/charts/status');
+      return response.data;
+    }
+  }
+};
+
 export default api;

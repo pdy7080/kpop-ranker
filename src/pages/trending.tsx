@@ -4,9 +4,10 @@ import { useRouter } from 'next/router';
 import Layout from '@/components/Layout';
 import { motion } from 'framer-motion';
 import TrendingListV2 from '@/components/TrendingListV2';
-import { trendingApi } from '@/lib/api';
+import ChartIndividual from '@/components/ChartIndividual';
+import { trendingApi, chartIndividualAPI } from '@/lib/api';
 import { 
-  TrendingUp, Grid3x3, List, Sparkles
+  TrendingUp, Grid3x3, List, Sparkles, Clock
 } from 'lucide-react';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
@@ -35,10 +36,11 @@ const chartFilters: ChartFilter[] = [
   { id: 'genie', name: 'Genie', icon: '🧞', color: 'bg-blue-500' },
   { id: 'bugs', name: 'Bugs', icon: '🐛', color: 'bg-red-500' },
   { id: 'spotify', name: 'Spotify', icon: '🎧', color: 'bg-green-600' },
-  { id: 'youtube', name: 'YouTube', icon: '📺', color: 'bg-red-600' },
+  // YouTube는 별도 구조로 일시 제외
+  // { id: 'youtube', name: 'YouTube', icon: '📺', color: 'bg-red-600' },
   { id: 'flo', name: 'FLO', icon: '🌊', color: 'bg-blue-600' },
   { id: 'apple_music', name: 'Apple Music', icon: '🍎', color: 'bg-gray-800' },
-  { id: 'salam', name: 'Salam', icon: '🎵', color: 'bg-orange-500' },
+  { id: 'lastfm', name: 'Last.fm', icon: '🎵', color: 'bg-red-800' },
 ];
 
 export default function TrendingPage() {
@@ -48,215 +50,260 @@ export default function TrendingPage() {
   const [selectedChart, setSelectedChart] = useState<string>('all');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [isLoading, setIsLoading] = useState(true);
-  const [limit, setLimit] = useState(20); // 50 → 20로 초기 로딩 감소
+  
+  // 차트별 개별 데이터 상태
+  const [chartData, setChartData] = useState<any>(null);
+  const [isLoadingChart, setIsLoadingChart] = useState(false);
+  const [limit, setLimit] = useState(20);
 
   useEffect(() => {
     fetchTrendingData();
   }, [limit]);
 
-  useEffect(() => {
-    filterTracks();
-  }, [selectedChart, trendingTracks]);
-
   const fetchTrendingData = async () => {
     try {
       setIsLoading(true);
-      // 🚀 캐시 기반 API 사용 (94% 성능 향상!)
-      const response = await fetch(`${API_URL}/cache/api/trending?limit=${limit}&fast=true`);
+      const data = await trendingApi.getTrending('hot', limit);
       
-      if (response.ok) {
-        const data = await response.json();
-        console.log('Trending data:', data);
-        
-        if (data?.trending && Array.isArray(data.trending)) {
-          const processedTracks = data.trending.map((track: any, index: number) => {
-            let imageUrl = track.image_url;
-            
-            // 최적화: 상위 10개만 즉시 이미지 처리
-            if (!imageUrl || !track.has_real_image) {
-              imageUrl = `${API_URL}/api/track-image-detail/${encodeURIComponent(track.artist)}/${encodeURIComponent(track.track)}`;
-            } else if (!imageUrl.startsWith('http')) {
-              imageUrl = imageUrl.startsWith('/') ? `${API_URL}${imageUrl}` : imageUrl;
-            }
-            
-            return {
-              ...track,
-              image_url: imageUrl
-            };
-          });
-          
-          // 지연된 이미지 프리로드 (스크롤 성능 개선)
-          setTimeout(() => {
-            processedTracks.forEach((track, index) => {
-              if (index < 20) { // 첫 20개 이미지 프리로드
-                const img = new Image();
-                img.src = track.image_url;
-                // 캐시에 저장하기 위해 로드 후 즉시 해제하지 않음
-              }
-            });
-          }, 100); // 100ms 후 백그라운드에서 프리로드
-          
-          setTrendingTracks(processedTracks);
-          setFilteredTracks(processedTracks);
-        }
+      if (data && data.trending) {
+        setTrendingTracks(data.trending);
+        setFilteredTracks(data.trending);
       }
     } catch (error) {
-      console.error('Error fetching trending:', error);
+      console.error('트렌딩 데이터 로딩 실패:', error);
     } finally {
       setIsLoading(false);
     }
   };
-
-  const filterTracks = () => {
-    if (selectedChart === 'all') {
-      setFilteredTracks(trendingTracks);
-    } else {
-      const filtered = trendingTracks.filter(track => {
-        return track.charts && Object.keys(track.charts).some(
-          chart => chart.toLowerCase() === selectedChart.toLowerCase()
-        );
+  
+  // 차트별 개별 데이터 로딩 (최적화)
+  const fetchChartData = async (chartName: string) => {
+    if (chartName === 'all') return;
+    
+    try {
+      setIsLoadingChart(true);
+      // 타임아웃 30초로 증가 + 재시도 로직
+      const data = await chartIndividualAPI.getChartLatest(chartName);
+      
+      if (data.success) {
+        setChartData(data);
+      } else {
+        console.error(`${chartName} 차트 데이터 오류:`, data.error);
+        setChartData({
+          error: true,
+          message: `${chartName} 차트 데이터를 불러올 수 없습니다.`
+        });
+      }
+    } catch (error) {
+      console.error(`${chartName} 차트 데이터 로딩 실패:`, error);
+      
+      // 간단한 재시도 (1번)
+      if (error.code === 'ECONNABORTED') {
+        console.log(`${chartName} 재시도 중...`);
+        try {
+          const retryData = await chartIndividualAPI.getChartLatest(chartName);
+          if (retryData.success) {
+            setChartData(retryData);
+            return;
+          }
+        } catch (retryError) {
+          console.error('재시도 실패:', retryError);
+        }
+      }
+      
+      setChartData({
+        error: true,
+        message: `${chartName} 차트를 일시적으로 사용할 수 없습니다. 잠시 후 다시 시도해주세요.`
       });
-      setFilteredTracks(filtered);
+    } finally {
+      setIsLoadingChart(false);
     }
+  };
+
+  const handleTrackClick = (artist: string, track: string) => {
+    // 트랙 상세페이지로 이동
+    const encodedArtist = encodeURIComponent(artist);
+    const encodedTrack = encodeURIComponent(track);
+    router.push(`/track/${encodedArtist}/${encodedTrack}`);
+  };
+
+  const handleChartFilter = (chartId: string) => {
+    setSelectedChart(chartId);
+    
+    if (chartId === 'all') {
+      // 통합 차트 표시
+      setFilteredTracks(trendingTracks);
+      setChartData(null);
+    } else {
+      // 개별 차트 데이터 로딩
+      fetchChartData(chartId);
+    }
+  };
+
+  const loadMore = () => {
+    setLimit(prev => prev + 20);
   };
 
   return (
     <Layout>
       <Head>
-        <title>TRENDING - KPOP Ranker</title>
-        <meta name="description" content="실시간 K-POP 트렌딩 차트" />
+        <title>트렌딩 - KPOP Ranker</title>
+        <meta name="description" content="실시간 K-POP 트렌드 분석" />
+        <meta property="og:title" content="KPOP Ranker - 실시간 트렌딩" />
+        <meta property="og:description" content="8개 글로벌 차트의 실시간 K-POP 트렌드를 한눈에" />
       </Head>
 
-      {/* Hero Header - Simplified */}
-      <section className="relative py-8 bg-gradient-to-b from-purple-900/10 to-transparent">
-        <div className="container mx-auto px-4">
+      <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-800">
+        <div className="container mx-auto px-4 py-8">
+          {/* 페이지 헤더 */}
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="text-center mb-6"
+            className="text-center mb-8"
           >
-            <h1 className="text-3xl md:text-4xl font-bold mb-2">
-              <span className="bg-gradient-to-r from-purple-400 via-pink-400 to-blue-400 bg-clip-text text-transparent flex items-center justify-center gap-3">
-                <Sparkles className="w-8 h-8" />
-                TRENDING
-              </span>
-            </h1>
-            <p className="text-sm text-gray-400">실시간 K-POP 트렌드 분석</p>
+            <div className="flex items-center justify-center gap-3 mb-4">
+              <TrendingUp className="w-8 h-8 text-pink-400" />
+              <h1 className="text-4xl font-bold text-white">TRENDING</h1>
+              <Sparkles className="w-6 h-6 text-yellow-400" />
+            </div>
+            <p className="text-gray-300 text-lg">실시간 K-POP 트렌드 분석</p>
+            
+            {/* LIVE 표시 */}
+            <div className="flex items-center justify-center gap-4 mt-4">
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+                <span className="text-green-400 font-semibold">LIVE</span>
+              </div>
+              <Clock className="w-4 h-4 text-gray-400" />
+              <span className="text-gray-400 text-sm">업데이트</span>
+            </div>
           </motion.div>
 
-          {/* Stats Bar */}
+          {/* 차트 필터 탭 */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            className="flex justify-center gap-8 mb-6"
+            className="mb-8"
           >
-            <div className="text-center">
-              <div className="text-2xl font-bold text-white">{filteredTracks.length}</div>
-              <div className="text-xs text-gray-400">트랙</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-green-400 flex items-center gap-1">
-                <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
-                LIVE
-              </div>
-              <div className="text-xs text-gray-400">업데이트</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-white">8</div>
-              <div className="text-xs text-gray-400">차트</div>
+            <div className="flex flex-wrap justify-center gap-3">
+              {chartFilters.map((filter, index) => (
+                <motion.button
+                  key={filter.id}
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: index * 0.1 }}
+                  onClick={() => handleChartFilter(filter.id)}
+                  className={`
+                    px-4 py-2 rounded-full text-sm font-semibold transition-all duration-200
+                    ${selectedChart === filter.id
+                      ? `${filter.color} text-white scale-105 shadow-lg`
+                      : 'bg-white/10 text-gray-300 hover:bg-white/20'
+                    }
+                  `}
+                >
+                  <span className="mr-2">{filter.icon}</span>
+                  {filter.name}
+                </motion.button>
+              ))}
             </div>
           </motion.div>
-        </div>
-      </section>
 
-      {/* Controls */}
-      <section className="container mx-auto px-4 mb-6">
-        <div className="flex flex-col lg:flex-row gap-4 justify-between items-center">
-          {/* Chart Filters */}
-          <div className="flex gap-2 flex-wrap justify-center">
-            {chartFilters.map((chart) => (
-              <motion.button
-                key={chart.id}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => setSelectedChart(chart.id)}
-                className={`
-                  px-3 py-1.5 rounded-lg font-medium text-sm transition-all
-                  ${selectedChart === chart.id
-                    ? `${chart.color} text-white shadow-lg`
-                    : 'bg-gray-800 text-gray-300 hover:bg-gray-700 hover:text-white border border-gray-600'
-                  }
-                `}
-              >
-                <span className="mr-1">{chart.icon}</span>
-                {chart.name}
-              </motion.button>
-            ))}
-          </div>
-
-          {/* View Mode Toggle */}
-          <div className="flex gap-1 bg-black/40 p-1 rounded-lg border border-white/10">
-            <button
-              onClick={() => setViewMode('grid')}
-              className={`
-                px-3 py-1.5 rounded-md transition-all flex items-center gap-2 text-sm
-                ${viewMode === 'grid'
-                  ? 'bg-purple-500 text-white'
-                  : 'text-gray-400 hover:text-white'
-                }
-              `}
-            >
-              <Grid3x3 className="w-4 h-4" />
-              Grid
-            </button>
-            <button
-              onClick={() => setViewMode('list')}
-              className={`
-                px-3 py-1.5 rounded-md transition-all flex items-center gap-2 text-sm
-                ${viewMode === 'list'
-                  ? 'bg-purple-500 text-white'
-                  : 'text-gray-400 hover:text-white'
-                }
-              `}
-            >
-              <List className="w-4 h-4" />
-              List
-            </button>
-          </div>
-        </div>
-      </section>
-
-      {/* Trending List */}
-      <section className="container mx-auto px-4 pb-8">
-        {isLoading ? (
-          <div className="flex justify-center items-center py-20">
-            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500"></div>
-          </div>
-        ) : (
-          <TrendingListV2 
-            tracks={filteredTracks}
-            selectedChart={selectedChart}
-            viewMode={viewMode}
-          />
-        )}
-
-        {/* Load More */}
-        {!isLoading && filteredTracks.length >= limit && (
+          {/* 뷰 모드 전환 */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="text-center mt-8"
+            className="flex justify-end mb-6"
           >
-            <button
-              onClick={() => setLimit(limit + 50)}
-              className="px-6 py-2.5 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg font-medium hover:shadow-lg hover:shadow-purple-500/25 transition-all"
-            >
-              더 보기 (+50)
-            </button>
+            <div className="flex bg-white/10 rounded-full p-1">
+              <button
+                onClick={() => setViewMode('grid')}
+                className={`p-2 rounded-full transition-all ${
+                  viewMode === 'grid'
+                    ? 'bg-purple-600 text-white'
+                    : 'text-gray-400 hover:text-white'
+                }`}
+              >
+                <Grid3x3 className="w-5 h-5" />
+              </button>
+              <button
+                onClick={() => setViewMode('list')}
+                className={`p-2 rounded-full transition-all ${
+                  viewMode === 'list'
+                    ? 'bg-purple-600 text-white'
+                    : 'text-gray-400 hover:text-white'
+                }`}
+              >
+                <List className="w-5 h-5" />
+              </button>
+            </div>
           </motion.div>
-        )}
-      </section>
+
+          {/* 컨텐츠 영역 */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+          >
+            {selectedChart === 'all' ? (
+              // 통합 차트 표시
+              <>
+                {isLoading ? (
+                  <div className="flex justify-center items-center min-h-96">
+                    <div className="text-white text-xl">로딩 중...</div>
+                  </div>
+                ) : (
+                  <TrendingListV2
+                    tracks={filteredTracks}
+                    viewMode={viewMode}
+                    showLoadMore={trendingTracks.length >= limit}
+                    onLoadMore={loadMore}
+                    isLoading={false}
+                  />
+                )}
+              </>
+            ) : (
+              // 개별 차트 표시
+              <>
+                {isLoadingChart ? (
+                  <div className="flex justify-center items-center min-h-96">
+                    <div className="text-white text-xl">차트 데이터 로딩 중...</div>
+                  </div>
+                ) : chartData ? (
+                // 성공적으로 로드된 차트 데이터
+                !chartData.error ? (
+                <ChartIndividual
+                  chartName={chartData.chart_name}
+                  displayName={chartData.chart_display_name}
+                  tracks={chartData.tracks}
+                  lastUpdate={chartData.last_update}
+                  isYoutube={chartData.is_youtube}
+                  onTrackClick={handleTrackClick}  // 트랙 클릭 핸들러 추가
+                />
+              ) : (
+                // 에러 내용 표시
+                <div className="text-center py-12">
+                  <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-6 max-w-md mx-auto">
+                    <p className="text-red-400 mb-2">⚠️ 차트 로딩 오류</p>
+                    <p className="text-white text-sm">{chartData.message}</p>
+                    <button 
+                      onClick={() => fetchChartData(selectedChart)}
+                      className="mt-4 px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 transition-colors"
+                    >
+                      다시 시도
+                    </button>
+                  </div>
+                </div>
+              )
+                ) : (
+                  <div className="text-center text-white">
+                    <p>차트 데이터를 불러올 수 없습니다.</p>
+                  </div>
+                )}
+              </>
+            )}
+          </motion.div>
+        </div>
+      </div>
     </Layout>
   );
 }
