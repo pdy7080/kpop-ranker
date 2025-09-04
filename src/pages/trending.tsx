@@ -36,12 +36,30 @@ const TrackCard = memo(({
   const [imageLoaded, setImageLoaded] = useState(false);
   const [imageError, setImageError] = useState(false);
   
+  // 이미지 URL 생성 - API_URL 사용
   const imageUrl = useMemo(() => {
-    if (track.image_url) return track.image_url;
-    if (track.album_image) return track.album_image;
-    const artist = encodeURIComponent(track.artist || track.unified_artist || '');
-    const title = encodeURIComponent(track.track || track.title || track.unified_track || '');
-    return `${API_URL}/api/album-image-smart/${artist}/${title}`;
+    // 이미 로컬 이미지 또는 전체 URL이 있으면 사용
+    if (track.image_url && (track.image_url.startsWith('http') || track.image_url.startsWith('/'))) {
+      return track.image_url;
+    }
+    if (track.album_image && (track.album_image.startsWith('http') || track.album_image.startsWith('/'))) {
+      return track.album_image;
+    }
+    
+    // 아티스트와 트랙명으로 스마트 이미지 API 호출
+    const artist = track.artist || track.unified_artist || '';
+    const title = track.track || track.title || track.unified_track || '';
+    
+    if (!artist || !title) {
+      return '/images/default-album.svg';
+    }
+    
+    // URL 인코딩 (슬래시 제거)
+    const encodedArtist = encodeURIComponent(artist.replace(/\//g, ''));
+    const encodedTitle = encodeURIComponent(title.replace(/\//g, ''));
+    
+    // 백엔드 API URL 사용
+    return `${API_URL}/api/album-image-smart/${encodedArtist}/${encodedTitle}`;
   }, [track]);
   
   const formatScore = (score: number) => {
@@ -70,23 +88,23 @@ const TrackCard = memo(({
           
           {/* Album Image */}
           <div className="flex-shrink-0">
-            <div className="relative w-12 h-12 sm:w-[60px] sm:h-[60px]">
-              {!imageLoaded && !imageError && (
-                <div className="absolute inset-0 bg-gray-700 animate-pulse rounded" />
+            <div className="relative w-12 h-12 sm:w-[60px] sm:h-[60px] bg-gray-700 rounded overflow-hidden">
+              {!imageError && (
+                <img
+                  src={imageUrl}
+                  alt=""
+                  className="w-full h-full object-cover"
+                  onError={() => setImageError(true)}
+                  loading="lazy"
+                />
               )}
-              <img
-                src={imageError ? '/images/default-album.svg' : imageUrl}
-                alt=""
-                className={`w-full h-full object-cover rounded transition-opacity duration-300 ${
-                  imageLoaded ? 'opacity-100' : 'opacity-0'
-                }`}
-                onLoad={() => setImageLoaded(true)}
-                onError={() => {
-                  setImageError(true);
-                  setImageLoaded(true);
-                }}
-                loading="lazy"
-              />
+              {imageError && (
+                <div className="w-full h-full flex items-center justify-center text-gray-500">
+                  <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
+                  </svg>
+                </div>
+              )}
             </div>
           </div>
           
@@ -127,23 +145,23 @@ const TrackCard = memo(({
       </div>
       
       {/* Album Image */}
-      <div className="aspect-square relative">
-        {!imageLoaded && !imageError && (
-          <div className="absolute inset-0 bg-gray-700 animate-pulse" />
+      <div className="aspect-square relative bg-gray-700">
+        {!imageError && (
+          <img
+            src={imageUrl}
+            alt=""
+            className="w-full h-full object-cover"
+            onError={() => setImageError(true)}
+            loading="lazy"
+          />
         )}
-        <img
-          src={imageError ? '/images/default-album.svg' : imageUrl}
-          alt=""
-          className={`w-full h-full object-cover transition-opacity duration-300 ${
-            imageLoaded ? 'opacity-100' : 'opacity-0'
-          }`}
-          onLoad={() => setImageLoaded(true)}
-          onError={() => {
-            setImageError(true);
-            setImageLoaded(true);
-          }}
-          loading="lazy"
-        />
+        {imageError && (
+          <div className="w-full h-full flex items-center justify-center text-gray-500">
+            <svg className="w-12 h-12" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
+            </svg>
+          </div>
+        )}
       </div>
       
       {/* Track Info - 진한 배경, 흰 텍스트 */}
