@@ -176,14 +176,39 @@ export default function TrackDetailPage() {
   const handlePlayTrack = () => {
     const currentTrackTitle = trackInfo?.track || trackInfo?.title || (title as string) || '';
     if (trackInfo?.artist && currentTrackTitle) {
-      // 더 정확한 Spotify 링크 생성
-      const searchQuery = `track:"${currentTrackTitle}" artist:"${trackInfo.artist}"`
-        .replace(/[()\[\]]/g, '')  // 특수문자 제거
-        .replace(/\s+/g, ' ')      // 공백 정리
-        .trim();
+      // 모바일에 최적화된 검색 쿼리 생성
+      const isMobile = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+      
+      let searchQuery;
+      if (isMobile) {
+        // 모바일: 간단한 검색 (더 좋은 결과)
+        searchQuery = `${trackInfo.artist} ${currentTrackTitle}`
+          .replace(/[()\[\]]/g, '')  // 특수문자 제거
+          .replace(/\s+/g, ' ')      // 공백 정리
+          .trim();
+      } else {
+        // 데스크톱: 정확한 검색
+        searchQuery = `track:"${currentTrackTitle}" artist:"${trackInfo.artist}"`
+          .replace(/[()\[\]]/g, '')  // 특수문자 제거
+          .replace(/\s+/g, ' ')      // 공백 정리
+          .trim();
+      }
       
       const spotifyUrl = `https://open.spotify.com/search/${encodeURIComponent(searchQuery)}`;
-      window.open(spotifyUrl, '_blank');
+      
+      // 모바일 호환성 개선
+      
+      if (isMobile) {
+        // 모바일: 새 창 시도 후 실패 시 현재 창에서 열기
+        const newWindow = window.open(spotifyUrl, '_blank');
+        if (!newWindow || newWindow.closed || typeof newWindow.closed == 'undefined') {
+          // 팝업 차단되거나 실패 시 현재 창에서 열기
+          window.location.href = spotifyUrl;
+        }
+      } else {
+        // 데스크톱: 기본 새 창
+        window.open(spotifyUrl, '_blank');
+      }
     }
   };
 
