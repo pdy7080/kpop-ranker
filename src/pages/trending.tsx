@@ -1,4 +1,4 @@
-import React, { memo, useState, useEffect, useCallback, useMemo, Suspense } from 'react';
+import React, { memo, useState, useEffect, useCallback, useMemo } from 'react';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
 import Layout from '@/components/Layout';
@@ -7,11 +7,10 @@ import {
   TrendingUp, Grid3x3, List, Sparkles, Clock, Filter
 } from 'lucide-react';
 import { trendingApi, chartIndividualAPI } from '@/lib/api';
-import ChartIndividual from '@/components/ChartIndividual';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
-// 차트 필터 정의 - YouTube 제거, Apple Music, Last.fm 추가
+// 차트 필터 정의 - YouTube 제거
 interface ChartFilter {
   id: string;
   name: string;
@@ -26,18 +25,16 @@ const chartFilters: ChartFilter[] = [
   { id: 'bugs', name: 'Bugs', icon: '🐛', color: 'bg-red-500' },
   { id: 'spotify', name: 'Spotify', icon: '🎧', color: 'bg-green-600' },
   { id: 'flo', name: 'FLO', icon: '🌊', color: 'bg-blue-600' },
-  // YouTube 제거됨
   { id: 'apple_music', name: 'Apple Music', icon: '🍎', color: 'bg-gray-800' },
   { id: 'lastfm', name: 'Last.fm', icon: '🎵', color: 'bg-red-800' },
 ];
 
-// 최적화된 API 클라이언트 (기존 로직 유지)
+// 최적화된 API 클라이언트
 const optimizedTrendingAPI = {
   async getTrending(limit = 50) {
     const startTime = Date.now();
     
     try {
-      // 최적화된 캐시 API 사용 (기존 성능 유지)
       const response = await fetch(`${API_URL}/cache/api/trending?limit=${limit}&fast=true`);
       
       if (!response.ok) {
@@ -57,7 +54,6 @@ const optimizedTrendingAPI = {
     } catch (error) {
       console.error('Trending API error:', error);
       
-      // 폴백: 기존 API 시도
       try {
         const fallbackResponse = await fetch(`${API_URL}/api/trending?limit=${limit}`);
         if (fallbackResponse.ok) {
@@ -84,7 +80,7 @@ const optimizedTrendingAPI = {
   }
 };
 
-// 최적화된 트랙 카드 컴포넌트 - 모바일 반응형 개선
+// 최적화된 트랙 카드 컴포넌트 - 모바일 가독성 개선
 const OptimizedTrackCard = memo(({ 
   track, 
   index, 
@@ -133,14 +129,14 @@ const OptimizedTrackCard = memo(({
         className="bg-gray-800/50 backdrop-blur-sm rounded-lg sm:rounded-xl p-3 sm:p-4 hover:bg-gray-800/70 transition-all duration-300 cursor-pointer group"
       >
         <div className="flex items-center space-x-2 sm:space-x-4">
-          {/* Rank - 모바일에서 더 작게 */}
+          {/* Rank */}
           <div className="flex-shrink-0 w-8 sm:w-12 text-center">
             <span className="text-lg sm:text-2xl font-bold text-purple-400">
               {index + 1}
             </span>
           </div>
           
-          {/* Album Image - 모바일 크기 조정 */}
+          {/* Album Image */}
           <div className="flex-shrink-0">
             <div className="relative w-12 h-12 sm:w-[60px] sm:h-[60px]">
               {!imageLoaded && !imageError && (
@@ -162,7 +158,7 @@ const OptimizedTrackCard = memo(({
             </div>
           </div>
           
-          {/* Track Info - 모바일 텍스트 크기 조정 */}
+          {/* Track Info */}
           <div className="flex-grow min-w-0">
             <h3 className="font-semibold text-sm sm:text-lg truncate group-hover:text-purple-400 transition-colors">
               {track.track || track.title || track.unified_track}
@@ -181,7 +177,7 @@ const OptimizedTrackCard = memo(({
             ))}
           </div>
           
-          {/* Score & Trend - 모바일 크기 조정 */}
+          {/* Score & Trend */}
           <div className="flex items-center space-x-1 sm:space-x-2">
             {getTrendIcon()}
             <span className="text-xs sm:text-sm font-medium text-gray-300">
@@ -193,7 +189,7 @@ const OptimizedTrackCard = memo(({
     );
   }
   
-  // 그리드 뷰 - 모바일 최적화
+  // 그리드 뷰 - 모바일 가독성 개선
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.9 }}
@@ -204,8 +200,8 @@ const OptimizedTrackCard = memo(({
       className="bg-gray-800/50 backdrop-blur-sm rounded-lg sm:rounded-xl overflow-hidden hover:bg-gray-800/70 transition-all duration-300 cursor-pointer group relative"
     >
       {/* Rank Badge */}
-      <div className="absolute top-1 left-1 sm:top-2 sm:left-2 z-10 bg-black/70 backdrop-blur-sm rounded px-1 sm:px-2 py-0.5 sm:py-1">
-        <span className="text-xs sm:text-sm font-bold text-purple-400">#{index + 1}</span>
+      <div className="absolute top-1 left-1 sm:top-2 sm:left-2 z-10 bg-black/80 backdrop-blur-sm rounded px-1.5 sm:px-2 py-0.5 sm:py-1">
+        <span className="text-xs sm:text-sm font-bold text-white">#{index + 1}</span>
       </div>
       
       {/* Trend Icon */}
@@ -215,7 +211,7 @@ const OptimizedTrackCard = memo(({
         </div>
       )}
       
-      {/* Album Image - 모바일 최적화 */}
+      {/* Album Image */}
       <div className="aspect-square">
         {!imageLoaded && !imageError && (
           <div className="absolute inset-0 bg-gray-700 animate-pulse" />
@@ -235,18 +231,18 @@ const OptimizedTrackCard = memo(({
         />
       </div>
       
-      {/* Track Info - 모바일 패딩 및 텍스트 크기 조정 */}
-      <div className="p-2 sm:p-4">
-        <h3 className="font-semibold text-xs sm:text-base truncate group-hover:text-purple-400 transition-colors">
+      {/* Track Info - 배경색 및 텍스트 가독성 개선 */}
+      <div className="bg-gray-900/90 backdrop-blur-sm p-2 sm:p-3">
+        <h3 className="font-semibold text-xs sm:text-sm text-white truncate group-hover:text-purple-400 transition-colors">
           {track.track || track.title || track.unified_track}
         </h3>
-        <p className="text-xs sm:text-sm text-gray-400 truncate mt-0.5 sm:mt-1">
+        <p className="text-xs sm:text-xs text-gray-300 truncate mt-0.5">
           {track.artist || track.unified_artist}
         </p>
         
-        {/* Score - 모바일 크기 조정 */}
-        <div className="mt-1 sm:mt-2 flex items-center justify-between">
-          <span className="text-xs text-gray-500">Score</span>
+        {/* Score */}
+        <div className="mt-1 flex items-center justify-between">
+          <span className="text-xs text-gray-400">Score</span>
           <span className="text-xs sm:text-sm font-medium text-purple-400">
             {formatScore(track.score || 0)}
           </span>
@@ -289,19 +285,30 @@ const TrendingPage = () => {
       setLastUpdate(new Date());
     }
     
-    // 개별 차트 데이터 로드 (선택시)
-    if (selectedChart !== 'all') {
-      try {
-        const chartResult = await chartIndividualAPI.getChartData(selectedChart);
-        if (chartResult.tracks) {
-          setChartData(prev => ({ ...prev, [selectedChart]: chartResult.tracks }));
-        }
-      } catch (error) {
-        console.error('Chart data load error:', error);
-      }
-    }
-    
     setLoading(false);
+  };
+  
+  // 개별 차트 데이터 로드
+  const loadChartData = async (chartId: string) => {
+    if (chartId === 'all') return;
+    
+    try {
+      // getChartLatest API 사용
+      const result = await chartIndividualAPI.getChartLatest(chartId);
+      if (result && result.tracks) {
+        // 차트별 데이터를 순위와 함께 저장
+        const tracksWithRank = result.tracks.map((track: any, idx: number) => ({
+          ...track,
+          rank_position: idx + 1, // 순위 추가
+          score: (51 - (idx + 1)) * 10 // 간단한 스코어 계산
+        }));
+        setChartData(prev => ({ ...prev, [chartId]: tracksWithRank }));
+      }
+    } catch (error) {
+      console.error('Chart data load error:', error);
+      // 에러 시 빈 배열 설정
+      setChartData(prev => ({ ...prev, [chartId]: [] }));
+    }
   };
   
   // 필터된 트랙
@@ -333,17 +340,10 @@ const TrendingPage = () => {
   const handleChartChange = async (chartId: string) => {
     setSelectedChart(chartId);
     
-    // 개별 차트 데이터 로드 (캐시되지 않은 경우)
+    // 개별 차트 데이터 로드
     if (chartId !== 'all' && !chartData[chartId]) {
       setLoading(true);
-      try {
-        const result = await chartIndividualAPI.getChartData(chartId);
-        if (result.tracks) {
-          setChartData(prev => ({ ...prev, [chartId]: result.tracks }));
-        }
-      } catch (error) {
-        console.error('Chart data load error:', error);
-      }
+      await loadChartData(chartId);
       setLoading(false);
     }
   };
@@ -358,7 +358,7 @@ const TrendingPage = () => {
       
       <div className="min-h-screen py-4 sm:py-8 px-2 sm:px-4">
         <div className="max-w-7xl mx-auto">
-          {/* Header - 모바일 최적화 */}
+          {/* Header */}
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -375,7 +375,7 @@ const TrendingPage = () => {
             </p>
           </motion.div>
           
-          {/* Controls - 모바일 반응형 */}
+          {/* Controls */}
           <div className="mb-4 sm:mb-6 space-y-3 sm:space-y-4">
             {/* Chart Filters - 모바일 스크롤 */}
             <div className="overflow-x-auto pb-2">
@@ -397,7 +397,7 @@ const TrendingPage = () => {
               </div>
             </div>
             
-            {/* Search & View Toggle - 모바일 반응형 */}
+            {/* Search & View Toggle */}
             <div className="flex items-center gap-2">
               <input
                 type="text"
@@ -426,7 +426,7 @@ const TrendingPage = () => {
             </div>
           </div>
           
-          {/* Results Count - 모바일 텍스트 크기 */}
+          {/* Results Count */}
           <div className="mb-3 sm:mb-4 text-xs sm:text-sm text-gray-400">
             {filteredTracks.length}개 트랙 • 마지막 업데이트: {lastUpdate.toLocaleString('ko-KR')}
             {loadTime > 0 && <span className="ml-2">({loadTime}ms)</span>}
@@ -448,7 +448,7 @@ const TrendingPage = () => {
               ))}
             </div>
           ) : (
-            /* Tracks Grid/List - 모바일 그리드 조정 */
+            /* Tracks Grid/List */
             <div className={
               viewMode === 'grid' 
                 ? "grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2 sm:gap-4"
@@ -466,10 +466,14 @@ const TrendingPage = () => {
             </div>
           )}
           
-          {/* Empty State - 모바일 텍스트 크기 */}
+          {/* Empty State */}
           {!loading && filteredTracks.length === 0 && (
             <div className="text-center py-10 sm:py-20">
-              <p className="text-gray-400 text-sm sm:text-lg">검색 결과가 없습니다.</p>
+              <p className="text-gray-400 text-sm sm:text-lg">
+                {selectedChart !== 'all' 
+                  ? '이 차트의 데이터를 불러오는 중입니다...' 
+                  : '검색 결과가 없습니다.'}
+              </p>
             </div>
           )}
         </div>
