@@ -67,9 +67,21 @@ export const authAPI = {
   // OAuth 관련 함수들 추가
   getGoogleOAuthUrl: () => {
     const CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '665193635993-1m7ijedftmshe6ih769g2jkiuluti32m.apps.googleusercontent.com';
-    const REDIRECT_URI = typeof window !== 'undefined' 
-      ? `${window.location.origin}/auth/google/callback`
-      : 'https://kpop-ranker.vercel.app/auth/google/callback';
+    
+    // Redirect URI 명시적 설정 (window.location.origin은 불안정)
+    let REDIRECT_URI;
+    if (typeof window !== 'undefined') {
+      // 로컬 개발 환경
+      if (window.location.hostname === 'localhost') {
+        REDIRECT_URI = `http://localhost:${window.location.port || '3007'}/auth/google/callback`;
+      } else {
+        // 프로덕션 - 고정 URL 사용
+        REDIRECT_URI = 'https://kpop-ranker.vercel.app/auth/google/callback';
+      }
+    } else {
+      // SSR 환경
+      REDIRECT_URI = 'https://kpop-ranker.vercel.app/auth/google/callback';
+    }
     
     return `https://accounts.google.com/o/oauth2/v2/auth?` +
       `client_id=${CLIENT_ID}&` +
@@ -82,9 +94,21 @@ export const authAPI = {
   
   getKakaoOAuthUrl: () => {
     const CLIENT_ID = process.env.NEXT_PUBLIC_KAKAO_CLIENT_ID || 'fd87bbda53a9c6c6186a0a1544bbae66';
-    const REDIRECT_URI = typeof window !== 'undefined'
-      ? `${window.location.origin}/auth/kakao/callback`
-      : 'https://kpop-ranker.vercel.app/auth/kakao/callback';
+    
+    // Redirect URI 명시적 설정
+    let REDIRECT_URI;
+    if (typeof window !== 'undefined') {
+      // 로컬 개발 환경
+      if (window.location.hostname === 'localhost') {
+        REDIRECT_URI = `http://localhost:${window.location.port || '3007'}/auth/kakao/callback`;
+      } else {
+        // 프로덕션 - 고정 URL 사용
+        REDIRECT_URI = 'https://kpop-ranker.vercel.app/auth/kakao/callback';
+      }
+    } else {
+      // SSR 환경
+      REDIRECT_URI = 'https://kpop-ranker.vercel.app/auth/kakao/callback';
+    }
     
     return `https://kauth.kakao.com/oauth/authorize?` +
       `client_id=${CLIENT_ID}&` +

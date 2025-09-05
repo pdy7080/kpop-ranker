@@ -13,10 +13,13 @@ if (process.env.NODE_ENV === 'development') {
 
 export default function App({ Component, pageProps }: AppProps) {
   useEffect(() => {
-    // 다크모드 초기화
-    const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    if (isDark) {
-      document.documentElement.classList.add('dark');
+    // 클라이언트 사이드에서만 실행
+    if (typeof window !== 'undefined') {
+      // 다크모드 초기화
+      const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      if (isDark) {
+        document.documentElement.classList.add('dark');
+      }
     }
   }, []);
 
