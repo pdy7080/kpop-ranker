@@ -28,29 +28,23 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
     localStorage.setItem('oauth_provider', provider);
     
     try {
-      // OAuth URL 가져오기
-      let response;
+      // OAuth URL 직접 생성 (함수가 URL 문자열을 바로 반환)
+      let oauthUrl;
       if (provider === 'google') {
-        response = await authAPI.getGoogleOAuthUrl();
+        oauthUrl = authAPI.getGoogleOAuthUrl();
       } else if (provider === 'kakao') {
-        response = await authAPI.getKakaoOAuthUrl();
+        oauthUrl = authAPI.getKakaoOAuthUrl();
       } else {
         throw new Error(`Unsupported provider: ${provider}`);
       }
       
-      if (response?.url) {
+      if (oauthUrl) {
         // OAuth 페이지로 리다이렉트
-        window.location.href = response.url;
-      } else if (response?.configured === false) {
-        // OAuth가 설정되지 않은 경우 데모 로그인으로 전환
-        console.log(`${provider} OAuth가 설정되지 않았습니다. 데모 로그인을 사용하세요.`);
-        toast(t('login.social.setup'), {
-          icon: '🔧',
-        });
-        setShowDemoForm(true);
+        window.location.href = oauthUrl;
       } else {
-        console.warn(`${provider} OAuth URL을 가져오지 못했습니다.`);
+        console.warn(`${provider} OAuth URL을 생성하지 못했습니다.`);
         toast.error(t('login.error'));
+        setShowDemoForm(true);
       }
     } catch (error) {
       console.error('로그인 에러:', error);
