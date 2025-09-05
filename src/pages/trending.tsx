@@ -330,21 +330,23 @@ const TrendingPage = () => {
             </p>
           </div>
           
-          {/* 차트 업데이트 시간 표시 영역 */}
-          <div className="mb-4 sm:mb-6 p-3 sm:p-4 bg-gray-800/50 backdrop-blur-sm rounded-lg">
+          {/* 차트 업데이트 시간 표시 영역 - 가독성 개선 */}
+          <div className="mb-4 sm:mb-6 p-3 sm:p-4 bg-gradient-to-r from-gray-800 to-gray-700 backdrop-blur-sm rounded-lg border border-gray-600">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <svg className="w-5 h-5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
                 </svg>
-                <span className="text-sm sm:text-base text-gray-300">
-                  {selectedChart === 'all' ? '통합 차트' : chartFilters.find(c => c.id === selectedChart)?.name} 업데이트
+                <span className="text-sm sm:text-base font-medium text-white">
+                  {selectedChart === 'all' ? '통합 차트' : chartFilters.find(c => c.id === selectedChart)?.name}
                 </span>
               </div>
-              <span className="text-sm sm:text-lg font-semibold text-purple-400">
+              <span className="text-sm sm:text-lg font-bold text-white">
                 {selectedChart === 'all' 
                   ? `${Object.keys(chartUpdateTimes).length}개 차트 통합` 
-                  : (chartUpdateTimes[selectedChart] || '업데이트 확인 중...')
+                  : chartUpdateTimes[selectedChart] 
+                    ? `최종 업데이트: ${chartUpdateTimes[selectedChart]}`
+                    : '업데이트 확인 중...'
                 }
               </span>
             </div>
@@ -357,16 +359,16 @@ const TrendingPage = () => {
                   <button
                     key={chart.id}
                     onClick={() => handleChartChange(chart.id)}
-                    className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg transition-all text-sm sm:text-base whitespace-nowrap ${
+                    className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg transition-all text-sm sm:text-base whitespace-nowrap font-medium ${
                       selectedChart === chart.id
-                        ? chart.color + ' text-white'
-                        : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+                        ? chart.color + ' text-white shadow-lg'
+                        : 'bg-gray-800 text-white hover:bg-gray-700 hover:text-white'
                     }`}
                   >
                     <span className="mr-1">{chart.icon}</span>
                     <span>{chart.name}</span>
                     {chart.id !== 'all' && chartUpdateTimes[chart.id] && (
-                      <span className="ml-1 text-xs opacity-70">
+                      <span className="ml-1 text-xs text-white opacity-90">
                         ({chartUpdateTimes[chart.id].split(' ')[1]})
                       </span>
                     )}
