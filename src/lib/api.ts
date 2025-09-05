@@ -7,12 +7,12 @@ console.log('🔥 API URL configured:', API_URL);
 
 const api = axios.create({
   baseURL: API_URL,
-  timeout: 30000,  // 30초로 증가 (캐시 제거로 인한 안정성 확보)
+  timeout: 30000,
   headers: {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
   },
-  withCredentials: false
+  withCredentials: true  // 세션 쿠키 포함
 });
 
 // API 호출 로깅
@@ -38,6 +38,13 @@ api.interceptors.response.use(
   },
   (error) => {
     console.error(`❌ API Error: ${error.config?.url}`, error.message);
+    
+    // 401 에러 시 로그인 페이지로 리다이렉트하지 않고 에러 반환
+    if (error.response?.status === 401) {
+      // 조용히 에러 반환 (리다이렉트 없음)
+      return Promise.reject(new Error('Authentication required'));
+    }
+    
     return Promise.reject(error);
   }
 );
@@ -54,7 +61,7 @@ export const authAPI = {
     return response.data;
   },
   
-  status: async () => {
+  getStatus: async () => {
     const response = await api.get('/api/auth/status');
     return response.data;
   },
@@ -64,15 +71,13 @@ export const authAPI = {
     return response.data;
   },
   
-  // OAuth 관련 함수들 - 임시 폴백 버전
+  // OAuth 관련 함수들
   getGoogleOAuthUrl: async () => {
     try {
-      // 백엔드 API 시도
-      const response = await api.get('/api/auth/google/url');
+      const response = await api.get('/api/auth/oauth/google/url');
       return response.data;
     } catch (error) {
       console.warn('Google OAuth URL API 에러, 대체 방식 사용:', error);
-      // 폴백: 직접 URL 생성
       const CLIENT_ID = '665193635993-1m7ijedftmshe6ih769g2jkiuluti32m.apps.googleusercontent.com';
       const REDIRECT_URI = 'https://kpop-ranker.vercel.app/auth/callback';
       
@@ -94,12 +99,10 @@ export const authAPI = {
   
   getKakaoOAuthUrl: async () => {
     try {
-      // 백엔드 API 시도
-      const response = await api.get('/api/auth/kakao/url');
+      const response = await api.get('/api/auth/oauth/kakao/url');
       return response.data;
     } catch (error) {
       console.warn('Kakao OAuth URL API 에러, 대체 방식 사용:', error);
-      // 폴백: 직접 URL 생성
       const CLIENT_ID = 'fd87bbda53a9c6c6186a0a1544bbae66';
       const REDIRECT_URI = 'https://kpop-ranker.vercel.app/auth/callback';
       
@@ -116,50 +119,93 @@ export const authAPI = {
     }
   },
   
-  // OAuth 콜백 처리
   handleGoogleCallback: async (code: string) => {
-    const response = await api.post('/api/auth/google/callback', { code });
+    const response = await api.post('/api/auth/oauth/google', { code });
     return response.data;
   },
   
   handleKakaoCallback: async (code: string) => {
-    const response = await api.post('/api/auth/kakao/callback', { code });
+    const response = await api.post('/api/auth/oauth/kakao', { code });
     return response.data;
   }
 };
 
-// Portfolio API
+// Portfolio API - 수정된 버전
 export const portfolioAPI = {
+  get: async () => {
+    try {
+      const response = await api.get('/api/portfolio');
+      return response.data;
+    } catch (error) {
+      console.error('Portfolio API error:', error);
+      
+      // 인증 에러 시 requireAuth 플래그 반환 (404 리다이렉트 방지)
+      if (error.message === 'Authentication required' || error.response?.status === 401) {
+        return {
+          success: false,
+          requireAuth: true,
+          items: [],
+          message: 'Login required'
+        };
+      }
+      
+      throw error;
+    }
+  },
+  
+  add: async (artist: string, track: string) => {
+    try {
+      const response = await api.post('/api/portfolio/add', {
+        artist,
+        track
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Portfolio add error:', error);
+      
+      if (error.message === 'Authentication required' || error.response?.status === 401) {
+        return {
+          success: false,
+          requireAuth: true,
+          message: 'Login required'
+        };
+      }
+      
+      throw error;
+    }
+  },
+  
+  remove: async (itemId: string) => {
+    try {
+      const response = await api.delete(`/api/portfolio/${itemId}`);
+      return response.data;
+    } catch (error) {
+      console.error('Portfolio remove error:', error);
+      
+      if (error.message === 'Authentication required' || error.response?.status === 401) {
+        return {
+          success: false,
+          requireAuth: true,
+          message: 'Login required'
+        };
+      }
+      
+      throw error;
+    }
+  },
+  
+  // 기존 호환성을 위한 함수들
   getPortfolio: async (email?: string) => {
-    const userEmail = email || localStorage.getItem('user_email');
-    if (!userEmail) throw new Error('User email not found');
-    
-    const response = await api.get(`/api/portfolio/${encodeURIComponent(userEmail)}`);
-    return response.data;
+    return portfolioAPI.get();
   },
   
   addTrack: async (artist: string, title: string) => {
-    const userEmail = localStorage.getItem('user_email');
-    if (!userEmail) throw new Error('User not authenticated');
-    
-    const response = await api.post('/api/portfolio/add', {
-      user_email: userEmail,
-      artist,
-      title
-    });
-    return response.data;
+    return portfolioAPI.add(artist, title);
   },
   
   removeTrack: async (artist: string, title: string) => {
-    const userEmail = localStorage.getItem('user_email');
-    if (!userEmail) throw new Error('User not authenticated');
-    
-    const response = await api.post('/api/portfolio/remove', {
-      user_email: userEmail,
-      artist,
-      title
-    });
-    return response.data;
+    // ID 기반으로 변경되었으므로 임시로 에러 반환
+    throw new Error('Use remove(itemId) instead');
   }
 };
 
@@ -180,7 +226,7 @@ export const searchAPI = {
   }
 };
 
-// Trending API - 캐시 제거, 직접 호출만
+// Trending API
 export const trendingApi = {
   getTrending: async (limit: number = 20) => {
     const response = await api.get('/api/trending', {
@@ -197,22 +243,19 @@ export const trendingApi = {
   }
 };
 
-// Artist API - v13 캐시 시스템 적용
+// Artist API
 export const artistAPI = {
   getDetails: async (name: string) => {
     try {
-      // v13 API 우선 시도 (캐시 시스템)
       const response = await api.get(`/api/artist/v13/${encodeURIComponent(name)}/complete`);
       return response.data;
     } catch (error) {
       console.warn('v13 API failed, falling back to v12:', error);
-      // 폴백: 기존 API 사용
       const response = await api.get(`/api/artist/${encodeURIComponent(name)}/complete`);
       return response.data;
     }
   },
   
-  // 캐시 무효화 (관리자용)
   invalidateCache: async (artistName?: string) => {
     const response = await api.post('/api/artist/v13/cache/invalidate', {
       artist: artistName
@@ -220,7 +263,6 @@ export const artistAPI = {
     return response.data;
   },
   
-  // 인기 아티스트 조회
   getPopular: async (limit: number = 20) => {
     const response = await api.get('/api/artist/v13/popular', {
       params: { limit }
@@ -229,18 +271,16 @@ export const artistAPI = {
   }
 };
 
-// Track API - v16 캐시 시스템 적용
+// Track API
 export const trackAPI = {
   getDetails: async (artist: string, title: string) => {
     try {
-      // v16 API 우선 시도 (캐시 시스템)
       const response = await api.get(
         `/api/track/v16/${encodeURIComponent(artist)}/${encodeURIComponent(title)}`
       );
       return response.data;
     } catch (error) {
       console.warn('v16 API failed, falling back to v15:', error);
-      // 폴백: 기존 API 사용
       const response = await api.get(
         `/api/track/${encodeURIComponent(artist)}/${encodeURIComponent(title)}`
       );
@@ -249,11 +289,9 @@ export const trackAPI = {
   },
   
   getTrackDetail: async (artist: string, title: string) => {
-    // getDetails와 동일
     return trackAPI.getDetails(artist, title);
   },
   
-  // 인기 트랙 조회
   getPopular: async (limit: number = 20) => {
     const response = await api.get('/api/track/v16/popular', {
       params: { limit }
@@ -280,17 +318,16 @@ export const chartStatusAPI = {
   }
 };
 
-// Statistics API - 캐시 제거, 간소화
+// Statistics API
 export const statisticsAPI = {
   getStatistics: async () => {
     try {
       const response = await api.get('/api/statistics', {
-        timeout: 5000  // 통계는 5초 제한
+        timeout: 5000
       });
       return response.data;
     } catch (error) {
       console.error('Statistics API failed, using defaults:', error);
-      // 기본값 반환 (메인페이지 블로킹 방지)
       return {
         success: false,
         statistics: {
@@ -330,7 +367,7 @@ export const insightsAPI = {
   }
 };
 
-// Chart Individual API - 캐시 제거
+// Chart Individual API
 export const chartIndividualAPI = {
   getChartLatest: async (chartName: string) => {
     const response = await api.get(`/api/chart/${chartName}/latest`);

@@ -12,6 +12,7 @@ import {
   Music, Star, Activity, Globe
 } from 'lucide-react';
 import { useTranslation } from '@/contexts/TranslationContext';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface PortfolioItem {
   id: number;
@@ -26,46 +27,32 @@ interface PortfolioItem {
 export default function PortfolioPage() {
   const router = useRouter();
   const { t } = useTranslation();
+  const { user, isAuthenticated, isLoading: authLoading } = useAuth();
   const [portfolioItems, setPortfolioItems] = useState<PortfolioItem[]>([]);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'grid' | 'list' | 'analytics'>('analytics');
 
   useEffect(() => {
-    checkAuth();
-  }, []);
-
-  const checkAuth = async () => {
-    try {
-      const token = localStorage.getItem('auth_token');
-      const user = localStorage.getItem('user_email');
-      
-      if (token && user) {
-        setIsAuthenticated(true);
+    if (!authLoading) {
+      if (isAuthenticated) {
         fetchPortfolio();
       } else {
-        const status = await authAPI.getStatus();
-        setIsAuthenticated(status.authenticated);
-        
-        if (status.authenticated) {
-          fetchPortfolio();
-        }
+        setLoading(false);
       }
-    } catch (error) {
-      console.error('Auth check failed:', error);
-      setIsAuthenticated(false);
-    } finally {
-      setLoading(false);
     }
-  };
+  }, [isAuthenticated, authLoading]);
 
   const fetchPortfolio = async () => {
     try {
+      setLoading(true);
+      setError(null);
+      
       const response = await portfolioAPI.get();
       console.log('Portfolio response:', response);
       
       if (response.requireAuth) {
-        setIsAuthenticated(false);
+        console.log('Portfolio requires authentication');
         return;
       }
       
@@ -76,16 +63,28 @@ export default function PortfolioPage() {
       }
     } catch (error) {
       console.error('Failed to fetch portfolio:', error);
+      setError('포트폴리오를 불러오는데 실패했습니다.');
       setPortfolioItems([]);
+    } finally {
+      setLoading(false);
     }
   };
 
   const removeFromPortfolio = async (itemId: number) => {
     try {
-      await portfolioAPI.remove(itemId.toString());
-      setPortfolioItems(prev => prev.filter(item => item.id !== itemId));
+      const response = await portfolioAPI.remove(itemId.toString());
+      
+      if (response.requireAuth) {
+        console.log('Authentication required for portfolio removal');
+        return;
+      }
+      
+      if (response.success) {
+        setPortfolioItems(prev => prev.filter(item => item.id !== itemId));
+      }
     } catch (error) {
       console.error('Failed to remove item:', error);
+      setError('항목 삭제에 실패했습니다.');
     }
   };
 
@@ -105,7 +104,8 @@ export default function PortfolioPage() {
     alert('Portfolio link copied to clipboard!');
   };
 
-  if (loading) {
+  // 인증 로딩 중
+  if (authLoading || loading) {
     return (
       <Layout>
         <div className="min-h-screen bg-[#0A0A0F] flex items-center justify-center">
@@ -115,6 +115,7 @@ export default function PortfolioPage() {
     );
   }
 
+  // 인증되지 않은 경우
   if (!isAuthenticated) {
     return (
       <Layout>
@@ -129,12 +130,52 @@ export default function PortfolioPage() {
             <p className="text-gray-400 mb-6">
               포트폴리오 기능을 사용하려면 먼저 로그인해주세요.
             </p>
-            <button
-              onClick={() => router.push('/login')}
-              className="px-8 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg hover:from-purple-700 hover:to-pink-700 transition-all"
-            >
-              로그인하기
-            </button>
+            <div className="space-y-3">
+              <button
+                onClick={() => window.location.href = '/'}
+                className="w-full px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg hover:from-purple-700 hover:to-pink-700 transition-all"
+              >
+                메인 페이지로 가기
+              </button>
+              <p className="text-sm text-gray-500">
+                메인 페이지에서 로그인하실 수 있습니다.
+              </p>
+            </div>
+          </motion.div>
+        </div>
+      </Layout>
+    );
+  }
+
+  // 에러 상태
+  if (error) {
+    return (
+      <Layout>
+        <div className="min-h-screen bg-[#0A0A0F] flex items-center justify-center">
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="text-center max-w-md"
+          >
+            <div className="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+              <span className="text-red-500 text-2xl">!</span>
+            </div>
+            <h1 className="text-2xl font-bold text-white mb-4">오류가 발생했습니다</h1>
+            <p className="text-gray-400 mb-6">{error}</p>
+            <div className="space-y-3">
+              <button
+                onClick={fetchPortfolio}
+                className="w-full px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all"
+              >
+                다시 시도
+              </button>
+              <button
+                onClick={() => router.push('/')}
+                className="w-full px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-all"
+              >
+                메인 페이지로 가기
+              </button>
+            </div>
           </motion.div>
         </div>
       </Layout>
@@ -161,6 +202,11 @@ export default function PortfolioPage() {
               </span>
             </h1>
             <p className="text-gray-400">내가 좋아하는 K-POP 트랙들을 관리해보세요</p>
+            {user && (
+              <p className="text-sm text-purple-300 mt-2">
+                {user.name}님의 포트폴리오
+              </p>
+            )}
           </motion.div>
 
           {/* Stats */}
@@ -234,22 +280,24 @@ export default function PortfolioPage() {
               </button>
             </div>
 
-            <div className="flex gap-2">
-              <button
-                onClick={sharePortfolio}
-                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg transition-all flex items-center gap-2"
-              >
-                <Share2 className="w-4 h-4" />
-                Share
-              </button>
-              <button
-                onClick={exportPortfolio}
-                className="px-4 py-2 bg-green-600 hover:bg-green-700 rounded-lg transition-all flex items-center gap-2"
-              >
-                <Download className="w-4 h-4" />
-                Export
-              </button>
-            </div>
+            {portfolioItems.length > 0 && (
+              <div className="flex gap-2">
+                <button
+                  onClick={sharePortfolio}
+                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg transition-all flex items-center gap-2"
+                >
+                  <Share2 className="w-4 h-4" />
+                  Share
+                </button>
+                <button
+                  onClick={exportPortfolio}
+                  className="px-4 py-2 bg-green-600 hover:bg-green-700 rounded-lg transition-all flex items-center gap-2"
+                >
+                  <Download className="w-4 h-4" />
+                  Export
+                </button>
+              </div>
+            )}
           </motion.div>
 
           {/* Content */}

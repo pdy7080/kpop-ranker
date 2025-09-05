@@ -1,5 +1,7 @@
+/*
+개선된 AuthContext - 백엔드 인증 상태 동기화
+*/
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { authAPI } from '@/lib/api';
 
 interface User {
   user_id: string;
@@ -29,6 +31,8 @@ export const useAuth = () => {
   return context;
 };
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -43,24 +47,61 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const userPicture = localStorage.getItem('user_picture');
       
       if (!token || !userEmail || !userName) {
-        setIsLoading(false);
         setUser(null);
         return;
       }
 
-      // localStorage 데이터를 사용해서 사용자 상태 복원
+      // 백엔드에서 인증 상태 확인 (조용히 체크)
+      try {
+        const response = await fetch(`${API_URL}/api/auth/status`, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include',
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          if (data.authenticated && data.user) {
+            // 백엔드에서 인증 확인됨
+            const user = {
+              user_id: data.user.email || userEmail,
+              email: data.user.email || userEmail,
+              name: data.user.name || userName,
+              profile_image: userPicture || undefined,
+              provider: data.user.provider || 'oauth'
+            };
+            
+            setUser(user);
+            console.log('✅ AuthContext: 백엔드 인증 확인 성공', user);
+            return;
+          }
+        }
+        
+        // 백엔드 인증 실패 - 로그 없이 fallback
+        console.log('⚠️ AuthContext: 백엔드 인증 실패, 로컬 모드 사용');
+        
+      } catch (backendError) {
+        // 백엔드 연결 실패 - 조용히 로컬 모드 사용
+        console.log('⚠️ AuthContext: 백엔드 연결 실패, 로컬 모드 사용');
+      }
+
+      // localStorage 데이터를 사용해서 사용자 상태 복원 (fallback)
       const user = {
         user_id: userEmail,
         email: userEmail,
         name: userName,
         profile_image: userPicture || undefined,
-        provider: 'oauth'
+        provider: 'local'
       };
       
       setUser(user);
-      console.log('✅ AuthContext: 사용자 상태 복원 성공', user);
+      console.log('✅ AuthContext: 로컬 사용자 상태 복원 성공', user);
+      
     } catch (error) {
-      console.error('Auth check failed:', error);
+      console.error('❌ AuthContext: 인증 체크 실패:', error);
       // 오류 발생 시 localStorage 청소
       localStorage.removeItem('auth_token');
       localStorage.removeItem('user_email');
@@ -106,10 +147,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
       }
       
-      console.warn('OAuth 로그인 처리 실패');
       return false;
     } catch (error) {
-      console.error('Login failed:', error);
+      console.error('❌ AuthContext: 로그인 실패:', error);
       return false;
     } finally {
       setIsLoading(false);
@@ -139,7 +179,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.log('✅ AuthContext: 데모 로그인 성공', demoUser);
       return true;
     } catch (error) {
-      console.error('AuthContext: 데모 로그인 실패:', error);
+      console.error('❌ AuthContext: 데모 로그인 실패:', error);
       return false;
     } finally {
       setIsLoading(false);
@@ -148,16 +188,38 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const logout = async () => {
     try {
-      // 백엔드 로그아웃 API는 호출하지 않음 (클라이언트 측 로그아웃)
-      console.log('Logging out...');
+      setIsLoading(true);
+      
+      // 백엔드 로그아웃 시도 (조용히 실행)
+      const token = localStorage.getItem('auth_token');
+      if (token && token !== 'demo_token') {
+        try {
+          await fetch(`${API_URL}/api/auth/logout`, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json',
+            },
+            credentials: 'include',
+          });
+        } catch (logoutError) {
+          // 백엔드 로그아웃 실패해도 계속 진행
+          console.log('⚠️ 백엔드 로그아웃 실패 (계속 진행)');
+        }
+      }
+      
+      console.log('🚪 로그아웃 처리 중...');
     } catch (error) {
-      console.error('Logout failed:', error);
+      console.error('❌ 로그아웃 오류:', error);
     } finally {
+      // 항상 로컬 데이터 청소
       localStorage.removeItem('auth_token');
       localStorage.removeItem('user_email');
       localStorage.removeItem('user_name');
       localStorage.removeItem('user_picture');
       setUser(null);
+      setIsLoading(false);
+      console.log('✅ 로그아웃 완료');
     }
   };
 

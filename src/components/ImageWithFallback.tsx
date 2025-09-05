@@ -19,6 +19,14 @@ interface ImageWithFallbackProps {
   lazy?: boolean; // 지연 로딩 옵션
 }
 
+const isDev = process.env.NODE_ENV === 'development';
+
+function debugError(message: string, data?: any) {
+  if (isDev) {
+    console.error(message, data);
+  }
+}
+
 const ImageWithFallback: React.FC<ImageWithFallbackProps> = ({
   artist,
   track,
@@ -93,13 +101,14 @@ const ImageWithFallback: React.FC<ImageWithFallbackProps> = ({
     // 성공적으로 로드된 URL을 캐시에 저장
     imageCache.set(cacheKey, currentSrc);
     
-    console.log('✅ 이미지 로드 성공:', { artist: safeArtist, track: safeTrack });
+    // 성공 로그 제거 - 조용히 처리
   };
 
   const handleError = () => {
     if (!mountedRef.current) return;
     
-    console.log('❌ 이미지 로드 실패:', { artist: safeArtist, track: safeTrack, url: currentSrc });
+    // 개발 모드에서만 에러 로그 출력
+    debugError('이미지 로드 실패:', { artist: safeArtist, track: safeTrack, url: currentSrc });
     
     // 에러 캐시에 추가
     errorCache.add(cacheKey);

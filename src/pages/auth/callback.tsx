@@ -4,6 +4,21 @@ import { useAuth } from '@/contexts/AuthContext';
 import toast from 'react-hot-toast';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+const isDev = process.env.NODE_ENV === 'development';
+
+function debugLog(message: string, ...args: any[]) {
+  if (isDev) {
+    console.log(message, ...args);
+  }
+}
+
+function debugError(message: string, ...args: any[]) {
+  if (isDev) {
+    console.error(message, ...args);
+  } else {
+    console.warn(message); // 프로덕션에서는 warning만
+  }
+}
 
 export default function AuthCallbackPage() {
   const router = useRouter();
@@ -24,7 +39,7 @@ export default function AuthCallbackPage() {
       const error = urlParams.get('error');
       
       if (error) {
-        console.error('OAuth error:', error);
+        debugError('OAuth error:', error);
         toast.error('로그인에 실패했습니다.');
         sessionStorage.removeItem('oauth_processing');
         router.push('/');
@@ -32,7 +47,7 @@ export default function AuthCallbackPage() {
       }
       
       if (!code) {
-        console.error('No authorization code');
+        debugError('No authorization code');
         toast.error('인증 코드를 받지 못했습니다.');
         sessionStorage.removeItem('oauth_processing');
         router.push('/');
@@ -41,6 +56,7 @@ export default function AuthCallbackPage() {
       
       // localStorage에서 provider 가져오기 (fallback)
       const provider = state || localStorage.getItem('oauth_provider') || 'google';
+      debugLog('OAuth callback processing:', { provider, code: code.substring(0, 10) + '...' });
       
       try {
         // 백엔드로 코드 전송하여 토큰 교환 시도
@@ -55,8 +71,10 @@ export default function AuthCallbackPage() {
         
         const data = await response.json();
         
-        if (data.success) {
+        if (data.success && data.user) {
           // 백엔드 처리 성공
+          debugLog('Backend OAuth success:', data.user.email);
+          
           localStorage.setItem('auth_token', data.token);
           localStorage.setItem('user_email', data.user.email);
           localStorage.setItem('user_name', data.user.name);
@@ -75,7 +93,7 @@ export default function AuthCallbackPage() {
           throw new Error(data.error || '백엔드 로그인 실패');
         }
       } catch (error) {
-        console.warn('백엔드 OAuth 처리 실패, 클라이언트 측 처리 시도:', error);
+        debugError('백엔드 OAuth 처리 실패, 클라이언트 측 처리 시도:', error);
         
         // 폴백: 클라이언트 측에서 직접 OAuth 처리
         try {
@@ -86,26 +104,28 @@ export default function AuthCallbackPage() {
           
           if (userEmail && userName) {
             // 클라이언트 측 로그인 성공
+            debugLog('Client-side OAuth success:', userEmail);
+            
             const clientToken = `client_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
             localStorage.setItem('auth_token', clientToken);
             
             // 컨텍스트 업데이트
             await login(userEmail);
             
-            toast.success(`${userName}님 환영합니다! (클라이언트 모드)`);
+            toast.success(`${userName}님 환영합니다!`);
             sessionStorage.removeItem('oauth_processing');
             router.push('/');
             return;
           }
         } catch (clientError) {
-          console.error('클라이언트 OAuth 처리도 실패:', clientError);
+          debugError('클라이언트 OAuth 처리도 실패:', clientError);
         }
         
         // 모든 처리 실패
         toast.error('로그인 처리 중 오류가 발생했습니다.');
         sessionStorage.removeItem('oauth_processing');
         router.push('/');
-    }
+      }
     };
     
     handleCallback();
