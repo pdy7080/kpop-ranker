@@ -7,6 +7,8 @@ import { useTranslation } from '@/contexts/TranslationContext';
 import { authAPI } from '@/lib/api';
 import toast from 'react-hot-toast';
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+
 interface LoginModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -24,22 +26,35 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
   const handleSocialLogin = async (provider: string) => {
     setIsLoading(true);
     
-    // provider를 localStorage에 저장 (콜백 페이지에서 사용)
-    localStorage.setItem('oauth_provider', provider);
-    
     try {
-      // OAuth URL 직접 생성 (함수가 URL 문자열을 바로 반환)
+      // 백엔드 OAuth API를 통해 설정 가져오기
+      const configResponse = await fetch(`${API_URL}/api/auth/oauth/config`);
+      const config = await configResponse.json();
+      
       let oauthUrl;
+      
       if (provider === 'google') {
-        oauthUrl = authAPI.getGoogleOAuthUrl();
+        const googleConfig = config.google;
+        oauthUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
+          `client_id=${googleConfig.client_id}&` +
+          `redirect_uri=${encodeURIComponent(googleConfig.redirect_uri)}&` +
+          `response_type=code&` +
+          `scope=${encodeURIComponent(googleConfig.scope)}&` +
+          `access_type=offline&` +
+          `prompt=consent&` +
+          `state=${provider}`; // provider 타입 전달
       } else if (provider === 'kakao') {
-        oauthUrl = authAPI.getKakaoOAuthUrl();
-      } else {
-        throw new Error(`Unsupported provider: ${provider}`);
+        const kakaoConfig = config.kakao;
+        oauthUrl = `https://kauth.kakao.com/oauth/authorize?` +
+          `client_id=${kakaoConfig.client_id}&` +
+          `redirect_uri=${encodeURIComponent(kakaoConfig.redirect_uri)}&` +
+          `response_type=code&` +
+          `state=${provider}`; // provider 타입 전달
       }
       
       if (oauthUrl) {
         // OAuth 페이지로 리다이렉트
+        localStorage.setItem('oauth_provider', provider);
         window.location.href = oauthUrl;
       } else {
         console.warn(`${provider} OAuth URL을 생성하지 못했습니다.`);
