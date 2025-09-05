@@ -11,6 +11,13 @@ export default function AuthCallbackPage() {
   
   useEffect(() => {
     const handleCallback = async () => {
+      // 이미 처리된 경우 중복 실행 방지
+      if (sessionStorage.getItem('oauth_processing')) {
+        return;
+      }
+      
+      sessionStorage.setItem('oauth_processing', 'true');
+      
       const urlParams = new URLSearchParams(window.location.search);
       const code = urlParams.get('code');
       const state = urlParams.get('state'); // provider 정보
@@ -19,6 +26,7 @@ export default function AuthCallbackPage() {
       if (error) {
         console.error('OAuth error:', error);
         toast.error('로그인에 실패했습니다.');
+        sessionStorage.removeItem('oauth_processing');
         router.push('/');
         return;
       }
@@ -26,6 +34,7 @@ export default function AuthCallbackPage() {
       if (!code) {
         console.error('No authorization code');
         toast.error('인증 코드를 받지 못했습니다.');
+        sessionStorage.removeItem('oauth_processing');
         router.push('/');
         return;
       }
@@ -59,15 +68,17 @@ export default function AuthCallbackPage() {
           await login(data.user.email);
           
           toast.success(`${data.user.name}님 환영합니다!`);
-          router.push('/');
-        } else {
-          throw new Error(data.error || '로그인 실패');
-        }
-      } catch (error) {
-        console.error('Login processing error:', error);
-        toast.error('로그인 처리 중 오류가 발생했습니다.');
-        router.push('/');
-      }
+          sessionStorage.removeItem('oauth_processing');
+            router.push('/');
+          } else {
+            throw new Error(data.error || '로그인 실패');
+            }
+          } catch (error) {
+          console.error('Login processing error:', error);
+          toast.error('로그인 처리 중 오류가 발생했습니다.');
+            sessionStorage.removeItem('oauth_processing');
+      router.push('/');
+    }
     };
     
     handleCallback();
