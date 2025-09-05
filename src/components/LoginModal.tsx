@@ -27,29 +27,34 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
     setIsLoading(true);
     
     try {
-      // 백엔드 OAuth API를 통해 설정 가져오기
-      const configResponse = await fetch(`${API_URL}/api/auth/oauth/config`);
-      const config = await configResponse.json();
-      
       let oauthUrl;
       
+      // 프론트엔드에서 직접 URL 생성 (백엔드 API가 안되면 폴백)
       if (provider === 'google') {
-        const googleConfig = config.google;
+        const CLIENT_ID = '665193635993-1m7ijedftmshe6ih769g2jkiuluti32m.apps.googleusercontent.com';
+        const REDIRECT_URI = typeof window !== 'undefined' && window.location.hostname === 'localhost'
+          ? `http://localhost:${window.location.port || '3007'}/auth/callback`
+          : 'https://kpop-ranker.vercel.app/auth/callback';
+        
         oauthUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
-          `client_id=${googleConfig.client_id}&` +
-          `redirect_uri=${encodeURIComponent(googleConfig.redirect_uri)}&` +
+          `client_id=${CLIENT_ID}&` +
+          `redirect_uri=${encodeURIComponent(REDIRECT_URI)}&` +
           `response_type=code&` +
-          `scope=${encodeURIComponent(googleConfig.scope)}&` +
+          `scope=${encodeURIComponent('openid profile email')}&` +
           `access_type=offline&` +
           `prompt=consent&` +
-          `state=${provider}`; // provider 타입 전달
+          `state=${provider}`;
       } else if (provider === 'kakao') {
-        const kakaoConfig = config.kakao;
+        const CLIENT_ID = 'fd87bbda53a9c6c6186a0a1544bbae66';
+        const REDIRECT_URI = typeof window !== 'undefined' && window.location.hostname === 'localhost'
+          ? `http://localhost:${window.location.port || '3007'}/auth/callback`
+          : 'https://kpop-ranker.vercel.app/auth/callback';
+        
         oauthUrl = `https://kauth.kakao.com/oauth/authorize?` +
-          `client_id=${kakaoConfig.client_id}&` +
-          `redirect_uri=${encodeURIComponent(kakaoConfig.redirect_uri)}&` +
+          `client_id=${CLIENT_ID}&` +
+          `redirect_uri=${encodeURIComponent(REDIRECT_URI)}&` +
           `response_type=code&` +
-          `state=${provider}`; // provider 타입 전달
+          `state=${provider}`;
       }
       
       if (oauthUrl) {
