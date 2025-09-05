@@ -106,8 +106,32 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return await demoLogin();
       }
       
-      // OAuth 로그인 처리는 실제 구현 시 추가
-      console.warn('OAuth 로그인은 아직 구현되지 않았습니다.');
+      // OAuth 사용자 정보로 직접 로그인 (콜백에서 이미 처리됨)
+      // provider가 이메일 주소인 경우 (콜백에서 호출)
+      if (provider.includes('@')) {
+        const userEmail = provider;
+        
+        // localStorage에서 사용자 정보 가져오기 (콜백에서 저장됨)
+        const token = localStorage.getItem('auth_token');
+        const userName = localStorage.getItem('user_name');
+        const userPicture = localStorage.getItem('user_picture');
+        
+        if (token && userName) {
+          const user = {
+            user_id: userEmail,
+            email: userEmail,
+            name: userName,
+            profile_image: userPicture,
+            provider: 'oauth'
+          };
+          
+          setUser(user);
+          console.log('✅ AuthContext: OAuth 로그인 성공', user);
+          return true;
+        }
+      }
+      
+      console.warn('OAuth 로그인 처리 실패');
       return false;
     } catch (error) {
       console.error('Login failed:', error);
