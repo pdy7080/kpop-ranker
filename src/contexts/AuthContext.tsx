@@ -38,59 +38,34 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const checkAuth = async () => {
     try {
       const token = localStorage.getItem('auth_token');
-      const userInfo = localStorage.getItem('user_info');
+      const userEmail = localStorage.getItem('user_email');
+      const userName = localStorage.getItem('user_name');
+      const userPicture = localStorage.getItem('user_picture');
       
-      if (!token) {
+      if (!token || !userEmail || !userName) {
         setIsLoading(false);
         setUser(null);
         return;
       }
 
-      // 먼저 localStorage에 저장된 user_info 사용
-      if (userInfo) {
-        try {
-          const parsedUser = JSON.parse(userInfo);
-          setUser({
-            user_id: parsedUser.email || 'user',
-            email: parsedUser.email,
-            name: parsedUser.name,
-            profile_image: parsedUser.picture || parsedUser.profile_image,
-            provider: parsedUser.provider || 'oauth'
-          });
-          setIsLoading(false);
-          return;
-        } catch (e) {
-          console.error('Failed to parse user info:', e);
-        }
-      }
-
-      // user_info가 없으면 API 호출
-      const response = await authAPI.getStatus();
-      // safeApiCall로 래핑된 응답이므로 직접 접근
-      if (response && 'authenticated' in response && response.authenticated) {
-        const userResponse = await authAPI.getUser();
-        if (userResponse && 'user' in userResponse && userResponse.user) {
-          setUser(userResponse.user);
-        } else {
-          // 백엔드에 /api/auth/user API가 없는 경우 임시 사용자 정보
-          setUser({
-            user_id: 'demo_user',
-            email: 'demo@kpopranker.com',
-            name: 'Demo User',
-            provider: 'demo'
-          });
-        }
-      } else {
-        localStorage.removeItem('auth_token');
-        localStorage.removeItem('refresh_token');
-        localStorage.removeItem('user_info');
-        setUser(null);
-      }
+      // localStorage 데이터를 사용해서 사용자 상태 복원
+      const user = {
+        user_id: userEmail,
+        email: userEmail,
+        name: userName,
+        profile_image: userPicture || undefined,
+        provider: 'oauth'
+      };
+      
+      setUser(user);
+      console.log('✅ AuthContext: 사용자 상태 복원 성공', user);
     } catch (error) {
       console.error('Auth check failed:', error);
+      // 오류 발생 시 localStorage 청소
       localStorage.removeItem('auth_token');
-      localStorage.removeItem('refresh_token');
-      localStorage.removeItem('user_info');
+      localStorage.removeItem('user_email');
+      localStorage.removeItem('user_name');
+      localStorage.removeItem('user_picture');
       setUser(null);
     } finally {
       setIsLoading(false);
@@ -155,8 +130,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       // 토큰과 사용자 정보 저장
       localStorage.setItem('auth_token', 'demo_token');
-      localStorage.setItem('user_info', JSON.stringify(demoUser));
       localStorage.setItem('user_email', email);
+      localStorage.setItem('user_name', name);
       
       // 상태 업데이트
       setUser(demoUser);
@@ -173,13 +148,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const logout = async () => {
     try {
-      await authAPI.logout();
+      // 백엔드 로그아웃 API는 호출하지 않음 (클라이언트 측 로그아웃)
+      console.log('Logging out...');
     } catch (error) {
       console.error('Logout failed:', error);
     } finally {
       localStorage.removeItem('auth_token');
-      localStorage.removeItem('refresh_token');
-      localStorage.removeItem('user_info');
+      localStorage.removeItem('user_email');
+      localStorage.removeItem('user_name');
+      localStorage.removeItem('user_picture');
       setUser(null);
     }
   };
