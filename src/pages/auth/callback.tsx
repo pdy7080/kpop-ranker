@@ -27,11 +27,13 @@ export default function AuthCallbackPage() {
   useEffect(() => {
     const handleCallback = async () => {
       // 이미 처리된 경우 중복 실행 방지
+      const processingKey = `oauth_processing_${Date.now()}`;
       if (sessionStorage.getItem('oauth_processing')) {
+        console.log('⚠️ OAuth 이미 처리 중...');
         return;
       }
       
-      sessionStorage.setItem('oauth_processing', 'true');
+      sessionStorage.setItem('oauth_processing', processingKey);
       
       const urlParams = new URLSearchParams(window.location.search);
       const code = urlParams.get('code');
@@ -106,8 +108,14 @@ export default function AuthCallbackPage() {
             // 클라이언트 측 로그인 성공
             debugLog('Client-side OAuth success:', userEmail);
             
-            const clientToken = `client_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+            // 포트폴리오 API가 인식할 수 있는 강력한 토큰 생성
+            const clientToken = `oauth_${userEmail}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
             localStorage.setItem('auth_token', clientToken);
+            
+            // 포트폴리오 API 호환을 위한 세션 정보도 저장
+            localStorage.setItem('user_id', userEmail);
+            localStorage.setItem('login_provider', provider);
+            localStorage.setItem('login_timestamp', Date.now().toString());
             
             // 컨텍스트 업데이트
             await login(userEmail);

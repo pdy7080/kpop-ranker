@@ -15,15 +15,28 @@ const api = axios.create({
   withCredentials: true  // 세션 쿠키 포함
 });
 
-// API 호출 로깅
+// API 호출 로깅 및 인증 헤더 추가
 api.interceptors.request.use((config) => {
   const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
+  const userEmail = typeof window !== 'undefined' ? localStorage.getItem('user_email') : null;
+  const userId = typeof window !== 'undefined' ? localStorage.getItem('user_id') : null;
   
   const authRequiredPaths = ['/api/portfolio', '/api/auth/user', '/api/auth/status', '/api/auth/logout'];
   const requiresAuth = authRequiredPaths.some(path => config.url?.includes(path));
   
-  if (requiresAuth && token) {
-    config.headers.Authorization = `Bearer ${token}`;
+  if (requiresAuth) {
+    // 다양한 인증 헤더 추가 (포트폴리오 API 호환성)
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    if (userEmail) {
+      config.headers['x-user-email'] = userEmail;
+    }
+    if (userId) {
+      config.headers['x-user-id'] = userId;
+    }
+    // 추가 세션 정보
+    config.headers['x-client-auth'] = 'oauth-client';
   }
   
   console.log(`🔍 API Request: ${config.method?.toUpperCase()} ${config.baseURL}${config.url}`);
