@@ -7,8 +7,6 @@ import { useTranslation } from '@/contexts/TranslationContext';
 import { authAPI } from '@/lib/api';
 import toast from 'react-hot-toast';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
-
 interface LoginModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -26,45 +24,33 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
   const handleSocialLogin = async (provider: string) => {
     setIsLoading(true);
     
+    // provider를 localStorage에 저장 (콜백 페이지에서 사용)
+    localStorage.setItem('oauth_provider', provider);
+    
     try {
-      let oauthUrl;
-      
-      // 프론트엔드에서 직접 URL 생성 (백엔드 API가 안되면 폴백)
+      // OAuth URL 가져오기
+      let response;
       if (provider === 'google') {
-        const CLIENT_ID = '665193635993-1m7ijedftmshe6ih769g2jkiuluti32m.apps.googleusercontent.com';
-        const REDIRECT_URI = typeof window !== 'undefined' && window.location.hostname === 'localhost'
-          ? `http://localhost:${window.location.port || '3007'}/auth/callback`
-          : 'https://kpop-ranker.vercel.app/auth/callback';
-        
-        oauthUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
-          `client_id=${CLIENT_ID}&` +
-          `redirect_uri=${encodeURIComponent(REDIRECT_URI)}&` +
-          `response_type=code&` +
-          `scope=${encodeURIComponent('openid profile email')}&` +
-          `access_type=offline&` +
-          `prompt=consent&` +
-          `state=${provider}`;
+        response = await authAPI.getGoogleOAuthUrl();
       } else if (provider === 'kakao') {
-        const CLIENT_ID = 'fd87bbda53a9c6c6186a0a1544bbae66';
-        const REDIRECT_URI = typeof window !== 'undefined' && window.location.hostname === 'localhost'
-          ? `http://localhost:${window.location.port || '3007'}/auth/callback`
-          : 'https://kpop-ranker.vercel.app/auth/callback';
-        
-        oauthUrl = `https://kauth.kakao.com/oauth/authorize?` +
-          `client_id=${CLIENT_ID}&` +
-          `redirect_uri=${encodeURIComponent(REDIRECT_URI)}&` +
-          `response_type=code&` +
-          `state=${provider}`;
+        response = await authAPI.getKakaoOAuthUrl();
+      } else {
+        throw new Error(`Unsupported provider: ${provider}`);
       }
       
-      if (oauthUrl) {
+      if (response?.url) {
         // OAuth 페이지로 리다이렉트
-        localStorage.setItem('oauth_provider', provider);
-        window.location.href = oauthUrl;
-      } else {
-        console.warn(`${provider} OAuth URL을 생성하지 못했습니다.`);
-        toast.error(t('login.error'));
+        window.location.href = response.url;
+      } else if (response?.configured === false) {
+        // OAuth가 설정되지 않은 경우 데모 로그인으로 전환
+        console.log(`${provider} OAuth가 설정되지 않았습니다. 데모 로그인을 사용하세요.`);
+        toast(t('login.social.setup'), {
+          icon: '🔧',
+        });
         setShowDemoForm(true);
+      } else {
+        console.warn(`${provider} OAuth URL을 가져오지 못했습니다.`);
+        toast.error(t('login.error'));
       }
     } catch (error) {
       console.error('로그인 에러:', error);
