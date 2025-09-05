@@ -28,22 +28,23 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
     localStorage.setItem('oauth_provider', provider);
     
     try {
-      // OAuth URL 직접 생성 (authAPI가 문자열 URL 반환)
-      let oauthUrl;
+      // 백엔드 OAuth API 호출
+      let response;
       if (provider === 'google') {
-        oauthUrl = authAPI.getGoogleOAuthUrl();
+        response = await authAPI.getGoogleOAuthUrl();
       } else if (provider === 'kakao') {
-        oauthUrl = authAPI.getKakaoOAuthUrl();
+        response = await authAPI.getKakaoOAuthUrl();
       } else {
         throw new Error(`Unsupported provider: ${provider}`);
       }
       
-      if (oauthUrl && typeof oauthUrl === 'string') {
+      if (response.success && response.url) {
         // OAuth 페이지로 리다이렉트
-        console.log(`🚀 Redirecting to ${provider} OAuth:`, oauthUrl);
-        window.location.href = oauthUrl;
+        console.log(`🚀 Redirecting to ${provider} OAuth:`, response.url);
+        console.log(`🔗 Redirect URI: ${response.redirect_uri}`);
+        window.location.href = response.url;
       } else {
-        console.warn(`${provider} OAuth URL을 생성하지 못했습니다.`);
+        console.warn(`${provider} OAuth API 호출 실패:`, response);
         toast.error(t('login.error'));
         // 데모 로그인으로 폴백
         setShowDemoForm(true);

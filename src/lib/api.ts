@@ -64,56 +64,56 @@ export const authAPI = {
     return response.data;
   },
   
-  // OAuth 관련 함수들 추가
-  getGoogleOAuthUrl: () => {
-    const CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '665193635993-1m7ijedftmshe6ih769g2jkiuluti32m.apps.googleusercontent.com';
-    
-    // Redirect URI 명시적 설정 (window.location.origin은 불안정)
-    let REDIRECT_URI;
-    if (typeof window !== 'undefined') {
-      // 로컬 개발 환경
-      if (window.location.hostname === 'localhost') {
-        REDIRECT_URI = `http://localhost:${window.location.port || '3007'}/auth/google/callback`;
-      } else {
-        // 프로덕션 - 고정 URL 사용
-        REDIRECT_URI = 'https://kpop-ranker.vercel.app/auth/google/callback';
-      }
-    } else {
-      // SSR 환경
-      REDIRECT_URI = 'https://kpop-ranker.vercel.app/auth/google/callback';
+  // OAuth 관련 함수들 - 임시 폴백 버전
+  getGoogleOAuthUrl: async () => {
+    try {
+      // 백엔드 API 시도
+      const response = await api.get('/api/auth/google/url');
+      return response.data;
+    } catch (error) {
+      console.warn('Google OAuth URL API 에러, 대체 방식 사용:', error);
+      // 폴백: 직접 URL 생성
+      const CLIENT_ID = '665193635993-1m7ijedftmshe6ih769g2jkiuluti32m.apps.googleusercontent.com';
+      const REDIRECT_URI = 'https://kpop-ranker.vercel.app/auth/callback';
+      
+      const auth_url = `https://accounts.google.com/o/oauth2/v2/auth?` +
+        `client_id=${CLIENT_ID}&` +
+        `redirect_uri=${encodeURIComponent(REDIRECT_URI)}&` +
+        `scope=${encodeURIComponent('openid profile email')}&` +
+        `response_type=code&` +
+        `access_type=offline&` +
+        `prompt=consent`;
+        
+      return {
+        success: true,
+        url: auth_url,
+        redirect_uri: REDIRECT_URI
+      };
     }
-    
-    return `https://accounts.google.com/o/oauth2/v2/auth?` +
-      `client_id=${CLIENT_ID}&` +
-      `redirect_uri=${encodeURIComponent(REDIRECT_URI)}&` +
-      `response_type=code&` +
-      `scope=${encodeURIComponent('openid profile email')}&` +
-      `access_type=offline&` +
-      `prompt=consent`;
   },
   
-  getKakaoOAuthUrl: () => {
-    const CLIENT_ID = process.env.NEXT_PUBLIC_KAKAO_CLIENT_ID || 'fd87bbda53a9c6c6186a0a1544bbae66';
-    
-    // Redirect URI 명시적 설정
-    let REDIRECT_URI;
-    if (typeof window !== 'undefined') {
-      // 로컬 개발 환경
-      if (window.location.hostname === 'localhost') {
-        REDIRECT_URI = `http://localhost:${window.location.port || '3007'}/auth/kakao/callback`;
-      } else {
-        // 프로덕션 - 고정 URL 사용
-        REDIRECT_URI = 'https://kpop-ranker.vercel.app/auth/kakao/callback';
-      }
-    } else {
-      // SSR 환경
-      REDIRECT_URI = 'https://kpop-ranker.vercel.app/auth/kakao/callback';
+  getKakaoOAuthUrl: async () => {
+    try {
+      // 백엔드 API 시도
+      const response = await api.get('/api/auth/kakao/url');
+      return response.data;
+    } catch (error) {
+      console.warn('Kakao OAuth URL API 에러, 대체 방식 사용:', error);
+      // 폴백: 직접 URL 생성
+      const CLIENT_ID = 'fd87bbda53a9c6c6186a0a1544bbae66';
+      const REDIRECT_URI = 'https://kpop-ranker.vercel.app/auth/callback';
+      
+      const auth_url = `https://kauth.kakao.com/oauth/authorize?` +
+        `client_id=${CLIENT_ID}&` +
+        `redirect_uri=${encodeURIComponent(REDIRECT_URI)}&` +
+        `response_type=code`;
+        
+      return {
+        success: true,
+        url: auth_url,
+        redirect_uri: REDIRECT_URI
+      };
     }
-    
-    return `https://kauth.kakao.com/oauth/authorize?` +
-      `client_id=${CLIENT_ID}&` +
-      `redirect_uri=${encodeURIComponent(REDIRECT_URI)}&` +
-      `response_type=code`;
   },
   
   // OAuth 콜백 처리
