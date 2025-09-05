@@ -66,7 +66,7 @@ export const authAPI = {
   
   // OAuth 관련 함수들 추가
   getGoogleOAuthUrl: () => {
-    const CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '148842862585-fqvd26vqss8vbl6e3tjusjemrkbo2i7v.apps.googleusercontent.com';
+    const CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '665193635993-1m7ijedftmshe6ih769g2jkiuluti32m.apps.googleusercontent.com';
     const REDIRECT_URI = typeof window !== 'undefined' 
       ? `${window.location.origin}/auth/google/callback`
       : 'https://kpop-ranker.vercel.app/auth/google/callback';
@@ -81,7 +81,7 @@ export const authAPI = {
   },
   
   getKakaoOAuthUrl: () => {
-    const CLIENT_ID = process.env.NEXT_PUBLIC_KAKAO_CLIENT_ID || '7e3a2a3a8a2e1a1a1a1a1a1a1a1a1a1a';
+    const CLIENT_ID = process.env.NEXT_PUBLIC_KAKAO_CLIENT_ID || 'fd87bbda53a9c6c6186a0a1544bbae66';
     const REDIRECT_URI = typeof window !== 'undefined'
       ? `${window.location.origin}/auth/kakao/callback`
       : 'https://kpop-ranker.vercel.app/auth/kakao/callback';
