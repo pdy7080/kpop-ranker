@@ -11,14 +11,14 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
 // 차트 필터 정의 - YouTube 제거
 const chartFilters = [
-  { id: 'all', name: '통합', icon: '🌍', color: 'bg-gradient-to-r from-purple-500 to-pink-500' },
-  { id: 'melon', name: 'Melon', icon: '🍈', color: 'bg-green-500' },
-  { id: 'genie', name: 'Genie', icon: '🧞', color: 'bg-blue-500' },
-  { id: 'bugs', name: 'Bugs', icon: '🐛', color: 'bg-red-500' },
-  { id: 'spotify', name: 'Spotify', icon: '🎧', color: 'bg-green-600' },
-  { id: 'flo', name: 'FLO', icon: '🌊', color: 'bg-blue-600' },
-  { id: 'apple_music', name: 'Apple Music', icon: '🍎', color: 'bg-gray-800' },
-  { id: 'lastfm', name: 'Last.fm', icon: '🎵', color: 'bg-red-800' },
+  { id: 'all', name: '통합', icon: '🌍', color: 'bg-gradient-to-r from-purple-500 to-pink-500', updateTime: '' },
+  { id: 'melon', name: 'Melon', icon: '🍈', color: 'bg-green-500', updateTime: '' },
+  { id: 'genie', name: 'Genie', icon: '🧞', color: 'bg-blue-500', updateTime: '' },
+  { id: 'bugs', name: 'Bugs', icon: '🐛', color: 'bg-red-500', updateTime: '' },
+  { id: 'spotify', name: 'Spotify', icon: '🎧', color: 'bg-green-600', updateTime: '' },
+  { id: 'flo', name: 'FLO', icon: '🌊', color: 'bg-blue-600', updateTime: '' },
+  { id: 'apple_music', name: 'Apple Music', icon: '🍎', color: 'bg-gray-800', updateTime: '' },
+  { id: 'lastfm', name: 'Last.fm', icon: '🎵', color: 'bg-red-800', updateTime: '' },
 ];
 
 // 트랙 카드 컴포넌트
@@ -191,11 +191,39 @@ const TrendingPage = () => {
   const [trendingData, setTrendingData] = useState<any[]>([]);
   const [chartData, setChartData] = useState<Record<string, any[]>>({});
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [chartUpdateTimes, setChartUpdateTimes] = useState<Record<string, string>>({});
   
   useEffect(() => {
     loadTrendingData();
+    loadChartUpdateStatus();
   }, []);
+  
+  const loadChartUpdateStatus = async () => {
+    try {
+      const response = await fetch(`${API_URL}/api/chart/update-status`);
+      if (response.ok) {
+        const data = await response.json();
+        const updates: Record<string, string> = {};
+        
+        if (data.charts) {
+          data.charts.forEach((chart: any) => {
+            if (chart.last_update) {
+              const date = new Date(chart.last_update);
+              const month = (date.getMonth() + 1).toString().padStart(2, '0');
+              const day = date.getDate().toString().padStart(2, '0');
+              const hours = date.getHours().toString().padStart(2, '0');
+              const minutes = date.getMinutes().toString().padStart(2, '0');
+              updates[chart.chart_name] = `${month}/${day} ${hours}:${minutes}`;
+            }
+          });
+        }
+        
+        setChartUpdateTimes(updates);
+      }
+    } catch (error) {
+      console.error('Failed to load update status:', error);
+    }
+  };
   
   const loadTrendingData = async () => {
     setLoading(true);
@@ -263,17 +291,10 @@ const TrendingPage = () => {
       ? trendingData 
       : (chartData[selectedChart] || []);
     
-    if (searchTerm) {
-      const term = searchTerm.toLowerCase();
-      tracks = tracks.filter((track: any) => {
-        const artist = (track.artist || track.unified_artist || '').toLowerCase();
-        const title = (track.track || track.title || track.unified_track || '').toLowerCase();
-        return artist.includes(term) || title.includes(term);
-      });
-    }
+    // 검색 기능 제거
     
     return tracks;
-  }, [trendingData, chartData, selectedChart, searchTerm]);
+  }, [trendingData, chartData, selectedChart]);
   
   const handleTrackClick = useCallback((track: any) => {
     const artist = encodeURIComponent(track.artist || track.unified_artist || '');
@@ -306,6 +327,11 @@ const TrendingPage = () => {
             </h1>
             <p className="text-sm sm:text-base text-gray-400">
               전 세계 K-POP 차트 실시간 인기 순위
+              {selectedChart !== 'all' && chartUpdateTimes[selectedChart] && (
+                <span className="ml-2 text-xs text-purple-400">
+                  (업데이트: {chartUpdateTimes[selectedChart]})
+                </span>
+              )}
             </p>
           </div>
           
@@ -323,21 +349,18 @@ const TrendingPage = () => {
                     }`}
                   >
                     <span className="mr-1">{chart.icon}</span>
-                    {chart.name}
+                    <span>{chart.name}</span>
+                    {chartUpdateTimes[chart.id] && (
+                      <span className="ml-1 text-xs opacity-80">
+                        ({chartUpdateTimes[chart.id].split(' ')[1]})
+                      </span>
+                    )}
                   </button>
                 ))}
               </div>
             </div>
             
-            <div className="flex items-center gap-2">
-              <input
-                type="text"
-                placeholder="검색..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="flex-grow px-3 sm:px-4 py-1.5 sm:py-2 bg-gray-800 rounded-lg text-sm sm:text-base text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500"
-              />
-              
+            <div className="flex items-center justify-end gap-2">
               <div className="flex items-center space-x-1 sm:space-x-2">
                 <button
                   onClick={() => setViewMode('grid')}
