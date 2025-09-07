@@ -1,0 +1,330 @@
+{
+  "meta": {
+    "generated_at": "2025-09-07T04:46:32.865635",
+    "data_type": "static_hybrid",
+    "trending_count": 20,
+    "active_charts": 0,
+    "version": "1.0"
+  },
+  "trending": [
+    {
+      "artist": "ALLDAY PROJECT",
+      "track": "FAMOUS",
+      "score": 260.0,
+      "charts": {
+        "apple_music": 4,
+        "bugs": 7,
+        "flo": 7,
+        "genie": 21,
+        "melon": 4,
+        "spotify": 7
+      },
+      "chart_count": 6,
+      "best_rank": 4,
+      "image_url": "https://cdn.music-flo.com/image/v2/album/026/455/39/04/439455026_184b5728a5ad4c04_s.jpg?1750588714258/dims/resize/75x75/quality/90",
+      "last_update": "2025-09-05 07:31:00.336842"
+    },
+    {
+      "artist": "IVE",
+      "track": "XOXZ",
+      "score": 240.0,
+      "charts": {
+        "apple_music": 3,
+        "bugs": 4,
+        "flo": 20,
+        "genie": 27,
+        "melon": 7,
+        "spotify": 9
+      },
+      "chart_count": 6,
+      "best_rank": 3,
+      "image_url": "https://cdn.music-flo.com/image/v2/album/483/378/42/04/442378483_185df6a185549169_o.jpg?1755830604335/dims/resize/75x75/quality/90",
+      "last_update": "2025-09-05 07:31:00.336842"
+    },
+    {
+      "artist": "HUNTRX",
+      "track": "Golden",
+      "score": 230.0,
+      "charts": {
+        "apple_music": 1,
+        "bugs": 1,
+        "genie": 1,
+        "lastfm": 17,
+        "melon": 1
+      },
+      "chart_count": 5,
+      "best_rank": 1,
+      "image_url": "https://image.bugsm.co.kr/album/images/50/381763/38176338.jpg?version=20250905045735",
+      "last_update": "2025-09-05 07:20:35.208711"
+    },
+    {
+      "artist": "BLACKPINK",
+      "track": "뛰어(JUMP)",
+      "score": 230.0,
+      "charts": {
+        "apple_music": 5,
+        "bugs": 6,
+        "flo": 3,
+        "genie": 17,
+        "melon": 2
+      },
+      "chart_count": 5,
+      "best_rank": 2,
+      "image_url": "https://cdn.music-flo.com/image/v2/album/308/514/40/04/440514308_185109979d90dfd0_s.jpg?1752192279395/dims/resize/75x75/quality/90",
+      "last_update": "2025-09-05 07:31:00.336842"
+    },
+    {
+      "artist": "WOODZ",
+      "track": "Drowning",
+      "score": 180.0,
+      "charts": {
+        "apple_music": 15,
+        "bugs": 9,
+        "flo": 21,
+        "genie": 19,
+        "melon": 5,
+        "spotify": 42
+      },
+      "chart_count": 6,
+      "best_rank": 5,
+      "image_url": "https://cdn.music-flo.com/image/v2/album/413/666/11/04/411666413_6448df60_s.jpg?1682497378566/dims/resize/75x75/quality/90",
+      "last_update": "2025-09-05 07:31:00.336842"
+    },
+    {
+      "artist": "aespa",
+      "track": "Dirty Work",
+      "score": 160.0,
+      "charts": {
+        "apple_music": 19,
+        "bugs": 16,
+        "flo": 25,
+        "genie": 34,
+        "melon": 8,
+        "spotify": 16
+      },
+      "chart_count": 6,
+      "best_rank": 8,
+      "image_url": "https://cdn.music-flo.com/image/v2/album/740/913/39/04/439913740_184c82651f5675e5_s.jpg?1750917727896/dims/resize/75x75/quality/90",
+      "last_update": "2025-09-05 07:31:00.336842"
+    },
+    {
+      "artist": "ALLDAY PROJECT",
+      "track": "WICKED",
+      "score": 155.0,
+      "charts": {
+        "apple_music": 10,
+        "bugs": 17,
+        "flo": 34,
+        "genie": 58,
+        "melon": 15,
+        "spotify": 18
+      },
+      "chart_count": 6,
+      "best_rank": 10,
+      "image_url": "https://cdn.music-flo.com/image/v2/album/026/455/39/04/439455026_184b5728a5ad4c04_s.jpg?1750588714258/dims/resize/75x75/quality/90",
+      "last_update": "2025-09-05 07:31:00.336842"
+    },
+    {
+      "artist": "aespa",
+      "track": "Whiplash",
+      "score": 140.0,
+      "charts": {
+        "apple_music": 18,
+        "bugs": 18,
+        "flo": 26,
+        "genie": 25,
+        "melon": 13,
+        "spotify": 17
+      },
+      "chart_count": 6,
+      "best_rank": 13,
+      "image_url": "https://cdn.music-flo.com/image/v2/album/366/014/30/04/430014366_17ff7b7f55d08ac6_s.jpg?1729236571181/dims/resize/75x75/quality/90",
+      "last_update": "2025-09-05 07:31:00.336842"
+    },
+    {
+      "artist": "박다혜",
+      "track": "시작의 아이 ❍",
+      "score": 110.0,
+      "charts": {
+        "apple_music": 48,
+        "bugs": 14,
+        "flo": 30,
+        "genie": 24,
+        "melon": 6
+      },
+      "chart_count": 5,
+      "best_rank": 6,
+      "image_url": "https://cdn.music-flo.com/image/v2/album/982/725/41/04/441725982_1859599f348d583c_o.jpg?1754532071009/dims/resize/75x75/quality/90",
+      "last_update": "2025-09-05 07:31:00.336842"
+    },
+    {
+      "artist": "Hearts2Hearts",
+      "track": "STYLE",
+      "score": 110.0,
+      "charts": {
+        "apple_music": 9,
+        "bugs": 35,
+        "flo": 48,
+        "melon": 30,
+        "spotify": 12
+      },
+      "chart_count": 5,
+      "best_rank": 9,
+      "image_url": "https://cdn.music-flo.com/image/v2/album/462/506/39/04/439506462_1849bf366b910a12_o.jpg?1750140171877/dims/resize/75x75/quality/90",
+      "last_update": "2025-09-05 07:31:00.336842"
+    },
+    {
+      "artist": "임영웅",
+      "track": "사랑은 늘 도망가",
+      "score": 110.0,
+      "charts": {
+        "flo": 4,
+        "genie": 3,
+        "melon": 50
+      },
+      "chart_count": 3,
+      "best_rank": 3,
+      "image_url": "https://cdn.music-flo.com/image/v2/album/973/716/06/04/406716973_615eb227_s.jpg?1633595946672/dims/resize/75x75/quality/90",
+      "last_update": "2025-09-05 07:31:00.336842"
+    },
+    {
+      "artist": "Saja Boys",
+      "track": "Soda Pop",
+      "score": 110.0,
+      "charts": {
+        "apple_music": 11,
+        "bugs": 8,
+        "genie": 18
+      },
+      "chart_count": 3,
+      "best_rank": 8,
+      "image_url": "https://image.bugsm.co.kr/album/images/50/381763/38176338.jpg?version=20250905045735",
+      "last_update": "2025-09-05 07:20:35.208711"
+    },
+    {
+      "artist": "10CM",
+      "track": "너에게 닿기를",
+      "score": 105.0,
+      "charts": {
+        "apple_music": 54,
+        "bugs": 15,
+        "flo": 24,
+        "genie": 23,
+        "melon": 10
+      },
+      "chart_count": 5,
+      "best_rank": 10,
+      "image_url": "https://cdn.music-flo.com/image/v2/album/581/012/35/04/435012581_1829d2ff29ee7a2f_s.jpg?1741154725638/dims/resize/75x75/quality/90",
+      "last_update": "2025-09-05 07:31:00.336842"
+    },
+    {
+      "artist": "임영웅",
+      "track": "순간을 영원처럼",
+      "score": 105.0,
+      "charts": {
+        "flo": 5,
+        "genie": 2,
+        "melon": 91
+      },
+      "chart_count": 3,
+      "best_rank": 2,
+      "image_url": "https://cdn.music-flo.com/image/v2/album/031/628/42/04/442628031_185fd9069efde772_s.jpg?1756361003313/dims/resize/75x75/quality/90",
+      "last_update": "2025-09-05 07:31:00.336842"
+    },
+    {
+      "artist": "임영웅",
+      "track": "우리들의 블루스",
+      "score": 105.0,
+      "charts": {
+        "flo": 6,
+        "genie": 8,
+        "melon": 83
+      },
+      "chart_count": 3,
+      "best_rank": 6,
+      "image_url": "https://cdn.music-flo.com/image/v2/album/827/064/08/04/408064827_626f999f_s.jpg?1651480994126/dims/resize/75x75/quality/90",
+      "last_update": "2025-09-05 07:31:00.336842"
+    },
+    {
+      "artist": "JENNIE",
+      "track": "like JENNIE",
+      "score": 100.0,
+      "charts": {
+        "apple_music": 32,
+        "bugs": 12,
+        "flo": 29,
+        "genie": 32,
+        "lastfm": 94,
+        "melon": 16,
+        "spotify": 86
+      },
+      "chart_count": 7,
+      "best_rank": 12,
+      "image_url": "https://cdn.music-flo.com/image/v2/album/950/052/35/04/435052950_182a78042b944049_s.jpg?1741336168165/dims/resize/75x75/quality/90",
+      "last_update": "2025-09-05 07:31:00.336842"
+    },
+    {
+      "artist": "이찬혁",
+      "track": "멸종위기사랑",
+      "score": 100.0,
+      "charts": {
+        "apple_music": 12,
+        "bugs": 10,
+        "flo": 59,
+        "genie": 59,
+        "melon": 41
+      },
+      "chart_count": 5,
+      "best_rank": 10,
+      "image_url": "https://cdn.music-flo.com/image/v2/album/268/517/40/04/440517268_1851f93adfe7d1cd_s.jpg?1752455763400/dims/resize/75x75/quality/90",
+      "last_update": "2025-09-05 07:31:00.336842"
+    },
+    {
+      "artist": "MAKTUB",
+      "track": "시작의 아이",
+      "score": 100.0,
+      "charts": {
+        "bugs": 27,
+        "flo": 27,
+        "genie": 20,
+        "melon": 9
+      },
+      "chart_count": 4,
+      "best_rank": 9,
+      "image_url": "https://cdn.music-flo.com/image/v2/album/993/394/32/04/432394993_1813f6adb485e368_s.jpg?1735001508863/dims/resize/75x75/quality/90",
+      "last_update": "2025-09-05 07:31:00.336842"
+    },
+    {
+      "artist": "임영웅",
+      "track": "답장을 보낸지",
+      "score": 100.0,
+      "charts": {
+        "flo": 10,
+        "genie": 4
+      },
+      "chart_count": 2,
+      "best_rank": 4,
+      "image_url": "https://cdn.music-flo.com/image/v2/album/031/628/42/04/442628031_185fd9069efde772_s.jpg?1756361003313/dims/resize/75x75/quality/90",
+      "last_update": "2025-09-05 07:31:00.336842"
+    },
+    {
+      "artist": "임영웅",
+      "track": "들꽃이 될게요",
+      "score": 100.0,
+      "charts": {
+        "flo": 8,
+        "genie": 5
+      },
+      "chart_count": 2,
+      "best_rank": 5,
+      "image_url": "https://cdn.music-flo.com/image/v2/album/031/628/42/04/442628031_185fd9069efde772_s.jpg?1756361003313/dims/resize/75x75/quality/90",
+      "last_update": "2025-09-05 07:31:00.336842"
+    }
+  ],
+  "charts": [],
+  "stats": {
+    "total_tracks": 0,
+    "active_charts": 0,
+    "last_updated": null
+  }
+}

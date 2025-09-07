@@ -1,170 +1,50 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 
-// 이미지 캐시를 위한 전역 Map
-const imageCache = new Map<string, string>();
-const errorCache = new Set<string>();
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
 interface ImageWithFallbackProps {
   artist: string;
   track: string;
-  alt?: string;
+  src?: string;  // 외부 URL (무시됨)
   className?: string;
-  src?: string;  
-  width?: number;
-  height?: number;
-  priority?: boolean;
-  shape?: 'square' | 'circle';
   isDetailView?: boolean;
-  quality?: 'auto' | 'high' | 'medium' | 'low';
-  lazy?: boolean; // 지연 로딩 옵션
 }
 
-const isDev = process.env.NODE_ENV === 'development';
-
-function debugError(message: string, data?: any) {
-  if (isDev) {
-    console.error(message, data);
-  }
-}
-
-const ImageWithFallback: React.FC<ImageWithFallbackProps> = ({
-  artist,
-  track,
-  alt,
+const ImageWithFallback: React.FC<ImageWithFallbackProps> = ({ 
+  artist, 
+  track, 
+  src,  // 무시하고 항상 로컬 API 사용
   className = '',
-  src,
-  width,
-  height,
-  priority = false,
-  shape = 'square',
-  isDetailView = false,
-  quality = 'auto',
-  lazy = true, // 기본적으로 지연 로딩 활성화
+  isDetailView = false
 }) => {
-  const safeArtist = artist || 'Unknown Artist';
-  const safeTrack = track || 'Unknown Track';
-  
-  // 메모이제이션으로 URL 생성 최적화
+  const [imageError, setImageError] = useState(false);
+
+  // 항상 로컬 고화질 API 사용
   const imageUrl = useMemo(() => {
-    const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
-    const encodedArtist = encodeURIComponent(safeArtist);
-    const encodedTrack = encodeURIComponent(safeTrack);
-    return `${baseUrl}/api/track-image-detail/${encodedArtist}/${encodedTrack}`;
-  }, [safeArtist, safeTrack]);
-  
-  const cacheKey = `${safeArtist}:${safeTrack}`;
-  
-  const [hasError, setHasError] = useState(() => errorCache.has(cacheKey));
-  const [isLoading, setIsLoading] = useState(() => !imageCache.has(cacheKey) && !errorCache.has(cacheKey));
-  const [currentSrc, setCurrentSrc] = useState(() => {
-    if (imageCache.has(cacheKey)) return imageCache.get(cacheKey)!;
-    if (errorCache.has(cacheKey)) return '/default-album.svg';
-    return imageUrl;
-  });
-  
-  const mountedRef = useRef(true);
-  const imgRef = useRef<HTMLImageElement>(null);
-  const intersectionRef = useRef<IntersectionObserver | null>(null);
-  const [isVisible, setIsVisible] = useState(!lazy || priority);
-
-  // 지연 로딩 설정 (Intersection Observer)
-  useEffect(() => {
-    if (!lazy || priority || isVisible) return;
-    
-    if (imgRef.current) {
-      intersectionRef.current = new IntersectionObserver(
-        (entries) => {
-          entries.forEach((entry) => {
-            if (entry.isIntersecting) {
-              setIsVisible(true);
-              intersectionRef.current?.disconnect();
-            }
-          });
-        },
-        { rootMargin: '100px' } // 100px 전에 미리 로드 시작
-      );
-      
-      intersectionRef.current.observe(imgRef.current);
+    if (imageError) {
+      return '/images/default-album.svg';
     }
-    
-    return () => {
-      intersectionRef.current?.disconnect();
-    };
-  }, [lazy, priority, isVisible]);
 
-  const handleLoad = () => {
-    if (!mountedRef.current) return;
-    
-    setIsLoading(false);
-    setHasError(false);
-    
-    // 성공적으로 로드된 URL을 캐시에 저장
-    imageCache.set(cacheKey, currentSrc);
-    
-    // 성공 로그 제거 - 조용히 처리
+    // src가 있어도 무시하고 항상 로컬 API 호출
+    // 이렇게 하면 메인페이지의 저화질 CDN URL을 무시하고 고화질 로컬 이미지 사용
+    const encodedArtist = encodeURIComponent(artist.replace(/\//g, ''));
+    const encodedTrack = encodeURIComponent(track.replace(/\//g, ''));
+    return `${API_URL}/api/album-image-smart/${encodedArtist}/${encodedTrack}`;
+  }, [artist, track, API_URL, imageError]);
+
+  const handleImageError = () => {
+    console.log(`Image load failed for ${artist} - ${track}`);
+    setImageError(true);
   };
-
-  const handleError = () => {
-    if (!mountedRef.current) return;
-    
-    // 개발 모드에서만 에러 로그 출력
-    debugError('이미지 로드 실패:', { artist: safeArtist, track: safeTrack, url: currentSrc });
-    
-    // 에러 캐시에 추가
-    errorCache.add(cacheKey);
-    
-    setHasError(true);
-    setIsLoading(false);
-    setCurrentSrc('/default-album.svg');
-  };
-
-  useEffect(() => {
-    return () => {
-      mountedRef.current = false;
-    };
-  }, []);
-
-  const shapeClass = shape === 'circle' ? 'rounded-full' : 'rounded-lg';
-  const finalClassName = `${className} ${shapeClass} transition-all duration-200`;
-
-  // 지연 로딩이 활성화되어 있고 아직 보이지 않는 경우
-  if (lazy && !isVisible && !priority) {
-    return (
-      <div 
-        ref={imgRef}
-        className={`${finalClassName} bg-gray-200 animate-pulse flex items-center justify-center`}
-        style={{ width, height }}
-      >
-        <div className="text-gray-400 text-xs">로딩중...</div>
-      </div>
-    );
-  }
 
   return (
-    <>
-      {isLoading && (
-        <div className={`${finalClassName} bg-gray-200 animate-pulse flex items-center justify-center absolute inset-0`}>
-          <div className="text-gray-400 text-xs">로딩중...</div>
-        </div>
-      )}
-      <img
-        ref={imgRef}
-        src={currentSrc}
-        alt={alt || `${safeArtist} - ${safeTrack}`}
-        className={finalClassName}
-        width={width}
-        height={height}
-        onLoad={handleLoad}
-        onError={handleError}
-        loading={priority ? 'eager' : 'lazy'}
-        style={{
-          opacity: isLoading ? 0 : 1,
-          transition: 'opacity 0.2s ease-in-out',
-          width,
-          height,
-        }}
-      />
-    </>
+    <img
+      src={imageUrl}
+      alt={`${artist} - ${track}`}
+      className={className}
+      onError={handleImageError}
+      loading="lazy"
+    />
   );
 };
 

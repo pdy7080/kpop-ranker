@@ -306,9 +306,10 @@ export default function ArtistPage() {
             {bestTrack && (
               <ImageWithFallback
                 artist={artistInfo.name}
-                track={bestTrack.title}
-                className="w-full h-full object-cover filter blur-3xl opacity-30"
-              />
+                track={bestTrack.title || bestTrack.track || bestTrack.unified_track}
+                src={bestTrack.image_url || bestTrack.album_image || bestTrack.local_image}
+                  className="w-full h-full object-cover filter blur-3xl opacity-30"
+                  />
             )}
             <div className="absolute inset-0 bg-gradient-to-b from-gray-900/80 to-gray-900" />
           </div>
@@ -322,11 +323,12 @@ export default function ArtistPage() {
                 <div className="w-64 h-64 md:w-80 md:h-80 rounded-2xl overflow-hidden shadow-2xl">
                   {bestTrack ? (
                     <ImageWithFallback
-                      artist={artistInfo.name}
-                      track={bestTrack.title}
-                      shape="square"
+                    artist={artistInfo.name}
+                    track={bestTrack.title || bestTrack.track || bestTrack.unified_track}
+                    src={bestTrack.image_url || bestTrack.album_image || bestTrack.local_image}
+                    shape="square"
                       className="w-full h-full object-cover"
-                    />
+                      />
                   ) : (
                     <div className="w-full h-full bg-gradient-to-br from-purple-600 to-pink-600 flex items-center justify-center">
                       <Mic className="w-32 h-32 text-white/60" />
@@ -423,7 +425,8 @@ export default function ArtistPage() {
                           <div className="w-14 h-14 md:w-16 md:h-16 rounded-lg overflow-hidden bg-gradient-to-br from-purple-500 to-pink-500">
                             <ImageWithFallback
                               artist={artistInfo.name}
-                              track={track.title}
+                              track={track.title || track.track || track.unified_track}
+                              src={track.image_url || track.album_image || track.local_image}
                               shape="square"
                               className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
                             />
@@ -506,7 +509,8 @@ export default function ArtistPage() {
                           <div className="w-16 h-16 md:w-20 md:h-20 rounded-lg overflow-hidden bg-gradient-to-br from-purple-500 to-pink-500">
                             <ImageWithFallback
                               artist={artistInfo.name}
-                              track={track.title}
+                              track={track.title || track.track || track.unified_track}
+                              src={track.image_url || track.album_image || track.local_image}
                               shape="square"
                               className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
                             />

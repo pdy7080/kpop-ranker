@@ -369,6 +369,7 @@ export default function TrackDetailPage() {
             <ImageWithFallback
               artist={trackInfo.artist}
               track={currentTrackTitle}
+              src={trackInfo.image_url}
               className="w-full h-full object-cover filter blur-2xl opacity-20"
             />
             <div className="absolute inset-0 bg-gradient-to-b from-gray-900/80 to-gray-900" />
@@ -388,6 +389,7 @@ export default function TrackDetailPage() {
                      <ImageWithFallback
                        artist={trackInfo.artist}
                        track={currentTrackTitle}
+                       src={trackInfo.image_url}
                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                        isDetailView={true}
                        priority={true}
