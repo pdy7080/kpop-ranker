@@ -61,7 +61,7 @@ const CHART_COLORS: { [key: string]: string } = {
   flo: '#AA40FC',
   spotify: '#1DB954',
   youtube: '#FF0000',
-  apple_music: '#000000',
+  apple_music: '#FC3C44',
   salam: '#FF6B35'
 };
 
@@ -91,7 +91,7 @@ const formatViews = (views: string | number): string => {
 const ChangeIndicator = ({ change }: { change?: number }) => {
   if (!change || change === 0) {
     return (
-      <span className="flex items-center text-gray-400 text-sm">
+      <span className="flex items-center text-gray-500 text-sm">
         <Minus className="w-4 h-4 mr-1" />
         -
       </span>
@@ -100,7 +100,7 @@ const ChangeIndicator = ({ change }: { change?: number }) => {
   
   if (change > 0) {
     return (
-      <span className="flex items-center text-green-500 text-sm font-medium">
+      <span className="flex items-center text-green-400 text-sm font-medium">
         <ArrowUp className="w-4 h-4 mr-1" />
         {change}
       </span>
@@ -108,7 +108,7 @@ const ChangeIndicator = ({ change }: { change?: number }) => {
   }
   
   return (
-    <span className="flex items-center text-red-500 text-sm font-medium">
+    <span className="flex items-center text-red-400 text-sm font-medium">
       <ArrowDown className="w-4 h-4 mr-1" />
       {Math.abs(change)}
     </span>
@@ -287,10 +287,10 @@ export default function TrackDetailPage() {
   if (loading) {
     return (
       <Layout>
-        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="min-h-screen bg-[#050507] flex items-center justify-center">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
-            <p className="text-gray-600">{t('common.loading')}</p>
+            <p className="text-gray-400">{t('common.loading')}</p>
           </div>
         </div>
       </Layout>
@@ -300,9 +300,9 @@ export default function TrackDetailPage() {
   if (error || !trackInfo) {
     return (
       <Layout>
-        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="min-h-screen bg-[#050507] flex items-center justify-center">
           <div className="text-center">
-            <p className="text-red-600 mb-4">{error || t('search.no.results')}</p>
+            <p className="text-red-400 mb-4">{error || t('search.no.results')}</p>
             <button
               onClick={() => router.back()}
               className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
@@ -326,12 +326,11 @@ export default function TrackDetailPage() {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.5 }}
-        className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-pink-50"
+        className="min-h-screen bg-[#050507]"
       >
-        {/* Rest of the component remains the same... */}
         {/* 헤더 섹션 */}
         <div className="relative">
-          <div className="absolute inset-0 bg-gradient-to-b from-purple-900/90 to-purple-600/90 backdrop-blur-sm"></div>
+          <div className="absolute inset-0 bg-gradient-to-b from-purple-900/20 to-[#050507] backdrop-blur-sm"></div>
           
           <div className="relative z-10 max-w-7xl mx-auto px-4 py-12">
             <div className="flex flex-col md:flex-row items-center md:items-start gap-8">
@@ -342,14 +341,14 @@ export default function TrackDetailPage() {
                 transition={{ duration: 0.5 }}
                 className="relative group"
               >
-                <div className="absolute inset-0 bg-gradient-to-r from-purple-600 to-pink-600 rounded-2xl blur-xl opacity-50 group-hover:opacity-75 transition-opacity"></div>
+                <div className="absolute inset-0 bg-gradient-to-r from-purple-600 to-pink-600 rounded-2xl blur-xl opacity-30 group-hover:opacity-50 transition-opacity"></div>
                 <div className="relative w-64 h-64 md:w-72 md:h-72 rounded-2xl overflow-hidden shadow-2xl">
                   <ImageWithFallback
                     artist={currentArtist as string}
                     track={currentTrackTitle as string}
                     className="w-full h-full object-cover"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end justify-center pb-4">
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end justify-center pb-4">
                     <button
                       onClick={handleWatchOnYouTube}
                       className="px-4 py-2 bg-red-600 text-white rounded-full flex items-center gap-2 hover:bg-red-700 transition-colors"
@@ -370,7 +369,7 @@ export default function TrackDetailPage() {
                 >
                   <button
                     onClick={handleArtistClick}
-                    className="text-white/80 hover:text-white text-lg mb-2 transition-colors cursor-pointer"
+                    className="text-purple-400 hover:text-purple-300 text-lg mb-2 transition-colors cursor-pointer"
                   >
                     {currentArtist}
                   </button>
@@ -380,9 +379,9 @@ export default function TrackDetailPage() {
                     </h1>
                     <button
                       onClick={() => {/* TODO: 즐겨찾기 기능 */}}
-                      className="p-2 rounded-full bg-white/20 hover:bg-white/30 transition-colors"
+                      className="p-2 rounded-full glass hover:bg-white/10 transition-colors"
                     >
-                      <Heart className="w-6 h-6 text-white" />
+                      <Heart className="w-6 h-6 text-pink-400" />
                     </button>
                   </div>
                 </motion.div>
@@ -395,18 +394,18 @@ export default function TrackDetailPage() {
                   className="flex items-center gap-6 justify-center md:justify-start mb-6"
                 >
                   <div className="text-center">
-                    <div className="text-3xl font-bold text-white">
+                    <div className="text-3xl font-bold gradient-text">
                       {trackInfo.charts?.length || 0}
                     </div>
-                    <div className="text-white/80 text-sm">Charts</div>
+                    <div className="text-gray-400 text-sm">Charts</div>
                   </div>
                   
                   {trackInfo.stats?.best_rank && (
                     <div className="text-center">
-                      <div className="text-3xl font-bold text-white">
+                      <div className="text-3xl font-bold gradient-text">
                         #{trackInfo.stats.best_rank}
                       </div>
-                      <div className="text-white/80 text-sm">Best Rank</div>
+                      <div className="text-gray-400 text-sm">Best Rank</div>
                     </div>
                   )}
                 </motion.div>
@@ -420,7 +419,7 @@ export default function TrackDetailPage() {
                 >
                   <button
                     onClick={handlePlayTrack}
-                    className="px-6 py-3 bg-green-600 text-white rounded-full flex items-center gap-2 hover:bg-green-700 transition-colors shadow-lg"
+                    className="px-6 py-3 bg-green-600 text-white rounded-full flex items-center gap-2 hover:bg-green-700 transition-colors shadow-lg hover:shadow-green-600/30"
                   >
                     <Play className="w-5 h-5" />
                     Spotify
@@ -428,7 +427,7 @@ export default function TrackDetailPage() {
                   
                   <button
                     onClick={handleWatchOnYouTube}
-                    className="px-6 py-3 bg-red-600 text-white rounded-full flex items-center gap-2 hover:bg-red-700 transition-colors shadow-lg"
+                    className="px-6 py-3 bg-red-600 text-white rounded-full flex items-center gap-2 hover:bg-red-700 transition-colors shadow-lg hover:shadow-red-600/30"
                   >
                     <Play className="w-5 h-5" />
                     YouTube
@@ -436,14 +435,14 @@ export default function TrackDetailPage() {
                   
                   <button
                     onClick={handleAddToPortfolio}
-                    className="px-6 py-3 bg-white/20 backdrop-blur text-white rounded-full hover:bg-white/30 transition-colors shadow-lg"
+                    className="px-6 py-3 glass text-white rounded-full hover:bg-white/10 transition-colors shadow-lg"
                   >
                     <Heart className="w-5 h-5" />
                   </button>
                   
                   <button
                     onClick={handleShare}
-                    className="px-6 py-3 bg-white/20 backdrop-blur text-white rounded-full hover:bg-white/30 transition-colors shadow-lg"
+                    className="px-6 py-3 glass text-white rounded-full hover:bg-white/10 transition-colors shadow-lg"
                   >
                     <Share2 className="w-5 h-5" />
                   </button>
@@ -460,8 +459,8 @@ export default function TrackDetailPage() {
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 0.5, duration: 0.5 }}
           >
-            <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
-              <BarChart3 className="w-6 h-6 text-purple-600" />
+            <h2 className="text-2xl font-bold mb-6 flex items-center gap-2 text-white">
+              <BarChart3 className="w-6 h-6 text-purple-500" />
               Chart Performance
             </h2>
             
@@ -473,15 +472,18 @@ export default function TrackDetailPage() {
                     initial={{ scale: 0.9, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
                     transition={{ delay: 0.1 * index, duration: 0.3 }}
-                    className="bg-white rounded-xl p-6 shadow-lg hover:shadow-xl transition-shadow"
+                    className="glass-card p-6 hover:bg-white/5 transition-all"
                   >
                     <div className="flex items-center justify-between mb-4">
                       <div className="flex items-center gap-3">
                         <div 
-                          className="w-3 h-3 rounded-full"
-                          style={{ backgroundColor: CHART_COLORS[chart.chart] || '#9CA3AF' }}
+                          className="w-3 h-3 rounded-full shadow-lg"
+                          style={{ 
+                            backgroundColor: CHART_COLORS[chart.chart] || '#9CA3AF',
+                            boxShadow: `0 0 10px ${CHART_COLORS[chart.chart] || '#9CA3AF'}40`
+                          }}
                         ></div>
-                        <h3 className="font-semibold text-lg">
+                        <h3 className="font-semibold text-lg text-gray-200">
                           {CHART_NAMES[chart.chart] || chart.chart}
                         </h3>
                       </div>
@@ -490,11 +492,11 @@ export default function TrackDetailPage() {
                     
                     <div className="flex items-end justify-between">
                       <div>
-                        <div className="text-3xl font-bold text-gray-900">
+                        <div className="text-3xl font-bold text-white">
                           #{chart.rank}
                         </div>
                         {chart.views && (
-                          <div className="text-sm text-gray-500 mt-1 flex items-center gap-1">
+                          <div className="text-sm text-gray-400 mt-1 flex items-center gap-1">
                             <Eye className="w-4 h-4" />
                             {formatViews(chart.views)}
                           </div>
@@ -502,7 +504,7 @@ export default function TrackDetailPage() {
                       </div>
                       
                       {chart.last_updated && (
-                        <div className="text-xs text-gray-400">
+                        <div className="text-xs text-gray-500">
                           <Clock className="w-4 h-4 inline mr-1" />
                           {new Date(chart.last_updated).toLocaleDateString()}
                         </div>
@@ -512,9 +514,9 @@ export default function TrackDetailPage() {
                 ))}
               </div>
             ) : (
-              <div className="bg-white rounded-xl p-12 text-center">
-                <Radio className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                <h3 className="text-xl font-semibold text-gray-700 mb-2">No Chart Data Available</h3>
+              <div className="glass-card p-12 text-center">
+                <Radio className="w-16 h-16 text-gray-600 mx-auto mb-4" />
+                <h3 className="text-xl font-semibold text-gray-300 mb-2">No Chart Data Available</h3>
                 <p className="text-gray-500">This track is not currently on any charts</p>
               </div>
             )}
@@ -527,16 +529,16 @@ export default function TrackDetailPage() {
             transition={{ delay: 0.6, duration: 0.5 }}
             className="mt-12"
           >
-            <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
-              <Music className="w-6 h-6 text-purple-600" />
+            <h2 className="text-2xl font-bold mb-6 flex items-center gap-2 text-white">
+              <Music className="w-6 h-6 text-purple-500" />
               More from {currentArtist}
             </h2>
             
-            <div className="bg-white rounded-xl p-6 shadow-lg">
-              <p className="text-gray-500 mb-4">Discover more tracks from this artist</p>
+            <div className="glass-card p-6">
+              <p className="text-gray-400 mb-4">Discover more tracks from this artist</p>
               <button
                 onClick={handleArtistClick}
-                className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors shadow-lg hover:shadow-purple-600/30"
               >
                 View All Tracks by {currentArtist}
               </button>
