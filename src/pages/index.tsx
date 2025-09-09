@@ -133,8 +133,8 @@ const formatViews = (views: string | number): string => {
 
 // 스켈레톤 로딩 컴포넌트
 const SkeletonCard = ({ className = "" }: { className?: string }) => (
-  <div className={`bg-gray-800 rounded-xl overflow-hidden animate-pulse ${className}`}>
-    <div className="w-full h-48 bg-gray-700"></div>
+  <div className={`glass-card overflow-hidden animate-pulse ${className}`}>
+    <div className="w-full h-64 bg-gray-700"></div>
     <div className="p-4">
       <div className="h-5 bg-gray-700 rounded mb-2"></div>
       <div className="h-4 bg-gray-700 rounded w-3/4 mb-3"></div>
@@ -233,11 +233,11 @@ export default function HybridHome() {
   return (
     <Layout>
       <Head>
-        <title>KPOP Ranker - 실시간 K-POP 차트 (하이브리드)</title>
-        <meta name="description" content="전 세계 K-POP 차트를 실시간으로 모니터링하는 하이브리드 플랫폼" />
+        <title>KPOP Ranker - 실시간 K-POP 차트</title>
+        <meta name="description" content="전 세계 K-POP 차트를 실시간으로 모니터링하는 플랫폼" />
       </Head>
 
-      <div className="min-h-screen bg-gray-900">
+      <div className="min-h-screen bg-[#050507]">
         {/* 즉시 표시되는 정적 헤더 */}
         <div className="container mx-auto px-4 py-12">
           <motion.div
@@ -246,7 +246,7 @@ export default function HybridHome() {
             className="text-center mb-8"
           >
             <h1 className="text-5xl font-black text-white mb-3">
-              <span className="text-indigo-400">KPOP</span> RANKER
+              <span className="gradient-text">KPOP</span> RANKER
               {isUpdating && (
                 <motion.span
                   initial={{ scale: 0 }}
@@ -263,16 +263,16 @@ export default function HybridHome() {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto mb-8">
               <motion.div
                 initial={{ opacity: 1, scale: 1 }}
-                className="bg-gray-800 rounded-lg p-4"
+                className="glass-card p-4"
               >
-                <BarChart3 className="w-6 h-6 text-indigo-400 mx-auto mb-2" />
+                <BarChart3 className="w-6 h-6 text-purple-400 mx-auto mb-2" />
                 <p className="text-2xl font-bold text-white">8</p>
                 <p className="text-sm text-gray-400">개 차트</p>
               </motion.div>
               
               <motion.div
                 initial={{ opacity: 1, scale: 1 }}
-                className="bg-gray-800 rounded-lg p-4"
+                className="glass-card p-4"
               >
                 <Globe className="w-6 h-6 text-green-400 mx-auto mb-2" />
                 <p className="text-2xl font-bold text-white">실시간</p>
@@ -281,9 +281,9 @@ export default function HybridHome() {
               
               <motion.div
                 initial={{ opacity: 1, scale: 1 }}
-                className="bg-gray-800 rounded-lg p-4"
+                className="glass-card p-4"
               >
-                <TrendingUp className="w-6 h-6 text-purple-400 mx-auto mb-2" />
+                <TrendingUp className="w-6 h-6 text-pink-400 mx-auto mb-2" />
                 <p className="text-2xl font-bold text-white">
                   {trendingTracks.length || '20'}
                 </p>
@@ -292,7 +292,7 @@ export default function HybridHome() {
               
               <motion.div
                 initial={{ opacity: 1, scale: 1 }}
-                className="bg-gray-800 rounded-lg p-4"
+                className="glass-card p-4"
               >
                 <Clock className="w-6 h-6 text-orange-400 mx-auto mb-2" />
                 <p className="text-2xl font-bold text-white">
@@ -308,7 +308,7 @@ export default function HybridHome() {
             <UnifiedSearch />
           </div>
 
-          {/* TOP 3 섹션 */}
+          {/* TOP 3 섹션 - 더 크게 표시 */}
           <AnimatePresence mode="wait">
             {isLoading ? (
               <motion.div
@@ -316,13 +316,13 @@ export default function HybridHome() {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="mb-12"
+                className="mb-16"
               >
-                <h2 className="text-2xl font-bold text-white mb-6 flex items-center justify-center gap-2">
-                  <Crown className="w-8 h-8 text-yellow-500" />
+                <h2 className="text-3xl font-bold text-white mb-8 flex items-center justify-center gap-2">
+                  <Crown className="w-10 h-10 text-yellow-500" />
                   TOP 3
                 </h2>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
                   {[0, 1, 2].map((idx) => (
                     <SkeletonCard key={idx} />
                   ))}
@@ -335,10 +335,10 @@ export default function HybridHome() {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -20 }}
-                  className="mb-12"
+                  className="mb-16"
                 >
-                  <h2 className="text-2xl font-bold text-white mb-6 flex items-center justify-center gap-2">
-                    <Crown className="w-8 h-8 text-yellow-500" />
+                  <h2 className="text-3xl font-bold text-white mb-8 flex items-center justify-center gap-2">
+                    <Crown className="w-10 h-10 text-yellow-500" />
                     TOP 3
                     {isUpdating && (
                       <motion.div
@@ -350,47 +350,49 @@ export default function HybridHome() {
                     )}
                   </h2>
                   
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
                     {trendingTracks.slice(0, 3).map((track, idx) => (
                       <motion.div
                         key={`${track.artist}-${track.track}`}
                         initial={{ opacity: 0, scale: 0.9 }}
                         animate={{ opacity: 1, scale: 1 }}
-                        whileHover={{ scale: 1.02 }}
+                        whileHover={{ scale: 1.02, y: -4 }}
                         transition={{ delay: idx * 0.1 }}
-                        className="bg-gray-800 rounded-xl overflow-hidden hover:shadow-2xl transition-all cursor-pointer group"
+                        className="glass-card overflow-hidden hover:shadow-2xl hover:shadow-purple-600/20 transition-all cursor-pointer group relative"
                         onClick={() => router.push(`/track/${encodeURIComponent(track.artist)}/${encodeURIComponent(track.track)}`)}
                       >
                         {/* 순위 뱃지 */}
                         <div className="relative">
-                          <div className={`absolute top-2 left-2 z-10 w-12 h-12 rounded-full flex items-center justify-center font-bold text-lg
-                            ${idx === 0 ? 'bg-gradient-to-r from-yellow-500 to-yellow-600' : 
-                              idx === 1 ? 'bg-gradient-to-r from-gray-400 to-gray-500' :
-                              'bg-gradient-to-r from-orange-600 to-orange-700'} text-white shadow-lg`}>
+                          <div className={`absolute top-3 left-3 z-10 w-14 h-14 rounded-full flex items-center justify-center font-bold text-xl
+                            ${idx === 0 ? 'bg-gradient-to-r from-yellow-500 to-yellow-600 shadow-yellow-500/50' : 
+                              idx === 1 ? 'bg-gradient-to-r from-gray-400 to-gray-500 shadow-gray-400/50' :
+                              'bg-gradient-to-r from-orange-600 to-orange-700 shadow-orange-600/50'} text-white shadow-lg`}>
                             {idx + 1}
                           </div>
                           
                           {/* Play 버튼 오버레이 */}
                           <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-all flex items-center justify-center">
-                            <Play className="w-12 h-12 text-white opacity-0 group-hover:opacity-100 transition-all" />
+                            <Play className="w-16 h-16 text-white opacity-0 group-hover:opacity-100 transition-all transform group-hover:scale-110" />
                           </div>
                           
-                          <ImageWithFallback
-                            artist={track.artist}
-                            track={track.track}
-                            src={track.image_url}
-                            className="w-full h-48 object-cover"
-                          />
+                          <div className="w-full h-64 overflow-hidden">
+                            <ImageWithFallback
+                              artist={track.artist}
+                              track={track.track}
+                              src={track.image_url}
+                              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                            />
+                          </div>
                         </div>
                         
-                        <div className="p-4">
-                          <h3 className="font-bold text-white text-lg truncate group-hover:text-indigo-400 transition-colors">
+                        <div className="p-5">
+                          <h3 className="font-bold text-white text-xl truncate group-hover:text-purple-400 transition-colors">
                             {track.track}
                           </h3>
-                          <p className="text-gray-400 truncate mb-3">{track.artist}</p>
+                          <p className="text-gray-400 text-lg truncate mb-4">{track.artist}</p>
                           
                           {/* 차트 순위들 */}
-                          <div className="flex flex-wrap gap-1 mb-2">
+                          <div className="flex flex-wrap gap-2 mb-3">
                             {Object.entries(track.charts)
                               .filter(([chart, rank]) => chart !== 'youtube' && typeof rank === 'number')
                               .slice(0, 4)
@@ -406,8 +408,8 @@ export default function HybridHome() {
                           
                           {/* 스코어 */}
                           <div className="flex items-center gap-2 text-sm">
-                            <Award className="w-4 h-4 text-yellow-500" />
-                            <span className="text-gray-300">스코어: {Math.round(track.score)}</span>
+                            <Award className="w-5 h-5 text-yellow-500" />
+                            <span className="text-gray-300 font-medium">스코어: {Math.round(track.score)}</span>
                           </div>
                         </div>
                       </motion.div>
@@ -418,7 +420,7 @@ export default function HybridHome() {
             )}
           </AnimatePresence>
 
-          {/* HOT TRACKS 섹션 */}
+          {/* HOT TRACKS 섹션 - 이미지 크기 증가 */}
           <AnimatePresence mode="wait">
             {isLoading ? (
               <motion.div
@@ -427,15 +429,15 @@ export default function HybridHome() {
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
               >
-                <h2 className="text-2xl font-bold text-white mb-6 flex items-center justify-center gap-2">
-                  <Flame className="w-6 h-6 text-orange-500" />
+                <h2 className="text-2xl font-bold text-white mb-8 flex items-center justify-center gap-2">
+                  <Flame className="w-8 h-8 text-orange-500" />
                   HOT TRACKS
                 </h2>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-4 gap-6">
                   {Array.from({ length: 16 }, (_, idx) => (
-                    <div key={idx} className="bg-gray-800 rounded-lg overflow-hidden animate-pulse">
-                      <div className="w-full h-32 bg-gray-700"></div>
-                      <div className="p-3">
+                    <div key={idx} className="glass-card overflow-hidden animate-pulse">
+                      <div className="w-full h-48 bg-gray-700"></div>
+                      <div className="p-4">
                         <div className="h-4 bg-gray-700 rounded mb-2"></div>
                         <div className="h-3 bg-gray-700 rounded w-3/4 mb-2"></div>
                         <div className="h-4 bg-gray-700 rounded w-12"></div>
@@ -452,8 +454,8 @@ export default function HybridHome() {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -20 }}
                 >
-                  <h2 className="text-2xl font-bold text-white mb-6 flex items-center justify-center gap-2">
-                    <Flame className="w-6 h-6 text-orange-500" />
+                  <h2 className="text-2xl font-bold text-white mb-8 flex items-center justify-center gap-2">
+                    <Flame className="w-8 h-8 text-orange-500" />
                     HOT TRACKS
                     {isUpdating && (
                       <motion.div
@@ -465,43 +467,45 @@ export default function HybridHome() {
                     )}
                   </h2>
                   
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-4 gap-6">
                     {trendingTracks.slice(3, 19).map((track, idx) => (
                       <motion.div
                         key={`${track.artist}-${track.track}-${idx}`}
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
-                        whileHover={{ scale: 1.05 }}
+                        whileHover={{ scale: 1.05, y: -2 }}
                         transition={{ delay: idx * 0.02 }}
-                        className="bg-gray-800 rounded-lg overflow-hidden hover:bg-gray-700 transition-all cursor-pointer group"
+                        className="glass-card overflow-hidden hover:bg-white/5 hover:shadow-lg hover:shadow-purple-600/10 transition-all cursor-pointer group"
                         onClick={() => router.push(`/track/${encodeURIComponent(track.artist)}/${encodeURIComponent(track.track)}`)}
                       >
                         <div className="relative">
                           <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all flex items-center justify-center">
-                            <Play className="w-6 h-6 text-white opacity-0 group-hover:opacity-100 transition-all" />
+                            <Play className="w-10 h-10 text-white opacity-0 group-hover:opacity-100 transition-all transform group-hover:scale-110" />
                           </div>
-                          <ImageWithFallback
-                            artist={track.artist}
-                            track={track.track}
-                            src={track.image_url}
-                            className="w-full h-32 object-cover"
-                          />
+                          <div className="w-full h-48 overflow-hidden">
+                            <ImageWithFallback
+                              artist={track.artist}
+                              track={track.track}
+                              src={track.image_url}
+                              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                            />
+                          </div>
                         </div>
-                        <div className="p-3">
-                          <h4 className="font-medium text-white text-sm truncate group-hover:text-indigo-400 transition-colors">
+                        <div className="p-4">
+                          <h4 className="font-semibold text-white text-sm truncate group-hover:text-purple-400 transition-colors">
                             {track.track}
                           </h4>
-                          <p className="text-gray-400 text-xs truncate mb-2">{track.artist}</p>
+                          <p className="text-gray-400 text-xs truncate mb-3">{track.artist}</p>
                           
                           {/* 베스트 랭크와 차트 수 */}
                           <div className="flex items-center justify-between text-xs">
                             <div className="flex items-center gap-1">
-                              <Award className="w-3 h-3 text-yellow-500" />
-                              <span className="text-gray-300">#{track.best_rank}</span>
+                              <Award className="w-4 h-4 text-yellow-500" />
+                              <span className="text-gray-300 font-medium">#{track.best_rank}</span>
                             </div>
                             <div className="flex items-center gap-1">
-                              <BarChart3 className="w-3 h-3 text-indigo-500" />
-                              <span className="text-gray-300">{track.chart_count}</span>
+                              <BarChart3 className="w-4 h-4 text-purple-500" />
+                              <span className="text-gray-300 font-medium">{track.chart_count}</span>
                             </div>
                           </div>
                         </div>
@@ -514,26 +518,28 @@ export default function HybridHome() {
           </AnimatePresence>
 
           {/* 하이브리드 시스템 상태 표시 */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="fixed bottom-4 right-4 bg-gray-800 rounded-lg p-3 shadow-lg border border-gray-700"
-          >
-            <div className="flex items-center gap-2 text-sm">
-              <div className={`w-2 h-2 rounded-full ${
-                loadingStage === 'complete' ? 'bg-green-500' : 
-                loadingStage === 'static' ? 'bg-yellow-500' : 'bg-blue-500'
-              } animate-pulse`}></div>
-              <span className="text-gray-300">
-                {loadingStage === 'complete' ? '하이브리드 로딩 완료' :
-                 loadingStage === 'static' ? '정적 데이터 로딩 중' :
-                 'API 데이터 로딩 중'}
-              </span>
-              {isUpdating && (
-                <Zap className="w-4 h-4 text-yellow-400 animate-pulse" />
-              )}
-            </div>
-          </motion.div>
+          {loadingStage !== 'complete' && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="fixed bottom-4 right-4 glass-card p-3 shadow-lg"
+            >
+              <div className="flex items-center gap-2 text-sm">
+                <div className={`w-2 h-2 rounded-full ${
+                  loadingStage === 'complete' ? 'bg-green-500' : 
+                  loadingStage === 'static' ? 'bg-yellow-500' : 'bg-blue-500'
+                } animate-pulse`}></div>
+                <span className="text-gray-300">
+                  {loadingStage === 'complete' ? '하이브리드 로딩 완료' :
+                   loadingStage === 'static' ? '정적 데이터 로딩 중' :
+                   'API 데이터 로딩 중'}
+                </span>
+                {isUpdating && (
+                  <Zap className="w-4 h-4 text-yellow-400 animate-pulse" />
+                )}
+              </div>
+            </motion.div>
+          )}
         </div>
       </div>
     </Layout>
