@@ -23,7 +23,7 @@ interface ChartData {
   views?: string;
   last_updated?: string;
   last_updated_formatted?: string;
-  video_url?: string;  // YouTube 비디오 URL 추가
+  video_url?: string;
 }
 
 interface TrackInfo {
@@ -50,7 +50,7 @@ interface TrackInfo {
     youtube?: string;
     apple_music?: string;
   };
-  youtube_url?: string;  // 실제 YouTube 비디오 URL 추가
+  youtube_url?: string;
   total_charts?: number;
 }
 
@@ -61,8 +61,8 @@ const CHART_COLORS: { [key: string]: string } = {
   flo: '#AA40FC',
   spotify: '#1DB954',
   youtube: '#FF0000',
-  apple_music: '#000000',  // Apple Music 블랙
-  salam: '#FF6B35'         // Salam 오렉지
+  apple_music: '#000000',
+  salam: '#FF6B35'
 };
 
 const CHART_NAMES: { [key: string]: string } = {
@@ -72,8 +72,8 @@ const CHART_NAMES: { [key: string]: string } = {
   flo: 'FLO',
   spotify: 'Spotify',
   youtube: 'YouTube',
-  apple_music: 'Apple Music',  // 새로운 차트
-  salam: 'Salam'               // 새로운 차트
+  apple_music: 'Apple Music',
+  salam: 'Salam'
 };
 
 const formatViews = (views: string | number): string => {
@@ -144,9 +144,33 @@ export default function TrackDetailPage() {
       
       console.log('📊 Track data received:', response);
       
-      // v16 API 응답 처리 - response.track이 있으면 그것을 사용, 없으면 response 자체 사용
+      // API 응답 처리 수정 - 객체인지 확인 후 처리
       if (response) {
-        const trackData = response.track || response;
+        let trackData = response.track || response;
+        
+        // trackData가 문자열이나 기본형이면 객체로 변환
+        if (typeof trackData !== 'object' || trackData === null) {
+          trackData = {
+            artist: decodeURIComponent(artist as string),
+            track: decodeURIComponent(title as string),
+            title: decodeURIComponent(title as string),
+            charts: []
+          };
+        } else {
+          // 객체인 경우 복사본 생성 (읽기 전용 방지)
+          trackData = { ...trackData };
+          
+          // artist 필드가 없으면 URL 파라미터에서 가져오기
+          if (!trackData.artist && artist) {
+            trackData.artist = decodeURIComponent(artist as string);
+          }
+          
+          // title/track 필드 처리
+          if (!trackData.track && !trackData.title && title) {
+            trackData.track = decodeURIComponent(title as string);
+            trackData.title = decodeURIComponent(title as string);
+          }
+        }
         
         // chart_positions을 charts 배열로 변환
         if (trackData.chart_positions && !trackData.charts) {
@@ -158,6 +182,15 @@ export default function TrackDetailPage() {
           }));
         }
         
+        // charts가 빈 배열이면 처리
+        if (!trackData.charts || trackData.charts.length === 0) {
+          // chart_data나 다른 필드에서 시도
+          if (response.charts && response.charts.length > 0) {
+            trackData.charts = response.charts;
+          }
+        }
+        
+        console.log('✅ Processed track data:', trackData);
         setTrackInfo(trackData);
       } else {
         setError(t('search.no.results'));
@@ -171,158 +204,94 @@ export default function TrackDetailPage() {
   };
 
   const handleArtistClick = () => {
-    if (trackInfo?.artist) {
-      router.push(`/artist/${encodeURIComponent(trackInfo.artist)}`);
+    const artistName = trackInfo?.artist || artist;
+    if (artistName) {
+      router.push(`/artist/${encodeURIComponent(artistName as string)}`);
     }
   };
 
-  // YouTube 뮤직비디오 열기 - 검색 방식 (안정적)
+  // YouTube 뮤직비디오 열기
   const handleWatchOnYouTube = () => {
-    if (trackInfo?.artist && currentTrackTitle) {
-      const searchQuery = `${trackInfo.artist} ${currentTrackTitle} official MV`.replace(/[()\[\]]/g, '');
+    const artistName = trackInfo?.artist || artist;
+    const trackTitle = trackInfo?.track || trackInfo?.title || title;
+    
+    if (artistName && trackTitle) {
+      const searchQuery = `${artistName} ${trackTitle} official MV`.replace(/[()\[\]]/g, '');
       const youtubeUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(searchQuery)}`;
       window.open(youtubeUrl, '_blank');
     }
   };
 
-  // 1. Spotify에서 트랙 검색 - 모바일 다중 전략
+  // Spotify에서 트랙 검색
   const handlePlayTrack = () => {
-    const currentTrackTitle = trackInfo?.track || trackInfo?.title || (title as string) || '';
-    if (trackInfo?.artist && currentTrackTitle) {
-      // 모바일 환경 감지
+    const artistName = trackInfo?.artist || artist;
+    const trackTitle = trackInfo?.track || trackInfo?.title || title;
+    
+    if (artistName && trackTitle) {
       const isMobile = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
       const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
       const isAndroid = /Android/.test(navigator.userAgent);
       
       console.log('🔍 디바이스 정보:', { isMobile, isIOS, isAndroid });
-      console.log('🎧 아티스트:', trackInfo.artist);
-      console.log('🎵 곡제목:', currentTrackTitle);
+      console.log('🎧 아티스트:', artistName);
+      console.log('🎵 곡제목:', trackTitle);
+      
+      const cleanTitle = (trackTitle as string).replace(/\s*\(.*?\)\s*/g, '').trim();
+      const searchQuery = `${artistName} ${cleanTitle}`;
+      const encodedQuery = encodeURIComponent(searchQuery);
       
       if (isMobile) {
-        // 모바일: 여러 방법 시도
-        const cleanArtist = trackInfo.artist.replace(/[()\[\]"']/g, '').trim();
-        const cleanTitle = currentTrackTitle.replace(/[()\[\]"']/g, '').trim();
-        
-        // URL 매개변수 방식 시도 1 - 가장 단순
-        const query1 = `${cleanArtist} ${cleanTitle}`;
-        const url1 = `https://open.spotify.com/search?q=${encodeURIComponent(query1)}`;
-        
-        // URL 매개변수 방식 시도 2 - 공백을 +로 대체
-        const query2 = `${cleanArtist}+${cleanTitle}`;
-        const url2 = `https://open.spotify.com/search?q=${query2}`;
-        
-        // 기존 방식
-        const url3 = `https://open.spotify.com/search/${encodeURIComponent(cleanArtist + ' ' + cleanTitle)}`;
-        
-        console.log('🔗 시도할 URL들:');
-        console.log('1. Query 방식:', url1);
-        console.log('2. Plus 방식:', url2);
-        console.log('3. 기존 방식:', url3);
-        
-        // 모바일에서는 쿼리 방식을 우선 시도
-        let finalUrl = url1;
-        
-        // iOS에서는 다른 방식 시도
         if (isIOS) {
-          finalUrl = url2;
-          console.log('📱 iOS 감지: Plus 방식 사용');
-        }
-        
-        console.log('✅ 최종 URL:', finalUrl);
-        
-        // 모바일에서 열기 시도
-        setTimeout(() => {
-          try {
-            console.log('🚀 모바일에서 Spotify 열기 시도...');
-            window.open(finalUrl, '_blank', 'noopener,noreferrer');
-          } catch (error) {
-            console.log('❌ window.open 실패, location.href 시도');
-            window.location.href = finalUrl;
-          }
-        }, 100);
-        
-      } else {
-        // 데스크톱: 기존 정확한 검색
-        const searchQuery = `track:"${currentTrackTitle}" artist:"${trackInfo.artist}"`
-          .replace(/[()\[\]]/g, '')
-          .replace(/\s+/g, ' ')
-          .trim();
-        
-        const spotifyUrl = `https://open.spotify.com/search/${encodeURIComponent(searchQuery)}`;
-        console.log('💻 데스크톱 Spotify URL:', spotifyUrl);
-        
-        window.open(spotifyUrl, '_blank');
-      }
-    }
-  };
-
-  // 2. 포트폴리오에 곡 추가 - 인증 상태 확인 및 올바른 토큰 사용
-  const handleAddToPortfolio = async () => {
-    try {
-      const currentTrackTitle = trackInfo?.track || trackInfo?.title || (title as string) || '';
-      console.log('🔥 포트폴리오 추가 시도:', { artist: trackInfo?.artist, title: currentTrackTitle });
-      
-      // 인증 상태 확인
-      const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
-      
-      if (!token) {
-        alert(t('portfolio.login.description') || '로그인이 필요합니다.');
-        // 로그인 페이지로 이동 또는 로그인 모달 열기
-        router.push('/auth/login');
-        return;
-      }
-      
-      const response = await fetch(`${API_URL}/api/portfolio`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`  // ✅ 실제 사용자 토큰 사용
-        },
-        body: JSON.stringify({
-          artist: trackInfo?.artist,
-          track: currentTrackTitle  // ✅ track 필드로 통일
-        })
-      });
-      
-      console.log('🔍 포트폴리오 API 응답 상태:', response.status);
-      
-      const data = await response.json();
-      console.log('📊 포트폴리오 API 응답 데이터:', data);
-      
-      if (data.success) {
-        alert(t('toast.added.portfolio') || '포트폴리오에 추가되었습니다!');
-      } else {
-        if (data.requireAuth) {
-          alert(t('portfolio.login.description') || '로그인이 필요합니다.');
-          router.push('/auth/login');
+          const spotifyAppUrl = `spotify://search/${encodedQuery}`;
+          const spotifyWebUrl = `https://open.spotify.com/search/${encodedQuery}`;
+          
+          const iframe = document.createElement('iframe');
+          iframe.style.display = 'none';
+          iframe.src = spotifyAppUrl;
+          document.body.appendChild(iframe);
+          
+          setTimeout(() => {
+            document.body.removeChild(iframe);
+            window.open(spotifyWebUrl, '_blank');
+          }, 1000);
+        } else if (isAndroid) {
+          const spotifyAppUrl = `spotify://search/${encodedQuery}`;
+          const spotifyWebUrl = `https://open.spotify.com/search/${encodedQuery}`;
+          
+          window.location.href = spotifyAppUrl;
+          
+          setTimeout(() => {
+            window.open(spotifyWebUrl, '_blank');
+          }, 1000);
         } else {
-          console.error('❌ 포트폴리오 추가 실패:', data);
-          alert(data.error || '포트폴리오 추가에 실패했습니다.');
+          window.open(`https://open.spotify.com/search/${encodedQuery}`, '_blank');
         }
+      } else {
+        window.open(`https://open.spotify.com/search/${encodedQuery}`, '_blank');
       }
-    } catch (error) {
-      console.error('❌ 포트폴리오 추가 중 오류:', error);
-      alert('포트폴리오 추가 중 오류가 발생했습니다.');
     }
   };
 
-  // 3. 공유하기 기능 - 모달 열기
   const handleShare = () => {
     setShowShareModal(true);
   };
 
+  const handleAddToPortfolio = () => {
+    alert(t('track.portfolio.login.required'));
+  };
+
+  // 현재 artist와 title 가져오기 (여러 소스에서)
+  const currentArtist = trackInfo?.artist || artist || '';
+  const currentTrackTitle = trackInfo?.track || trackInfo?.title || title || '';
+
   if (loading) {
     return (
       <Layout>
-        <div className="min-h-screen bg-gradient-to-br from-gray-900 to-black flex items-center justify-center">
-          <motion.div
-            animate={{ rotate: 360 }}
-            transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-            className="flex flex-col items-center gap-4"
-          >
-            <Disc className="w-16 h-16 text-purple-500" />
-            <p className="text-gray-400">{t('common.loading')}</p>
-          </motion.div>
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">{t('common.loading')}</p>
+          </div>
         </div>
       </Layout>
     );
@@ -331,16 +300,14 @@ export default function TrackDetailPage() {
   if (error || !trackInfo) {
     return (
       <Layout>
-        <div className="min-h-screen bg-gradient-to-br from-gray-900 to-black flex items-center justify-center">
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
           <div className="text-center">
-            <h2 className="text-3xl font-bold text-white mb-4">
-              {error || t('search.no.results')}
-            </h2>
+            <p className="text-red-600 mb-4">{error || t('search.no.results')}</p>
             <button
               onClick={() => router.back()}
-              className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+              className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
             >
-              {t('common.retry')}
+              {t('common.back')}
             </button>
           </div>
         </div>
@@ -348,307 +315,241 @@ export default function TrackDetailPage() {
     );
   }
 
-  const currentTrackTitle = trackInfo?.track || trackInfo?.title || (title as string) || '';
-  const bestRank = trackInfo.stats?.best_rank || 
-                  (trackInfo.charts && trackInfo.charts.length > 0 
-                    ? Math.min(...trackInfo.charts.map(c => c.rank)) 
-                    : null);
-
   return (
     <Layout>
       <Head>
-        <title>{currentTrackTitle} - {trackInfo.artist} | KPOP Ranker</title>
-        <meta name="description" content={`${trackInfo.artist}의 ${currentTrackTitle} 차트 성과 및 순위 정보`} />
+        <title>{currentTrackTitle} - {currentArtist} | KPOP Ranker</title>
+        <meta name="description" content={`${currentArtist}의 ${currentTrackTitle} 차트 순위 및 스트리밍 정보`} />
       </Head>
 
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900/20 to-gray-900">
-        {/* Header Section */}
-        <div className="relative overflow-hidden">
-          {/* Background Blur */}
-          <div className="absolute inset-0">
-            <ImageWithFallback
-              artist={trackInfo.artist}
-              track={currentTrackTitle}
-              src={trackInfo.image_url}
-              className="w-full h-full object-cover filter blur-2xl opacity-20"
-            />
-            <div className="absolute inset-0 bg-gradient-to-b from-gray-900/80 to-gray-900" />
-          </div>
-
-          {/* Content */}
-          <div className="relative container mx-auto px-4 py-16">
-            <div className="grid md:grid-cols-2 gap-12 items-center">
-              {/* Album Art */}
-              <motion.div
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                className="flex justify-center"
+      <motion.div 
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.5 }}
+        className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-pink-50"
+      >
+        {/* Rest of the component remains the same... */}
+        {/* 헤더 섹션 */}
+        <div className="relative">
+          <div className="absolute inset-0 bg-gradient-to-b from-purple-900/90 to-purple-600/90 backdrop-blur-sm"></div>
+          
+          <div className="relative z-10 max-w-7xl mx-auto px-4 py-12">
+            <div className="flex flex-col md:flex-row items-center md:items-start gap-8">
+              {/* 앨범 이미지 */}
+              <motion.div 
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ duration: 0.5 }}
+                className="relative group"
               >
-                <div className="relative group">
-                  <div className="w-80 h-80 md:w-96 md:h-96 rounded-2xl overflow-hidden shadow-2xl">
-                     <ImageWithFallback
-                       artist={trackInfo.artist}
-                       track={currentTrackTitle}
-                       src={trackInfo.image_url}
-                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                       isDetailView={true}
-                       priority={true}
-                     />
-                    
-                    {/* Play Overlay */}
-                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 
-                                  transition-all flex items-center justify-center">
-                      <div className="w-20 h-20 bg-white/20 backdrop-blur-sm rounded-full 
-                                   flex items-center justify-center cursor-pointer hover:scale-110 transition-transform">
-                        <Play className="w-10 h-10 text-white ml-1" />
-                      </div>
-                    </div>
+                <div className="absolute inset-0 bg-gradient-to-r from-purple-600 to-pink-600 rounded-2xl blur-xl opacity-50 group-hover:opacity-75 transition-opacity"></div>
+                <div className="relative w-64 h-64 md:w-72 md:h-72 rounded-2xl overflow-hidden shadow-2xl">
+                  <ImageWithFallback
+                    artist={currentArtist as string}
+                    track={currentTrackTitle as string}
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end justify-center pb-4">
+                    <button
+                      onClick={handleWatchOnYouTube}
+                      className="px-4 py-2 bg-red-600 text-white rounded-full flex items-center gap-2 hover:bg-red-700 transition-colors"
+                    >
+                      <Play className="w-5 h-5" />
+                      Watch MV
+                    </button>
                   </div>
-                  
-                  {/* Best Rank Badge */}
-                  {bestRank && (
-                    <div className="absolute -top-4 -right-4 w-16 h-16 
-                                  bg-gradient-to-r from-yellow-500 to-orange-500 
-                                  rounded-full flex items-center justify-center shadow-xl">
-                      <div className="text-center">
-                        <div className="text-white text-xs font-bold">BEST</div>
-                        <div className="text-white text-lg font-black">#{bestRank}</div>
-                      </div>
-                    </div>
-                  )}
                 </div>
               </motion.div>
 
-              {/* Track Info */}
-              <motion.div
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                className="space-y-6"
-              >
-                <div>
-                  <h1 className="text-4xl md:text-5xl font-black text-white mb-2">
-                    {currentTrackTitle}
-                  </h1>
+              {/* 트랙 정보 */}
+              <div className="flex-1 text-center md:text-left">
+                <motion.div
+                  initial={{ y: 20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ delay: 0.2, duration: 0.5 }}
+                >
                   <button
                     onClick={handleArtistClick}
-                    className="text-2xl text-gray-300 hover:text-white transition-colors 
-                             flex items-center gap-2 group"
+                    className="text-white/80 hover:text-white text-lg mb-2 transition-colors cursor-pointer"
                   >
-                    {trackInfo.artist}
-                    <ExternalLink className="w-5 h-5 opacity-0 group-hover:opacity-100 transition-opacity" />
+                    {currentArtist}
                   </button>
-                </div>
+                  <div className="flex items-center gap-3 justify-center md:justify-start mb-4">
+                    <h1 className="text-3xl md:text-5xl font-bold text-white">
+                      {currentTrackTitle}
+                    </h1>
+                    <button
+                      onClick={() => {/* TODO: 즐겨찾기 기능 */}}
+                      className="p-2 rounded-full bg-white/20 hover:bg-white/30 transition-colors"
+                    >
+                      <Heart className="w-6 h-6 text-white" />
+                    </button>
+                  </div>
+                </motion.div>
 
-                {/* Quick Stats */}
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                  <div className="glass-card p-4 rounded-xl text-center">
-                    <div className="text-2xl font-bold text-white">
-                      {trackInfo.charts?.length || trackInfo.total_charts || 0}
+                {/* 차트 정보 */}
+                <motion.div
+                  initial={{ y: 20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ delay: 0.3, duration: 0.5 }}
+                  className="flex items-center gap-6 justify-center md:justify-start mb-6"
+                >
+                  <div className="text-center">
+                    <div className="text-3xl font-bold text-white">
+                      {trackInfo.charts?.length || 0}
                     </div>
-                    <div className="text-sm text-gray-400">Charts</div>
+                    <div className="text-white/80 text-sm">Charts</div>
                   </div>
                   
-                  {bestRank && (
-                    <div className="glass-card p-4 rounded-xl text-center">
-                      <div className="text-2xl font-bold text-white">#{bestRank}</div>
-                      <div className="text-sm text-gray-400">Best Rank</div>
+                  {trackInfo.stats?.best_rank && (
+                    <div className="text-center">
+                      <div className="text-3xl font-bold text-white">
+                        #{trackInfo.stats.best_rank}
+                      </div>
+                      <div className="text-white/80 text-sm">Best Rank</div>
                     </div>
                   )}
-                  
-                  {trackInfo.stats?.days_on_chart && (
-                    <div className="glass-card p-4 rounded-xl text-center">
-                      <div className="text-2xl font-bold text-white">{trackInfo.stats.days_on_chart}</div>
-                      <div className="text-sm text-gray-400">Days</div>
-                    </div>
-                  )}
-                </div>
+                </motion.div>
 
-                {/* Action Buttons */}
-                <div className="flex gap-3 flex-wrap">
-                  <button 
+                {/* 액션 버튼 */}
+                <motion.div
+                  initial={{ y: 20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ delay: 0.4, duration: 0.5 }}
+                  className="flex flex-wrap gap-3 justify-center md:justify-start"
+                >
+                  <button
                     onClick={handlePlayTrack}
-                    className="px-6 py-3 bg-gradient-to-r from-green-600 to-green-500 
-                             text-white font-bold rounded-full flex items-center gap-2 
-                             hover:shadow-lg transform hover:scale-105 transition-all
-                             hover:from-green-500 hover:to-green-400"
+                    className="px-6 py-3 bg-green-600 text-white rounded-full flex items-center gap-2 hover:bg-green-700 transition-colors shadow-lg"
                   >
-                    <Play className="w-4 h-4" />
+                    <Play className="w-5 h-5" />
                     Spotify
                   </button>
                   
-                  <button 
+                  <button
                     onClick={handleWatchOnYouTube}
-                    className="px-6 py-3 bg-gradient-to-r from-red-600 to-red-500 
-                             text-white font-bold rounded-full flex items-center gap-2 
-                             hover:shadow-lg transform hover:scale-105 transition-all
-                             hover:from-red-500 hover:to-red-400"
+                    className="px-6 py-3 bg-red-600 text-white rounded-full flex items-center gap-2 hover:bg-red-700 transition-colors shadow-lg"
                   >
-                    <Play className="w-4 h-4" />
+                    <Play className="w-5 h-5" />
                     YouTube
                   </button>
                   
-                  <button 
+                  <button
                     onClick={handleAddToPortfolio}
-                    className="px-6 py-4 bg-gradient-to-r from-pink-600 to-pink-500 text-white rounded-full 
-                             hover:from-pink-500 hover:to-pink-400 hover:shadow-lg transform hover:scale-105 transition-all
-                             flex items-center gap-2"
-                    title="포트폴리오에 추가"
+                    className="px-6 py-3 bg-white/20 backdrop-blur text-white rounded-full hover:bg-white/30 transition-colors shadow-lg"
                   >
                     <Heart className="w-5 h-5" />
                   </button>
                   
-                  <button 
+                  <button
                     onClick={handleShare}
-                    className="px-6 py-4 glass-card text-white rounded-full 
-                             hover:bg-white/20 transition-all flex items-center gap-2"
-                    title="공유하기"
+                    className="px-6 py-3 bg-white/20 backdrop-blur text-white rounded-full hover:bg-white/30 transition-colors shadow-lg"
                   >
                     <Share2 className="w-5 h-5" />
                   </button>
-                </div>
-              </motion.div>
+                </motion.div>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Chart Rankings */}
-        <div className="container mx-auto px-4 py-16">
-          <h2 className="text-3xl font-bold text-white mb-8 flex items-center gap-3">
-            <div className="p-3 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl">
-              <BarChart3 className="w-6 h-6" />
-            </div>
-            Chart Performance
-          </h2>
-
-          {trackInfo.charts && trackInfo.charts.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {trackInfo.charts.map((chart, index) => {
-                const chartName = chart.chart.toLowerCase();
-                const color = CHART_COLORS[chartName] || '#6b7280';
-                const displayName = CHART_NAMES[chartName] || chart.chart_display || chart.chart;
-
-                return (
+        {/* 차트 성과 섹션 */}
+        <div className="max-w-7xl mx-auto px-4 py-12">
+          <motion.div
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.5, duration: 0.5 }}
+          >
+            <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
+              <BarChart3 className="w-6 h-6 text-purple-600" />
+              Chart Performance
+            </h2>
+            
+            {trackInfo.charts && trackInfo.charts.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {trackInfo.charts.map((chart, index) => (
                   <motion.div
-                    key={chart.chart}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.1 }}
-                    className="glass-card p-6 rounded-xl hover:bg-white/10 transition-all"
+                    key={`${chart.chart}-${index}`}
+                    initial={{ scale: 0.9, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{ delay: 0.1 * index, duration: 0.3 }}
+                    className="bg-white rounded-xl p-6 shadow-lg hover:shadow-xl transition-shadow"
                   >
                     <div className="flex items-center justify-between mb-4">
                       <div className="flex items-center gap-3">
                         <div 
-                          className="w-12 h-12 rounded-full flex items-center justify-center text-white font-bold"
-                          style={{ backgroundColor: color }}
-                        >
-                          {displayName.charAt(0)}
-                        </div>
-                        <div>
-                          <h3 className="font-bold text-white">{displayName}</h3>
-                          <div className="text-sm text-gray-400">
-                            {chart.last_updated_formatted || chart.last_updated || ''}
-                          </div>
-                        </div>
+                          className="w-3 h-3 rounded-full"
+                          style={{ backgroundColor: CHART_COLORS[chart.chart] || '#9CA3AF' }}
+                        ></div>
+                        <h3 className="font-semibold text-lg">
+                          {CHART_NAMES[chart.chart] || chart.chart}
+                        </h3>
                       </div>
                       <ChangeIndicator change={chart.change} />
                     </div>
-
-                    <div className="space-y-3">
-                      <div className="flex justify-between items-center">
-                        <span className="text-gray-400">Rank</span>
-                        <span className="text-3xl font-bold text-white">#{chart.rank}</span>
+                    
+                    <div className="flex items-end justify-between">
+                      <div>
+                        <div className="text-3xl font-bold text-gray-900">
+                          #{chart.rank}
+                        </div>
+                        {chart.views && (
+                          <div className="text-sm text-gray-500 mt-1 flex items-center gap-1">
+                            <Eye className="w-4 h-4" />
+                            {formatViews(chart.views)}
+                          </div>
+                        )}
                       </div>
                       
-                      {chart.views && (
-                        <div className="flex justify-between items-center">
-                          <span className="text-gray-400">
-                            {chartName === 'youtube' ? 'Video Views' : 'Views'}
-                          </span>
-                          <span className="text-white font-medium">{formatViews(chart.views)}</span>
+                      {chart.last_updated && (
+                        <div className="text-xs text-gray-400">
+                          <Clock className="w-4 h-4 inline mr-1" />
+                          {new Date(chart.last_updated).toLocaleDateString()}
                         </div>
                       )}
-
-                      {/* YouTube 전용 뮤직비디오 버튼 */}
-                      {chartName === 'youtube' && (
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleWatchOnYouTube();
-                          }}
-                          className="w-full mt-3 px-4 py-2 bg-red-600 hover:bg-red-700 
-                                   text-white rounded-lg transition-all flex items-center justify-center gap-2"
-                        >
-                          <Play className="w-4 h-4" />
-                          Search MV
-                        </button>
-                      )}
-
-                      {/* Progress Bar */}
-                      <div className="mt-4">
-                        <div className="h-2 bg-white/10 rounded-full overflow-hidden">
-                          <motion.div
-                            initial={{ width: 0 }}
-                            animate={{ width: `${Math.max(5, 100 - chart.rank)}%` }}
-                            transition={{ delay: index * 0.1 + 0.3, duration: 0.8 }}
-                            className="h-full rounded-full"
-                            style={{ backgroundColor: color }}
-                          />
-                        </div>
-                      </div>
                     </div>
                   </motion.div>
-                );
-              })}
-            </div>
-          ) : (
-            <div className="text-center py-16">
-              <BarChart3 className="w-16 h-16 text-gray-500 mx-auto mb-4" />
-              <h3 className="text-xl font-bold text-gray-400 mb-2">No Chart Data Available</h3>
-              <p className="text-gray-500">This track is not currently on any charts</p>
-            </div>
-          )}
-        </div>
+                ))}
+              </div>
+            ) : (
+              <div className="bg-white rounded-xl p-12 text-center">
+                <Radio className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                <h3 className="text-xl font-semibold text-gray-700 mb-2">No Chart Data Available</h3>
+                <p className="text-gray-500">This track is not currently on any charts</p>
+              </div>
+            )}
+          </motion.div>
 
-        {/* More from Artist */}
-        <div className="container mx-auto px-4 pb-16">
-          <h2 className="text-3xl font-bold text-white mb-8 flex items-center gap-3">
-            <div className="p-3 bg-gradient-to-r from-green-500 to-emerald-500 rounded-xl">
-              <Music className="w-6 h-6" />
+          {/* 더 많은 트랙 섹션 */}
+          <motion.div
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.6, duration: 0.5 }}
+            className="mt-12"
+          >
+            <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
+              <Music className="w-6 h-6 text-purple-600" />
+              More from {currentArtist}
+            </h2>
+            
+            <div className="bg-white rounded-xl p-6 shadow-lg">
+              <p className="text-gray-500 mb-4">Discover more tracks from this artist</p>
+              <button
+                onClick={handleArtistClick}
+                className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+              >
+                View All Tracks by {currentArtist}
+              </button>
             </div>
-            More from {trackInfo.artist}
-          </h2>
-          
-          <div className="text-center">
-            <button
-              onClick={handleArtistClick}
-              className="px-8 py-4 bg-gradient-to-r from-purple-600 to-pink-600 
-                       text-white font-bold rounded-full hover:shadow-lg 
-                       transform hover:scale-105 transition-all"
-            >
-              View All Tracks by {trackInfo.artist}
-            </button>
-          </div>
+          </motion.div>
         </div>
-      </div>
+      </motion.div>
 
-      <style jsx global>{`
-        .glass-card {
-          background: rgba(255, 255, 255, 0.05);
-          backdrop-filter: blur(10px);
-          border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-      `}</style>
-      
-      {/* Share Modal */}
-      {trackInfo && (
+      {showShareModal && (
         <ShareModal
-          isOpen={showShareModal}
-          onClose={() => setShowShareModal(false)}
-          trackInfo={{
-            artist: trackInfo.artist,
-            title: currentTrackTitle
-          }}
           url={typeof window !== 'undefined' ? window.location.href : ''}
+          title={`${currentArtist} - ${currentTrackTitle}`}
+          onClose={() => setShowShareModal(false)}
         />
       )}
     </Layout>
