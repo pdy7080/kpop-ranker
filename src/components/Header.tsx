@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { FaChartLine, FaBriefcase, FaBars, FaInfoCircle, FaUser, FaSignInAlt, FaSignOutAlt } from 'react-icons/fa';
+import { FaChartLine, FaBriefcase, FaBars, FaInfoCircle, FaUser, FaSignInAlt, FaSignOutAlt, FaBuilding } from 'react-icons/fa';
 import { HiSparkles } from 'react-icons/hi';
 import MobileMenu from './MobileMenu';
 import { useAuth } from '@/contexts/AuthContext';
@@ -95,6 +95,19 @@ const Header: React.FC = () => {
                   <FaInfoCircle className="w-4 h-4 group-hover:text-blue-400 transition-colors" />
                   <span className="relative">
                     {t('nav.about')}
+                    <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-purple-500 to-pink-500 group-hover:w-full transition-all duration-300" />
+                  </span>
+                </motion.div>
+              </Link>
+              
+              <Link href="/b2b">
+                <motion.div 
+                  className="flex items-center space-x-2 text-gray-300 hover:text-white transition-all cursor-pointer group"
+                  whileHover={{ y: -2 }}
+                >
+                  <FaBuilding className="w-4 h-4 group-hover:text-purple-400 transition-colors" />
+                  <span className="relative font-semibold">
+                    B2B
                     <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-purple-500 to-pink-500 group-hover:w-full transition-all duration-300" />
                   </span>
                 </motion.div>

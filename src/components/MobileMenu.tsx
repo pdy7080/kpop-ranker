@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FaBars, FaTimes, FaHome, FaSearch, FaBriefcase, FaChartLine, FaBrain, FaInfoCircle, FaUser, FaSignInAlt, FaSignOutAlt } from 'react-icons/fa';
+import { FaBars, FaTimes, FaHome, FaSearch, FaBriefcase, FaChartLine, FaBrain, FaInfoCircle, FaUser, FaSignInAlt, FaSignOutAlt, FaBuilding } from 'react-icons/fa';
 import LanguageSelector from './LanguageSelector';
 import { useTranslation } from '@/contexts/TranslationContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -35,6 +35,7 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, onClose }) => {
     { href: '/trending', icon: FaChartLine, label: t('nav.trending') },
     { href: '/insights', icon: FaBrain, label: t('nav.ai_insights') },
     { href: '/about', icon: FaInfoCircle, label: t('nav.about') },
+    { href: '/b2b', icon: FaBuilding, label: 'B2B 서비스', special: true },
   ];
 
   return (
@@ -95,8 +96,9 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, onClose }) => {
                         onClick={onClose}
                         className="flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors"
                         style={{
-                          backgroundColor: isActive ? '#7c3aed' : 'transparent',
-                          color: isActive ? '#ffffff' : '#d1d5db'
+                          backgroundColor: isActive ? '#7c3aed' : item.special ? 'rgba(147, 51, 234, 0.1)' : 'transparent',
+                          color: isActive ? '#ffffff' : item.special ? '#c084fc' : '#d1d5db',
+                          border: item.special ? '1px solid rgba(147, 51, 234, 0.3)' : 'none'
                         }}
                         onMouseEnter={(e) => {
                           if (!isActive) {
