@@ -11,17 +11,17 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
 // 차트 필터 정의 - YouTube 제거
 const chartFilters = [
-  { id: 'all', name: '통합', icon: '🌍', color: 'bg-gradient-to-r from-purple-500 to-pink-500', updateTime: '' },
-  { id: 'melon', name: 'Melon', icon: '🍈', color: 'bg-green-500', updateTime: '' },
-  { id: 'genie', name: 'Genie', icon: '🧞', color: 'bg-blue-500', updateTime: '' },
-  { id: 'bugs', name: 'Bugs', icon: '🐛', color: 'bg-red-500', updateTime: '' },
-  { id: 'spotify', name: 'Spotify', icon: '🎧', color: 'bg-green-600', updateTime: '' },
-  { id: 'flo', name: 'FLO', icon: '🌊', color: 'bg-blue-600', updateTime: '' },
-  { id: 'apple_music', name: 'Apple Music', icon: '🍎', color: 'bg-gray-800', updateTime: '' },
-  { id: 'lastfm', name: 'Last.fm', icon: '🎵', color: 'bg-red-800', updateTime: '' },
+  { id: 'all', name: '통합', icon: '🌍', color: 'bg-gradient-to-r from-purple-500 to-pink-500' },
+  { id: 'melon', name: 'Melon', icon: '🍈', color: 'bg-green-500' },
+  { id: 'genie', name: 'Genie', icon: '🧞', color: 'bg-blue-500' },
+  { id: 'bugs', name: 'Bugs', icon: '🐛', color: 'bg-red-500' },
+  { id: 'spotify', name: 'Spotify', icon: '🎧', color: 'bg-green-600' },
+  { id: 'flo', name: 'FLO', icon: '🌊', color: 'bg-blue-600' },
+  { id: 'apple_music', name: 'Apple Music', icon: '🍎', color: 'bg-gray-800' },
+  { id: 'lastfm', name: 'Last.fm', icon: '🎵', color: 'bg-red-800' },
 ];
 
-// 트랙 카드 컴포넌트
+// 트랙 카드 컴포넌트 - 이미지 로직 단순화
 const TrackCard = memo(({ 
   track, 
   index, 
@@ -35,24 +35,26 @@ const TrackCard = memo(({
 }) => {
   const [imageError, setImageError] = useState(false);
   
-  // 이미지 URL 처리 - 백엔드 API 직접 호출
+  // 🔥 이미지 URL 처리 - 백엔드가 보내는 image_url만 사용 (단순화)
   const imageUrl = useMemo(() => {
-    // 1. 이미 전체 URL이 있으면 사용
-    if (track.image_url && track.image_url.startsWith('http')) {
-      return track.image_url;
+    if (imageError) {
+      return '/images/default-album.svg';
     }
     
-    // 2. 상대경로면 백엔드 URL 추가
-    if (track.image_url && track.image_url.startsWith('/')) {
-      // /api/album-image-smart/... 형태면 백엔드 URL 붙이기
-      if (track.image_url.includes('/api/')) {
+    // 백엔드에서 이미 완전한 URL 또는 상대 경로를 보내므로 그대로 사용
+    if (track.image_url) {
+      // 이미 전체 URL이면 그대로 사용
+      if (track.image_url.startsWith('http')) {
+        return track.image_url;
+      }
+      
+      // 상대 경로면 백엔드 URL 붙이기
+      if (track.image_url.startsWith('/')) {
         return `${API_URL}${track.image_url}`;
       }
-      // /static/... 형태면 백엔드 URL 붙이기
-      return `${API_URL}${track.image_url}`;
     }
     
-    // 3. 이미지 URL이 없으면 스마트 API 호출
+    // 이미지 URL이 없으면 스마트 API 호출
     const artist = track.artist || track.unified_artist || '';
     const title = track.track || track.title || track.unified_track || '';
     
@@ -66,7 +68,12 @@ const TrackCard = memo(({
     
     // 백엔드 API 전체 URL
     return `${API_URL}/api/album-image-smart/${encodedArtist}/${encodedTitle}`;
-  }, [track]);
+  }, [track, imageError]);
+  
+  const handleImageError = () => {
+    console.log(`이미지 로드 실패: ${track.artist} - ${track.track} (${imageUrl})`);
+    setImageError(true);
+  };
   
   const formatScore = (score: number) => {
     if (!score) return '0';
@@ -98,7 +105,7 @@ const TrackCard = memo(({
                   src={imageUrl}
                   alt=""
                   className="w-full h-full object-cover"
-                  onError={() => setImageError(true)}
+                  onError={handleImageError}
                   loading="lazy"
                 />
               ) : (
@@ -150,7 +157,7 @@ const TrackCard = memo(({
             src={imageUrl}
             alt=""
             className="w-full h-full object-cover"
-            onError={() => setImageError(true)}
+            onError={handleImageError}
             loading="lazy"
           />
         ) : (
@@ -195,33 +202,30 @@ const TrendingPage = () => {
   
   useEffect(() => {
     loadTrendingData();
-    loadChartUpdateStatus();
+    loadChartUpdateTimes();
   }, []);
   
-  const loadChartUpdateStatus = async () => {
+  const loadChartUpdateTimes = async () => {
     try {
       const response = await fetch(`${API_URL}/api/chart/update-status`);
       if (response.ok) {
         const data = await response.json();
-        const updates: Record<string, string> = {};
+        const times: Record<string, string> = {};
         
-        if (data.charts) {
-          data.charts.forEach((chart: any) => {
-            if (chart.last_update) {
-              const date = new Date(chart.last_update);
-              const month = (date.getMonth() + 1).toString().padStart(2, '0');
-              const day = date.getDate().toString().padStart(2, '0');
-              const hours = date.getHours().toString().padStart(2, '0');
-              const minutes = date.getMinutes().toString().padStart(2, '0');
-              updates[chart.chart_name] = `${month}/${day} ${hours}:${minutes}`;
-            }
-          });
-        }
+        data.charts?.forEach((chart: any) => {
+          const chartName = chart.chart_name || chart.name;
+          if (chart.last_update && chart.last_update !== 'N/A') {
+            const date = new Date(chart.last_update);
+            times[chartName] = date.toLocaleString('ko-KR', {
+              month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit'
+            });
+          }
+        });
         
-        setChartUpdateTimes(updates);
+        setChartUpdateTimes(times);
       }
     } catch (error) {
-      console.error('Failed to load update status:', error);
+      console.error('Chart update times load error:', error);
     }
   };
   
@@ -231,21 +235,7 @@ const TrendingPage = () => {
       const response = await fetch(`${API_URL}/api/trending?limit=50`);
       if (response.ok) {
         const data = await response.json();
-        let trending = data.trending || [];
-        
-        // 이미지 URL 수정
-        trending = trending.map((track: any) => {
-          if (track.image_url && track.image_url.startsWith('/api/')) {
-            return {
-              ...track,
-              image_url: `${API_URL}${track.image_url}`
-            };
-          }
-          return track;
-        });
-        
-        setTrendingData(trending);
-        setChartData({ all: trending });
+        setTrendingData(data.trending || []);
       }
     } catch (error) {
       console.error('Trending load error:', error);
@@ -260,19 +250,17 @@ const TrendingPage = () => {
     
     setLoading(true);
     try {
-      const response = await fetch(`${API_URL}/api/chart/${chartId}/latest`);
+      const response = await fetch(`${API_URL}/api/chart/${chartId}`);
       if (response.ok) {
         const data = await response.json();
         let tracks = (data.tracks || []).map((track: any, idx: number) => {
-          // 이미지 URL 수정
-          if (track.image_url && track.image_url.startsWith('/api/')) {
-            track.image_url = `${API_URL}${track.image_url}`;
-          }
-          
           return {
             ...track,
             rank_position: idx + 1,
-            score: (51 - (idx + 1)) * 10
+            score: (51 - (idx + 1)) * 10,
+            // artist와 track이 없으면 unified 필드 사용
+            artist: track.artist || track.unified_artist,
+            track: track.track || track.unified_track || track.title
           };
         });
         
@@ -290,8 +278,6 @@ const TrendingPage = () => {
     let tracks = selectedChart === 'all' 
       ? trendingData 
       : (chartData[selectedChart] || []);
-    
-    // 검색 기능 제거
     
     return tracks;
   }, [trendingData, chartData, selectedChart]);
@@ -367,11 +353,6 @@ const TrendingPage = () => {
                   >
                     <span className="mr-1">{chart.icon}</span>
                     <span>{chart.name}</span>
-                    {chart.id !== 'all' && chartUpdateTimes[chart.id] && (
-                      <span className="ml-1 text-xs text-white opacity-90">
-                        ({chartUpdateTimes[chart.id].split(' ')[1]})
-                      </span>
-                    )}
                   </button>
                 ))}
               </div>
