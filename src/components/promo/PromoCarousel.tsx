@@ -101,10 +101,10 @@ const PromoCarousel: React.FC = () => {
         {/* Carousel Container */}
         <div className="relative">
           {/* Main Carousel */}
-          <div className="relative h-80 md:h-96 lg:h-[420px] rounded-3xl overflow-hidden">
+          <div className="relative h-[280px] sm:h-[320px] md:h-[380px] lg:h-[420px] rounded-2xl sm:rounded-3xl overflow-hidden">
             {/* Gradient Border */}
-            <div className="absolute inset-0 p-[2px] bg-gradient-to-r from-purple-500 via-pink-500 to-blue-500 rounded-3xl">
-              <div className="h-full bg-gray-900/95 backdrop-blur-xl rounded-3xl">
+            <div className="absolute inset-0 p-[1px] sm:p-[2px] bg-gradient-to-r from-purple-500 via-pink-500 to-blue-500 rounded-2xl sm:rounded-3xl">
+              <div className="h-full bg-gray-900/95 backdrop-blur-xl rounded-2xl sm:rounded-3xl">
                 <AnimatePresence mode="wait">
                   <motion.div
                     key={currentSlide}
@@ -112,7 +112,7 @@ const PromoCarousel: React.FC = () => {
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: -300 }}
                     transition={{ duration: 0.5 }}
-                    className="h-full relative overflow-hidden rounded-3xl"
+                    className="h-full relative overflow-hidden rounded-2xl sm:rounded-3xl"
                   >
                     <PromoSlideContent slide={promoSlides[currentSlide]} />
                   </motion.div>
@@ -121,31 +121,34 @@ const PromoCarousel: React.FC = () => {
             </div>
           </div>
 
-          {/* Navigation Arrows */}
+          {/* Navigation Arrows - Mobile Optimized */}
           <button
             onClick={prevSlide}
-            className="absolute left-4 top-1/2 -translate-y-1/2 z-10 p-3 rounded-full bg-black/50 backdrop-blur-sm border border-white/10 text-white hover:bg-black/70 hover:scale-110 transition-all duration-300"
+            className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 z-10 p-2 sm:p-3 rounded-full bg-black/50 backdrop-blur-sm border border-white/10 text-white hover:bg-black/70 hover:scale-110 transition-all duration-300"
+            aria-label="Previous slide"
           >
-            <ChevronLeft className="w-5 h-5" />
+            <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5" />
           </button>
           <button
             onClick={nextSlide}
-            className="absolute right-4 top-1/2 -translate-y-1/2 z-10 p-3 rounded-full bg-black/50 backdrop-blur-sm border border-white/10 text-white hover:bg-black/70 hover:scale-110 transition-all duration-300"
+            className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 z-10 p-2 sm:p-3 rounded-full bg-black/50 backdrop-blur-sm border border-white/10 text-white hover:bg-black/70 hover:scale-110 transition-all duration-300"
+            aria-label="Next slide"
           >
-            <ChevronRight className="w-5 h-5" />
+            <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5" />
           </button>
 
           {/* Navigation Dots */}
-          <div className="flex justify-center gap-3 mt-6">
+          <div className="flex justify-center gap-2 sm:gap-3 mt-4 sm:mt-6">
             {promoSlides.map((_, index) => (
               <button
                 key={index}
                 onClick={() => goToSlide(index)}
-                className={`w-3 h-3 rounded-full transition-all duration-300 ${
+                className={`w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full transition-all duration-300 ${
                   index === currentSlide
                     ? 'bg-gradient-to-r from-purple-500 to-pink-500 scale-125'
                     : 'bg-gray-600 hover:bg-gray-500'
                 }`}
+                aria-label={`Go to slide ${index + 1}`}
               />
             ))}
           </div>
@@ -317,66 +320,67 @@ const PromoSlideContent: React.FC<PromoSlideContentProps> = ({ slide }) => {
 
       {/* Content */}
       <div className="relative z-10 h-full flex items-center">
-        <div className="w-full px-8 md:px-12">
+        <div className="w-full px-4 sm:px-6 md:px-8 lg:px-12">
           <div className="max-w-4xl">
-            {/* Company Logo/Name */}
-            <div className="flex items-center gap-3 mb-4">
-              <div className={`p-2 rounded-lg bg-gradient-to-r ${slide.gradient}`}>
-                <Building className="w-6 h-6 text-white" />
+            {/* Company Logo/Name - Mobile Responsive */}
+            <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
+              <div className={`p-1.5 sm:p-2 rounded-lg bg-gradient-to-r ${slide.gradient}`}>
+                <Building className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 text-white" />
               </div>
-              <div className={`text-lg md:text-xl font-semibold ${slide.accentColor}`}>
+              <div className={`text-sm sm:text-lg md:text-xl font-semibold ${slide.accentColor}`}>
                 {slide.company}
               </div>
             </div>
 
-            {/* Main Title */}
-            <h3 className="text-2xl md:text-4xl lg:text-5xl font-bold text-white mb-4 leading-tight">
+            {/* Main Title - Mobile Typography */}
+            <h3 className="text-lg sm:text-xl md:text-2xl lg:text-4xl xl:text-5xl font-bold text-white mb-3 sm:mb-4 leading-tight">
               {slide.title}
             </h3>
 
-            {/* Description */}
-            <p className="text-gray-300 text-base md:text-lg leading-relaxed mb-6 max-w-3xl">
+            {/* Description - Mobile Responsive */}
+            <p className="text-gray-300 text-sm sm:text-base md:text-lg leading-relaxed mb-4 sm:mb-6 max-w-3xl">
               {slide.description}
             </p>
 
-            {/* Features */}
-            <div className="flex flex-wrap gap-3 mb-8">
+            {/* Features - Mobile Stack */}
+            <div className="flex flex-wrap gap-2 sm:gap-3 mb-6 sm:mb-8">
               {slide.features.map((feature, index) => (
                 <motion.div
                   key={index}
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.1 }}
-                  className="px-4 py-2 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 text-white text-sm"
+                  className="px-3 py-1.5 sm:px-4 sm:py-2 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 text-white text-xs sm:text-sm"
                 >
                   {feature}
                 </motion.div>
               ))}
             </div>
 
-            {/* CTA Button */}
+            {/* CTA Button - Mobile Responsive */}
             <LinkWrapper
               {...linkProps}
               className="inline-block group"
             >
               <motion.div
-                whileHover={{ scale: 1.05, y: -2 }}
-                className={`inline-flex items-center gap-3 px-8 py-4 rounded-xl bg-gradient-to-r ${slide.gradient} text-white font-semibold text-lg shadow-xl hover:shadow-2xl hover:shadow-purple-500/30 transition-all duration-300`}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                className={`inline-flex items-center gap-2 sm:gap-3 px-6 py-3 sm:px-8 sm:py-4 rounded-xl bg-gradient-to-r ${slide.gradient} text-white font-semibold text-sm sm:text-base md:text-lg shadow-xl hover:shadow-2xl hover:shadow-purple-500/30 transition-all duration-300`}
               >
                 {slide.cta}
-                <ArrowUpRight className="w-5 h-5 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform duration-300" />
+                <ArrowUpRight className="w-4 h-4 sm:w-5 sm:h-5 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform duration-300" />
               </motion.div>
             </LinkWrapper>
           </div>
         </div>
       </div>
 
-      {/* Decorative Elements */}
-      <div className="absolute top-8 right-8 opacity-20">
-        <div className={`w-24 h-24 rounded-full bg-gradient-to-r ${slide.gradient} blur-2xl`} />
+      {/* Decorative Elements - Mobile Hidden */}
+      <div className="hidden sm:block absolute top-6 sm:top-8 right-6 sm:right-8 opacity-20">
+        <div className={`w-16 sm:w-24 h-16 sm:h-24 rounded-full bg-gradient-to-r ${slide.gradient} blur-2xl`} />
       </div>
-      <div className="absolute bottom-8 left-8 opacity-10">
-        <div className={`w-32 h-32 rounded-full bg-gradient-to-r ${slide.gradient} blur-3xl`} />
+      <div className="hidden sm:block absolute bottom-6 sm:bottom-8 left-6 sm:left-8 opacity-10">
+        <div className={`w-20 sm:w-32 h-20 sm:h-32 rounded-full bg-gradient-to-r ${slide.gradient} blur-3xl`} />
       </div>
     </div>
   );
