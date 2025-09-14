@@ -10,7 +10,8 @@ const nextConfig = {
       'localhost',
       'api.kpopranker.chargeapp.net',
       'kpop-ranker.vercel.app',
-      'kpopranker.vercel.app'
+      'kpopranker.vercel.app',
+      'www.kpopranker.com'
     ],
     formats: ['image/webp', 'image/avif'], // 최신 이미지 포맷 지원
     minimumCacheTTL: 86400, // 24시간 캐시
