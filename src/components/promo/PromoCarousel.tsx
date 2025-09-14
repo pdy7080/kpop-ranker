@@ -23,7 +23,7 @@ const promoSlides: PromoSlide[] = [
     company: 'DCC LAB',
     title: 'AI 기반 K-POP 데이터 플랫폼',
     description: '실시간 차트 분석부터 팬 포트폴리오까지, 완전 자동화된 K-POP 데이터 솔루션',
-    features: ['실시간 글로벌 차트 연동', '팬 포트폴리오 & 랭킹 시스템', '웹페이지 및 시스템 제작'],
+    features: ['실시간 차트랭킹', 'API솔루션', '웹페이지 및 시스템 제작'],
     cta: 'B2B 서비스 확인하기',
     href: '/b2b',
     gradient: 'from-purple-600 via-violet-600 to-blue-600',
