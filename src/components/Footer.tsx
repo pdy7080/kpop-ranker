@@ -18,9 +18,9 @@ const Footer: React.FC = () => {
           {/* Brand & Copyright */}
           <div className="text-center">
             <h3 className="font-bold text-sm bg-gradient-to-r from-purple-400 via-pink-400 to-blue-400 bg-clip-text text-transparent">
-              KPOP FANfolio
+              KPOP Ranker
             </h3>
-            <p className="text-xs text-gray-400 mt-1">© 2025 DCC Lab Inc.</p>
+            <p className="text-xs text-gray-400 mt-1">© 2025 KPOP Ranker. All rights reserved.</p>
           </div>
           
           {/* Quick Links - Horizontal */}
@@ -79,10 +79,10 @@ const Footer: React.FC = () => {
             transition={{ duration: 0.5 }}
           >
             <h3 className="font-bold text-lg mb-2 bg-gradient-to-r from-purple-400 via-pink-400 to-blue-400 bg-clip-text text-transparent">
-              KPOP FANfolio
+              KPOP Ranker
             </h3>
             <p className="text-xs text-gray-400">
-              {t('footer.brand.description')}
+              전 세계 K-POP 팬들을 위한 실시간 차트 모니터링 플랫폼
             </p>
           </motion.div>
 
@@ -172,9 +172,6 @@ const Footer: React.FC = () => {
               <a href="mailto:dcclab2022@gmail.com" className="block hover:text-purple-400 transition-colors mt-1">
                 dcclab2022@gmail.com
               </a>
-              <a href="mailto:business@kpopfanfolio.com" className="block hover:text-purple-400 transition-colors mt-1">
-                business@kpopfanfolio.com
-              </a>
             </p>
             {/* Social Icons */}
             <div className="flex gap-3 mt-2">
@@ -192,7 +189,7 @@ const Footer: React.FC = () => {
         <div className="mt-6 pt-4 border-t border-white/5">
           <div className="flex flex-col md:flex-row justify-between items-center">
             <p className="text-xs text-gray-400">
-              {t('footer.copyright')} • Made with 💜 for K-POP fans
+              © 2025 KPOP Ranker. All rights reserved. • Made with 💜 for K-POP fans
             </p>
             <Link 
               href="/b2b" 

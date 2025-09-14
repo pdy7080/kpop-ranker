@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import ImageWithFallback from '@/components/ImageWithFallback';
 import UnifiedSearch from '@/components/UnifiedSearch';
 import ChartRankDisplay from '@/components/ChartRankDisplay';
+import PromoCarousel from '@/components/promo/PromoCarousel';
 import { TrendingUp, Music, Award, Flame, Play, Crown, Zap, BarChart3, Globe, Clock } from 'lucide-react';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
@@ -540,6 +541,9 @@ export default function HybridHome() {
               </div>
             </motion.div>
           )}
+
+          {/* K-POP Partners Carousel - 푸터 바로 위 */}
+          <PromoCarousel />
         </div>
       </div>
     </Layout>
