@@ -327,51 +327,58 @@ export default function PortfolioPage() {
                 <PortfolioAnalytics portfolioItems={portfolioItems} />
                 
                 {/* Quick Overview */}
-                <div className="mt-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {portfolioItems.slice(0, 6).map((item, idx) => (
-                    <motion.div
-                      key={`analytics-preview-${item.id}-${idx}`}
-                      initial={{ opacity: 0, scale: 0.9 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ delay: idx * 0.05 }}
-                      className="bg-gray-800/50 backdrop-blur rounded-xl p-4 border border-gray-700 hover:border-purple-500 transition-all cursor-pointer"
-                      onClick={() => router.push(`/track/${encodeURIComponent(item.artist)}/${encodeURIComponent(item.title)}`)}
-                    >
-                      <div className="flex items-center gap-3">
-                        <ImageWithFallback
-                          artist={item.artist}
-                          track={item.title}
-                          width={60}
-                          height={60}
-                          className="rounded-lg"
-                          quality="medium"
-                        />
-                        <div className="flex-grow">
-                          <h3 className="font-semibold truncate">{item.title}</h3>
-                          <p className="text-sm text-gray-400 truncate">{item.artist}</p>
-                          <div className="flex items-center gap-2 mt-1">
-                            <span className="text-xs text-purple-400">
-                              {Object.keys(item.charts || {}).length} charts
-                            </span>
-                            {item.trend_score && (
-                              <span className="text-xs text-green-400">
-                                Score: {item.trend_score}
+                <div className="mt-8">
+                  <h3 className="text-xl font-bold text-white mb-4">얼마 전에 추가한 곡들</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {portfolioItems.slice(0, 6).map((item, idx) => (
+                      <motion.div
+                        key={`analytics-preview-${item.id}-${idx}`}
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ delay: idx * 0.05 }}
+                        className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-4 border border-gray-700/50 hover:border-purple-500/50 transition-all duration-300 cursor-pointer hover:bg-gray-800/70 hover:scale-105 hover:shadow-lg hover:shadow-purple-500/20"
+                        onClick={() => router.push(`/track/${encodeURIComponent(item.artist)}/${encodeURIComponent(item.title)}`)}
+                      >
+                        <div className="flex flex-col gap-3">
+                          {/* 이미지 영역 */}
+                          <div className="relative">
+                            <ImageWithFallback
+                              artist={item.artist}
+                              track={item.title}
+                              className="w-full aspect-square rounded-lg object-cover"
+                            />
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                removeFromPortfolio(item.id);
+                              }}
+                              className="absolute top-2 right-2 p-1.5 bg-black/70 hover:bg-red-500/80 rounded-full transition-all duration-200 opacity-0 group-hover:opacity-100"
+                            >
+                              <Trash2 className="w-3.5 h-3.5 text-white" />
+                            </button>
+                          </div>
+                          
+                          {/* 텍스트 영역 */}
+                          <div className="flex-grow min-h-0">
+                            <h4 className="font-semibold text-white truncate text-sm leading-tight">{item.title}</h4>
+                            <p className="text-xs text-gray-400 truncate mt-1">{item.artist}</p>
+                            
+                            {/* 차트 정보 */}
+                            <div className="flex items-center gap-2 mt-2">
+                              <span className="text-xs px-2 py-1 bg-purple-500/20 text-purple-300 rounded-full">
+                                {Object.keys(item.charts || {}).length}개 차트
                               </span>
-                            )}
+                              {item.trend_score && (
+                                <span className="text-xs px-2 py-1 bg-green-500/20 text-green-300 rounded-full">
+                                  점수: {item.trend_score}
+                                </span>
+                              )}
+                            </div>
                           </div>
                         </div>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            removeFromPortfolio(item.id);
-                          }}
-                          className="p-2 hover:bg-red-500/20 rounded transition-all"
-                        >
-                          <Trash2 className="w-4 h-4 text-red-400" />
-                        </button>
-                      </div>
-                    </motion.div>
-                  ))}
+                      </motion.div>
+                    ))}
+                  </div>
                 </div>
               </motion.div>
             ) : viewMode === 'grid' ? (
@@ -379,7 +386,7 @@ export default function PortfolioPage() {
                 key="grid"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4"
+                className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6"
               >
                 {portfolioItems.map((item, idx) => (
                   <motion.div
@@ -388,36 +395,37 @@ export default function PortfolioPage() {
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ delay: idx * 0.02 }}
                     onClick={() => router.push(`/track/${encodeURIComponent(item.artist)}/${encodeURIComponent(item.title)}`)}
-                    className="bg-gray-800/50 backdrop-blur rounded-xl p-4 hover:bg-gray-800/70 transition-all cursor-pointer border border-gray-700 hover:border-purple-500 group"
+                    className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-4 hover:bg-gray-800/70 transition-all duration-300 cursor-pointer border border-gray-700/50 hover:border-purple-500/50 group hover:scale-105 hover:shadow-lg hover:shadow-purple-500/20"
                   >
                     <div className="relative mb-3">
                       <ImageWithFallback
                         artist={item.artist}
                         track={item.title}
-                        width={200}
-                        height={200}
-                        className="rounded-lg w-full"
-                        quality="high"
+                        className="rounded-lg w-full aspect-square object-cover"
                       />
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
                           removeFromPortfolio(item.id);
                         }}
-                        className="absolute top-2 right-2 p-2 bg-black/50 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-500/50"
+                        className="absolute top-2 right-2 p-1.5 bg-black/70 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-200 hover:bg-red-500/80"
                       >
-                        <Trash2 className="w-4 h-4" />
+                        <Trash2 className="w-3.5 h-3.5 text-white" />
                       </button>
                     </div>
                     
-                    <h3 className="font-semibold truncate">{item.title}</h3>
-                    <p className="text-sm text-gray-400 truncate">{item.artist}</p>
-                    
-                    <div className="mt-3 flex items-center justify-between">
-                      <span className="text-xs text-gray-500">{Object.keys(item.charts || {}).length} charts</span>
-                      {item.trend_score && (
-                        <span className="text-sm font-bold text-purple-400">{item.trend_score}</span>
-                      )}
+                    <div className="space-y-1">
+                      <h3 className="font-semibold text-white text-sm truncate leading-tight">{item.title}</h3>
+                      <p className="text-xs text-gray-400 truncate">{item.artist}</p>
+                      
+                      <div className="flex items-center justify-between pt-2">
+                        <span className="text-xs px-2 py-1 bg-purple-500/20 text-purple-300 rounded-full">
+                          {Object.keys(item.charts || {}).length}개
+                        </span>
+                        {item.trend_score && (
+                          <span className="text-xs font-bold text-green-400">{item.trend_score}</span>
+                        )}
+                      </div>
                     </div>
                   </motion.div>
                 ))}
@@ -427,7 +435,7 @@ export default function PortfolioPage() {
                 key="list"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="space-y-4"
+                className="space-y-6"
               >
                 {portfolioItems.map((item, idx) => (
                   <motion.div
@@ -436,29 +444,28 @@ export default function PortfolioPage() {
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: idx * 0.02 }}
                     onClick={() => router.push(`/track/${encodeURIComponent(item.artist)}/${encodeURIComponent(item.title)}`)}
-                    className="bg-gray-800/50 backdrop-blur rounded-xl p-4 hover:bg-gray-800/70 transition-all cursor-pointer border border-gray-700 hover:border-purple-500"
+                    className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 hover:bg-gray-800/70 transition-all duration-300 cursor-pointer border border-gray-700/50 hover:border-purple-500/50 hover:shadow-lg hover:shadow-purple-500/20"
                   >
-                    <div className="flex items-center gap-4">
-                      <ImageWithFallback
-                        artist={item.artist}
-                        track={item.title}
-                        width={80}
-                        height={80}
-                        className="rounded-lg"
-                        quality="medium"
-                      />
+                    <div className="flex items-center gap-6">
+                      <div className="flex-shrink-0">
+                        <ImageWithFallback
+                          artist={item.artist}
+                          track={item.title}
+                          className="w-20 h-20 rounded-lg object-cover"
+                        />
+                      </div>
                       
-                      <div className="flex-grow">
-                        <h3 className="text-lg font-semibold">{item.title}</h3>
-                        <p className="text-gray-400">{item.artist}</p>
+                      <div className="flex-grow min-w-0">
+                        <h3 className="text-lg font-semibold text-white truncate">{item.title}</h3>
+                        <p className="text-gray-400 truncate">{item.artist}</p>
                         
-                        <div className="flex items-center gap-4 mt-2">
+                        <div className="flex items-center gap-4 mt-3">
                           <span className="text-xs text-gray-500">
-                            Added {new Date(item.added_at).toLocaleDateString()}
+                            추가일: {new Date(item.added_at).toLocaleDateString('ko-KR')}
                           </span>
-                          <div className="flex gap-1">
+                          <div className="flex gap-2 flex-wrap">
                             {Object.entries(item.charts || {}).slice(0, 3).map(([chart, rank], chartIdx) => (
-                              <span key={`${item.id}-${chart}-${chartIdx}`} className="text-xs px-2 py-1 bg-gray-700 rounded">
+                              <span key={`${item.id}-${chart}-${chartIdx}`} className="text-xs px-2 py-1 bg-gray-700/50 text-gray-300 rounded-full">
                                 {chart}: #{rank}
                               </span>
                             ))}
@@ -466,23 +473,21 @@ export default function PortfolioPage() {
                         </div>
                       </div>
                       
-                      <div className="text-center">
-                        {item.trend_score && (
-                          <div>
-                            <p className="text-2xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
-                              {item.trend_score}
-                            </p>
-                            <p className="text-xs text-gray-500">Score</p>
-                          </div>
-                        )}
-                      </div>
+                      {item.trend_score && (
+                        <div className="text-center flex-shrink-0">
+                          <p className="text-2xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
+                            {item.trend_score}
+                          </p>
+                          <p className="text-xs text-gray-500">점수</p>
+                        </div>
+                      )}
                       
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
                           removeFromPortfolio(item.id);
                         }}
-                        className="p-3 hover:bg-red-500/20 rounded-lg transition-all"
+                        className="p-3 hover:bg-red-500/20 rounded-lg transition-all duration-200 flex-shrink-0"
                       >
                         <Trash2 className="w-5 h-5 text-red-400" />
                       </button>
