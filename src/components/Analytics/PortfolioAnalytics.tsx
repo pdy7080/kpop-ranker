@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Trophy, Target, TrendingUp, Star } from 'lucide-react';
+import ImageWithFallback from '../ImageWithFallback';
 
 interface PortfolioAnalyticsProps {
   portfolioItems: any[];
@@ -132,9 +133,9 @@ export default function PortfolioAnalytics({ portfolioItems }: PortfolioAnalytic
           </div>
           
           <div className="flex items-center gap-4">
-            <img 
-              src={metrics.topPerformer.album_image || '/images/default-album.svg'}
-              alt={metrics.topPerformer.title}
+            <ImageWithFallback
+              artist={metrics.topPerformer.artist}
+              track={metrics.topPerformer.title}
               className="w-16 h-16 rounded-lg object-cover"
             />
             <div className="flex-1">

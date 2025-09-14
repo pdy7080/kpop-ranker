@@ -72,15 +72,22 @@ export default function PortfolioPage() {
 
   const removeFromPortfolio = async (itemId: number) => {
     try {
+      console.log('포트폴리오에서 제거 시도:', itemId);
+      
       const response = await portfolioAPI.remove(itemId.toString());
       
       if (response.requireAuth) {
         console.log('Authentication required for portfolio removal');
+        alert('로그인이 필요합니다.');
         return;
       }
       
       if (response.success) {
         setPortfolioItems(prev => prev.filter(item => item.id !== itemId));
+        console.log('포트폴리오에서 성공적으로 제거됨');
+      } else {
+        console.error('포트폴리오 제거 실패:', response);
+        setError(response.error || '항목 삭제에 실패했습니다.');
       }
     } catch (error) {
       console.error('Failed to remove item:', error);
@@ -336,7 +343,7 @@ export default function PortfolioPage() {
                         initial={{ opacity: 0, scale: 0.9 }}
                         animate={{ opacity: 1, scale: 1 }}
                         transition={{ delay: idx * 0.05 }}
-                        className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-4 border border-gray-700/50 hover:border-purple-500/50 transition-all duration-300 cursor-pointer hover:bg-gray-800/70 hover:scale-105 hover:shadow-lg hover:shadow-purple-500/20"
+                        className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-4 border border-gray-700/50 hover:border-purple-500/50 transition-all duration-300 cursor-pointer hover:bg-gray-800/70 hover:scale-105 hover:shadow-lg hover:shadow-purple-500/20 group"
                         onClick={() => router.push(`/track/${encodeURIComponent(item.artist)}/${encodeURIComponent(item.title)}`)}
                       >
                         <div className="flex flex-col gap-3">
@@ -352,7 +359,7 @@ export default function PortfolioPage() {
                                 e.stopPropagation();
                                 removeFromPortfolio(item.id);
                               }}
-                              className="absolute top-2 right-2 p-1.5 bg-black/70 hover:bg-red-500/80 rounded-full transition-all duration-200 opacity-0 group-hover:opacity-100"
+                              className="absolute top-2 right-2 p-1.5 bg-black/70 hover:bg-red-500/80 rounded-full transition-all duration-200 opacity-80 hover:opacity-100"
                             >
                               <Trash2 className="w-3.5 h-3.5 text-white" />
                             </button>
@@ -408,7 +415,7 @@ export default function PortfolioPage() {
                           e.stopPropagation();
                           removeFromPortfolio(item.id);
                         }}
-                        className="absolute top-2 right-2 p-1.5 bg-black/70 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-200 hover:bg-red-500/80"
+                        className="absolute top-2 right-2 p-1.5 bg-black/70 rounded-full transition-all duration-200 hover:bg-red-500/80 opacity-80 hover:opacity-100"
                       >
                         <Trash2 className="w-3.5 h-3.5 text-white" />
                       </button>
