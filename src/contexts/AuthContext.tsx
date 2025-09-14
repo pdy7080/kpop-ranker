@@ -89,12 +89,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
 
       // localStorage 데이터를 사용해서 사용자 상태 복원 (fallback)
+      // 토큰이 있으면 OAuth 상태 유지, 없으면 local
+      const provider = token && token !== 'demo_token' ? 'oauth' : 'local';
+      
       const user = {
         user_id: userEmail,
         email: userEmail,
         name: userName,
         profile_image: userPicture || undefined,
-        provider: 'local'
+        provider: provider
       };
       
       setUser(user);

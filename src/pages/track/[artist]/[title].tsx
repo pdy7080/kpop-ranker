@@ -12,6 +12,7 @@ import {
   ExternalLink, Award, Star, Radio, Disc
 } from 'lucide-react';
 import { useTranslation } from '@/contexts/TranslationContext';
+import { useAuth } from '@/contexts/AuthContext';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
@@ -118,11 +119,13 @@ const ChangeIndicator = ({ change }: { change?: number }) => {
 export default function TrackDetailPage() {
   const router = useRouter();
   const { t } = useTranslation();
+  const { user, isAuthenticated } = useAuth();
   const { artist, title } = router.query;
   const [trackInfo, setTrackInfo] = useState<TrackInfo | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showShareModal, setShowShareModal] = useState(false);
+  const [isAddingToPortfolio, setIsAddingToPortfolio] = useState(false);
 
   useEffect(() => {
     if (artist && title) {
@@ -276,8 +279,50 @@ export default function TrackDetailPage() {
     setShowShareModal(true);
   };
 
-  const handleAddToPortfolio = () => {
-    alert(t('track.portfolio.login.required'));
+  const handleAddToPortfolio = async () => {
+    if (!isAuthenticated || !user) {
+      alert(t('track.portfolio.login.required'));
+      return;
+    }
+
+    if (isAddingToPortfolio) return;
+
+    try {
+      setIsAddingToPortfolio(true);
+      
+      const token = localStorage.getItem('auth_token');
+      const userEmail = localStorage.getItem('user_email');
+      
+      const response = await fetch(`${API_URL}/api/portfolio`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+          'x-user-email': userEmail || user.email
+        },
+        body: JSON.stringify({
+          artist: currentArtist,
+          track: currentTrackTitle
+        })
+      });
+
+      const data = await response.json();
+      
+      if (data.success) {
+        alert(data.message || '포트폴리오에 추가되었습니다.');
+      } else {
+        if (data.requireAuth) {
+          alert(t('track.portfolio.login.required'));
+        } else {
+          alert(data.error || '포트폴리오 추가에 실패했습니다.');
+        }
+      }
+    } catch (error) {
+      console.error('포트폴리오 추가 실패:', error);
+      alert('포트폴리오 추가 중 오류가 발생했습니다.');
+    } finally {
+      setIsAddingToPortfolio(false);
+    }
   };
 
   // 현재 artist와 title 가져오기 (여러 소스에서)
@@ -378,10 +423,19 @@ export default function TrackDetailPage() {
                       {currentTrackTitle}
                     </h1>
                     <button
-                      onClick={() => {/* TODO: 즐겨찾기 기능 */}}
-                      className="p-2 rounded-full glass hover:bg-white/10 transition-colors"
+                      onClick={handleAddToPortfolio}
+                      disabled={isAddingToPortfolio}
+                      className={`p-2 rounded-full glass transition-colors ${
+                        isAddingToPortfolio 
+                          ? 'opacity-50 cursor-not-allowed' 
+                          : 'hover:bg-white/10'
+                      }`}
                     >
-                      <Heart className="w-6 h-6 text-pink-400" />
+                      {isAddingToPortfolio ? (
+                        <div className="w-6 h-6 animate-spin rounded-full border-2 border-pink-400 border-t-transparent" />
+                      ) : (
+                        <Heart className="w-6 h-6 text-pink-400" />
+                      )}
                     </button>
                   </div>
                 </motion.div>
@@ -435,9 +489,18 @@ export default function TrackDetailPage() {
                   
                   <button
                     onClick={handleAddToPortfolio}
-                    className="px-6 py-3 glass text-white rounded-full hover:bg-white/10 transition-colors shadow-lg"
+                    disabled={isAddingToPortfolio}
+                    className={`px-6 py-3 glass text-white rounded-full transition-colors shadow-lg ${
+                      isAddingToPortfolio 
+                        ? 'opacity-50 cursor-not-allowed' 
+                        : 'hover:bg-white/10'
+                    }`}
                   >
-                    <Heart className="w-5 h-5" />
+                    {isAddingToPortfolio ? (
+                      <div className="w-5 h-5 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                    ) : (
+                      <Heart className="w-5 h-5" />
+                    )}
                   </button>
                   
                   <button
