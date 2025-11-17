@@ -49,7 +49,13 @@ const TrackCard = memo(({
     
     // 3. 상대경로면 백엔드 URL 추가
     if (track.image_url && track.image_url.startsWith('/')) {
-      // /api/album-image-smart/... 형태면 백엔드 URL 붙이기
+      // /api/album-image-smart/... 형태면 백엔드 URL 붙이고 고화질 파라미터 추가
+      if (track.image_url.includes('/api/album-image-smart')) {
+        const hasParams = track.image_url.includes('?');
+        const sizeParam = hasParams ? '&size=640' : '?size=640';
+        return `${API_URL}${track.image_url}${sizeParam}`;
+      }
+      // 일반 /api/ 경로
       if (track.image_url.includes('/api/')) {
         return `${API_URL}${track.image_url}`;
       }
