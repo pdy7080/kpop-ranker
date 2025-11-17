@@ -217,11 +217,35 @@ export default function TrackDetailPage() {
   const handleWatchOnYouTube = () => {
     const artistName = trackInfo?.artist || artist;
     const trackTitle = trackInfo?.track || trackInfo?.title || title;
-    
+
     if (artistName && trackTitle) {
       const searchQuery = `${artistName} ${trackTitle} official MV`.replace(/[()\[\]]/g, '');
       const youtubeUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(searchQuery)}`;
       window.open(youtubeUrl, '_blank');
+    }
+  };
+
+  // Apple Music에서 트랙 검색
+  const handlePlayOnAppleMusic = () => {
+    const artistName = trackInfo?.artist || artist;
+    const trackTitle = trackInfo?.track || trackInfo?.title || title;
+
+    if (artistName && trackTitle) {
+      const searchQuery = `${artistName} ${trackTitle}`;
+      const appleMusicUrl = `https://music.apple.com/search?term=${encodeURIComponent(searchQuery)}`;
+      window.open(appleMusicUrl, '_blank');
+    }
+  };
+
+  // FLO에서 트랙 검색
+  const handlePlayOnFLO = () => {
+    const artistName = trackInfo?.artist || artist;
+    const trackTitle = trackInfo?.track || trackInfo?.title || title;
+
+    if (artistName && trackTitle) {
+      const searchQuery = `${artistName} ${trackTitle}`;
+      const floUrl = `https://www.music-flo.com/search/track?keyword=${encodeURIComponent(searchQuery)}`;
+      window.open(floUrl, '_blank');
     }
   };
 
@@ -478,7 +502,7 @@ export default function TrackDetailPage() {
                     <Play className="w-5 h-5" />
                     Spotify
                   </button>
-                  
+
                   <button
                     onClick={handleWatchOnYouTube}
                     className="px-6 py-3 bg-red-600 text-white rounded-full flex items-center gap-2 hover:bg-red-700 transition-colors shadow-lg hover:shadow-red-600/30"
@@ -486,13 +510,29 @@ export default function TrackDetailPage() {
                     <Play className="w-5 h-5" />
                     YouTube
                   </button>
-                  
+
+                  <button
+                    onClick={handlePlayOnAppleMusic}
+                    className="px-6 py-3 bg-gray-700 text-white rounded-full flex items-center gap-2 hover:bg-gray-800 transition-colors shadow-lg hover:shadow-gray-700/30"
+                  >
+                    <Play className="w-5 h-5" />
+                    Apple Music
+                  </button>
+
+                  <button
+                    onClick={handlePlayOnFLO}
+                    className="px-6 py-3 bg-purple-600 text-white rounded-full flex items-center gap-2 hover:bg-purple-700 transition-colors shadow-lg hover:shadow-purple-600/30"
+                  >
+                    <Play className="w-5 h-5" />
+                    FLO
+                  </button>
+
                   <button
                     onClick={handleAddToPortfolio}
                     disabled={isAddingToPortfolio}
                     className={`px-6 py-3 glass text-white rounded-full transition-colors shadow-lg ${
-                      isAddingToPortfolio 
-                        ? 'opacity-50 cursor-not-allowed' 
+                      isAddingToPortfolio
+                        ? 'opacity-50 cursor-not-allowed'
                         : 'hover:bg-white/10'
                     }`}
                   >
@@ -502,7 +542,7 @@ export default function TrackDetailPage() {
                       <Heart className="w-5 h-5" />
                     )}
                   </button>
-                  
+
                   <button
                     onClick={handleShare}
                     className="px-6 py-3 glass text-white rounded-full hover:bg-white/10 transition-colors shadow-lg"
