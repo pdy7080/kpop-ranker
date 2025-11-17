@@ -491,35 +491,20 @@ export default function TrackDetailPage() {
                   )}
                 </motion.div>
 
-                {/* 액션 버튼 */}
+                {/* 액션 버튼 - 잘 작동하는 플랫폼 우선 배치 */}
                 <motion.div
                   initial={{ y: 20, opacity: 0 }}
                   animate={{ y: 0, opacity: 1 }}
                   transition={{ delay: 0.4, duration: 0.5 }}
                   className="flex flex-wrap gap-3 justify-center md:justify-start"
                 >
-                  <button
-                    onClick={handlePlayTrack}
-                    className="px-6 py-3 bg-green-600 text-white rounded-full flex items-center gap-2 hover:bg-green-700 transition-colors shadow-lg hover:shadow-green-600/30"
-                  >
-                    <Play className="w-5 h-5" />
-                    Spotify
-                  </button>
-
+                  {/* 잘 작동하는 플랫폼 (YouTube, FLO) */}
                   <button
                     onClick={handleWatchOnYouTube}
                     className="px-6 py-3 bg-red-600 text-white rounded-full flex items-center gap-2 hover:bg-red-700 transition-colors shadow-lg hover:shadow-red-600/30"
                   >
                     <Play className="w-5 h-5" />
                     YouTube
-                  </button>
-
-                  <button
-                    onClick={handlePlayOnAppleMusic}
-                    className="px-6 py-3 bg-gray-700 text-white rounded-full flex items-center gap-2 hover:bg-gray-800 transition-colors shadow-lg hover:shadow-gray-700/30"
-                  >
-                    <Play className="w-5 h-5" />
-                    Apple Music
                   </button>
 
                   <button
@@ -530,6 +515,24 @@ export default function TrackDetailPage() {
                     FLO
                   </button>
 
+                  {/* 글로벌 플랫폼 (참고용) */}
+                  <button
+                    onClick={handlePlayTrack}
+                    className="px-6 py-3 bg-green-600 text-white rounded-full flex items-center gap-2 hover:bg-green-700 transition-colors shadow-lg hover:shadow-green-600/30"
+                  >
+                    <Play className="w-5 h-5" />
+                    Spotify
+                  </button>
+
+                  <button
+                    onClick={handlePlayOnAppleMusic}
+                    className="px-6 py-3 bg-gray-700 text-white rounded-full flex items-center gap-2 hover:bg-gray-800 transition-colors shadow-lg hover:shadow-gray-700/30"
+                  >
+                    <Play className="w-5 h-5" />
+                    Apple Music
+                  </button>
+
+                  {/* 유틸리티 버튼 */}
                   <button
                     onClick={handleAddToPortfolio}
                     disabled={isAddingToPortfolio}
