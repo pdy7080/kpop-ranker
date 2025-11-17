@@ -225,14 +225,15 @@ export default function TrackDetailPage() {
     }
   };
 
-  // Apple Music에서 트랙 검색
+  // Apple Music에서 트랙 검색 (한국 버전)
   const handlePlayOnAppleMusic = () => {
     const artistName = trackInfo?.artist || artist;
     const trackTitle = trackInfo?.track || trackInfo?.title || title;
 
     if (artistName && trackTitle) {
       const searchQuery = `${artistName} ${trackTitle}`;
-      const appleMusicUrl = `https://music.apple.com/search?term=${encodeURIComponent(searchQuery)}`;
+      // 한국 Apple Music에서 검색
+      const appleMusicUrl = `https://music.apple.com/kr/search?term=${encodeURIComponent(searchQuery)}`;
       window.open(appleMusicUrl, '_blank');
     }
   };
@@ -266,17 +267,19 @@ export default function TrackDetailPage() {
       const cleanTitle = (trackTitle as string).replace(/\s*\(.*?\)\s*/g, '').trim();
       const searchQuery = `${artistName} ${cleanTitle}`;
       const encodedQuery = encodeURIComponent(searchQuery);
-      
+
+      // Spotify 검색 URL (시장 파라미터 추가 없이 기본 검색만 사용)
+      // Spotify는 자동으로 사용자의 지역을 감지하므로 별도 지역 설정 불필요
       if (isMobile) {
         if (isIOS) {
           const spotifyAppUrl = `spotify://search/${encodedQuery}`;
           const spotifyWebUrl = `https://open.spotify.com/search/${encodedQuery}`;
-          
+
           const iframe = document.createElement('iframe');
           iframe.style.display = 'none';
           iframe.src = spotifyAppUrl;
           document.body.appendChild(iframe);
-          
+
           setTimeout(() => {
             document.body.removeChild(iframe);
             window.open(spotifyWebUrl, '_blank');
@@ -284,9 +287,9 @@ export default function TrackDetailPage() {
         } else if (isAndroid) {
           const spotifyAppUrl = `spotify://search/${encodedQuery}`;
           const spotifyWebUrl = `https://open.spotify.com/search/${encodedQuery}`;
-          
+
           window.location.href = spotifyAppUrl;
-          
+
           setTimeout(() => {
             window.open(spotifyWebUrl, '_blank');
           }, 1000);
