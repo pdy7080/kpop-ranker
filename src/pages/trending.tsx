@@ -69,8 +69,8 @@ const TrackCard = memo(({
     const encodedArtist = encodeURIComponent(artist.replace(/\//g, ''));
     const encodedTitle = encodeURIComponent(title.replace(/\//g, ''));
     
-    // 백엔드 API 전체 URL
-    return `${API_URL}/api/album-image-smart/${encodedArtist}/${encodedTitle}`;
+    // 백엔드 API 전체 URL - 고화질 파라미터 추가
+    return `${API_URL}/api/album-image-smart/${encodedArtist}/${encodedTitle}?size=640`;
   }, [track]);
   
   const formatScore = (score: number) => {

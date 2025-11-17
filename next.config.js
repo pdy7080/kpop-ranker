@@ -48,6 +48,12 @@ const nextConfig = {
         destination: 'http://localhost:5000/api/:path*'
       }
     ]
+  },
+
+  // SSG 제외 페이지 (admin 페이지는 동적 렌더링)
+  experimental: {
+    // admin 페이지 SSG 비활성화
+    excludePaths: ['/admin/**']
   }
 }
 

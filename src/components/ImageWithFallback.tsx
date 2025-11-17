@@ -8,19 +8,36 @@ interface ImageWithFallbackProps {
   src?: string;
   className?: string;
   isDetailView?: boolean;
+  imageSize?: 'small' | 'medium' | 'large';  // 이미지 크기 옵션
 }
 
-const ImageWithFallback: React.FC<ImageWithFallbackProps> = ({ 
-  artist = '', 
-  track = '', 
+const ImageWithFallback: React.FC<ImageWithFallbackProps> = ({
+  artist = '',
+  track = '',
   src,
   className = '',
-  isDetailView = false
+  isDetailView = false,
+  imageSize = 'large'  // 기본값: large (고화질)
 }) => {
   const [imageError, setImageError] = useState(false);
 
+  // 이미지 크기 맵핑 (Spotify 이미지 크기)
+  const getSizeParam = (size: 'small' | 'medium' | 'large'): number => {
+    switch (size) {
+      case 'small': return 300;   // 300x300
+      case 'medium': return 640;  // 640x640 (기본)
+      case 'large': return 640;   // 640x640 (Spotify 최대 크기)
+      default: return 640;
+    }
+  };
+
   // 안전한 이미지 URL 생성
   const imageUrl = useMemo(() => {
+    // 직접 제공된 src가 있으면 우선 사용
+    if (src && src.startsWith('http')) {
+      return src;
+    }
+
     // 에러 상태면 기본 이미지
     if (imageError) {
       return '/images/default-album.svg';
@@ -36,21 +53,23 @@ const ImageWithFallback: React.FC<ImageWithFallbackProps> = ({
       // 안전한 인코딩 (undefined 체크)
       const safeArtist = String(artist || '').replace(/\//g, '');
       const safeTrack = String(track || '').replace(/\//g, '');
-      
+
       // 빈 문자열 체크
       if (!safeArtist || !safeTrack) {
         return '/images/default-album.svg';
       }
-      
+
       const encodedArtist = encodeURIComponent(safeArtist);
       const encodedTrack = encodeURIComponent(safeTrack);
-      
-      return `${API_URL}/api/album-image-smart/${encodedArtist}/${encodedTrack}`;
+      const sizeParam = getSizeParam(imageSize);
+
+      // 고화질 이미지 요청 파라미터 추가
+      return `${API_URL}/api/album-image-smart/${encodedArtist}/${encodedTrack}?size=${sizeParam}`;
     } catch (error) {
       console.error('ImageWithFallback: Error encoding URL', error);
       return '/images/default-album.svg';
     }
-  }, [artist, track, imageError]);
+  }, [artist, track, src, imageError, imageSize]);
 
   const handleImageError = () => {
     if (artist && track) {

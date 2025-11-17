@@ -381,6 +381,7 @@ export default function HybridHome() {
                               artist={track.artist}
                               track={track.track}
                               src={track.image_url}
+                              imageSize="large"
                               className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                             />
                           </div>
@@ -488,6 +489,7 @@ export default function HybridHome() {
                               artist={track.artist}
                               track={track.track}
                               src={track.image_url}
+                              imageSize="large"
                               className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                             />
                           </div>
