@@ -33,8 +33,8 @@ const ImageWithFallback: React.FC<ImageWithFallbackProps> = ({
 
   // 안전한 이미지 URL 생성
   const imageUrl = useMemo(() => {
-    // 직접 제공된 src가 있으면 우선 사용
-    if (src && src.startsWith('http')) {
+    // 직접 제공된 src가 있으면 우선 사용 (http 또는 https로 시작)
+    if (src && (src.startsWith('http://') || src.startsWith('https://'))) {
       return src;
     }
 

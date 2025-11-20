@@ -418,6 +418,7 @@ export default function TrackDetailPage() {
                   <ImageWithFallback
                     artist={currentArtist as string}
                     track={currentTrackTitle as string}
+                    src={trackInfo?.image_url}
                     className="w-full h-full object-cover"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end justify-center pb-4">
