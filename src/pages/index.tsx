@@ -313,7 +313,7 @@ export default function HybridHome() {
           {/* 광고 1: 검색 섹션 하단 */}
           <div className="max-w-4xl mx-auto mb-12">
             <AdUnit
-              adSlot="YOUR_AD_SLOT_1"
+              adSlot="2277062593"
               adFormat="auto"
               fullWidthResponsive={true}
               className="text-center"
@@ -436,7 +436,7 @@ export default function HybridHome() {
           {/* 광고 2: TOP 3와 HOT TRACKS 사이 */}
           <div className="max-w-4xl mx-auto mb-12">
             <AdUnit
-              adSlot="YOUR_AD_SLOT_2"
+              adSlot="9510778686"
               adFormat="auto"
               fullWidthResponsive={true}
               className="text-center"
@@ -544,7 +544,7 @@ export default function HybridHome() {
           {/* 광고 3: HOT TRACKS 하단 */}
           <div className="max-w-4xl mx-auto my-12">
             <AdUnit
-              adSlot="YOUR_AD_SLOT_3"
+              adSlot="6884615340"
               adFormat="auto"
               fullWidthResponsive={true}
               className="text-center"
