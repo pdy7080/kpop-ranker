@@ -1,0 +1,532 @@
+
+> kpop-ranker-v2@2.0.0 build
+> next build
+
+ ⚠ You are using a non-standard "NODE_ENV" value in your environment. This creates inconsistencies in the project and is strongly advised against. Read more: https://nextjs.org/docs/messages/non-standard-node-env
+ ⚠ Specified "rewrites" will not automatically work with "output: export". See more info here: https://nextjs.org/docs/messages/export-no-custom-routes
+ ⚠ Specified "headers" will not automatically work with "output: export". See more info here: https://nextjs.org/docs/messages/export-no-custom-routes
+ ⚠ Specified "rewrites" will not automatically work with "output: export". See more info here: https://nextjs.org/docs/messages/export-no-custom-routes
+ ⚠ Specified "headers" will not automatically work with "output: export". See more info here: https://nextjs.org/docs/messages/export-no-custom-routes
+   ▲ Next.js 14.0.4
+   - Environments: .env.local
+
+   Creating an optimized production build ...
+ ✓ Compiled successfully
+   Linting and checking validity of types ...
+   Collecting page data ...
+   Generating static pages (0/18) ...
+🔗 API 클라이언트 초기화: http://localhost:8000
+ ⨯ TypeError: Cannot read properties of null (reading 'useContext')
+    at h (C:\project\kpopranker\.next\server\chunks\199.js:36:21366)
+    at c (C:\project\kpopranker\.next\server\chunks\199.js:36:12800)
+TypeError: Cannot read properties of null (reading 'useContext')
+    at t.useContext (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:106142)
+    at h (C:\project\kpopranker\.next\server\chunks\199.js:36:21366)
+    at c (C:\project\kpopranker\.next\server\chunks\199.js:36:12800)
+    at ai (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:6505)
+    at C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:11284
+    at ab (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:13038)
+    at e (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:46298)
+    at aS (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:48276)
+    at ag (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:7923)
+    at C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:13014
+
+Error occurred prerendering page "/chart/melon". Read more: https://nextjs.org/docs/messages/prerender-error
+TypeError: Cannot read properties of null (reading 'useContext')
+    at t.useContext (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:106142)
+    at h (C:\project\kpopranker\.next\server\chunks\199.js:36:21366)
+    at c (C:\project\kpopranker\.next\server\chunks\199.js:36:12800)
+    at ai (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:6505)
+    at C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:11284
+    at ab (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:13038)
+    at e (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:46298)
+    at aS (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:48276)
+    at ag (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:7923)
+    at C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:13014
+🔗 API 클라이언트 초기화: http://localhost:8000
+🔗 API 클라이언트 초기화: http://localhost:8000
+ ⨯ TypeError: Cannot read properties of null (reading 'useContext')
+    at h (C:\project\kpopranker\.next\server\chunks\199.js:36:21366)
+    at c (C:\project\kpopranker\.next\server\chunks\199.js:36:12800)
+TypeError: Cannot read properties of null (reading 'useContext')
+    at t.useContext (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:106142)
+    at h (C:\project\kpopranker\.next\server\chunks\199.js:36:21366)
+    at c (C:\project\kpopranker\.next\server\chunks\199.js:36:12800)
+    at ai (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:6505)
+    at C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:11284
+    at ab (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:13038)
+    at e (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:46298)
+    at aS (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:48276)
+    at ag (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:7923)
+    at C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:13014
+
+Error occurred prerendering page "/chart/bugs". Read more: https://nextjs.org/docs/messages/prerender-error
+TypeError: Cannot read properties of null (reading 'useContext')
+    at t.useContext (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:106142)
+    at h (C:\project\kpopranker\.next\server\chunks\199.js:36:21366)
+    at c (C:\project\kpopranker\.next\server\chunks\199.js:36:12800)
+    at ai (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:6505)
+    at C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:11284
+    at ab (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:13038)
+    at e (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:46298)
+    at aS (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:48276)
+    at ag (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:7923)
+    at C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:13014
+🔗 API 클라이언트 초기화: http://localhost:8000
+ ⨯ TypeError: Cannot read properties of null (reading 'useContext')
+    at h (C:\project\kpopranker\.next\server\chunks\199.js:36:21366)
+    at c (C:\project\kpopranker\.next\server\chunks\199.js:36:12800)
+TypeError: Cannot read properties of null (reading 'useContext')
+    at t.useContext (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:106142)
+    at h (C:\project\kpopranker\.next\server\chunks\199.js:36:21366)
+    at c (C:\project\kpopranker\.next\server\chunks\199.js:36:12800)
+    at ai (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:6505)
+    at C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:11284
+    at ab (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:13038)
+    at e (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:46298)
+    at aS (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:48276)
+    at ag (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:7923)
+    at C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:13014
+
+Error occurred prerendering page "/chart/lastfm". Read more: https://nextjs.org/docs/messages/prerender-error
+TypeError: Cannot read properties of null (reading 'useContext')
+    at t.useContext (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:106142)
+    at h (C:\project\kpopranker\.next\server\chunks\199.js:36:21366)
+    at c (C:\project\kpopranker\.next\server\chunks\199.js:36:12800)
+    at ai (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:6505)
+    at C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:11284
+    at ab (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:13038)
+    at e (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:46298)
+    at aS (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:48276)
+    at ag (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:7923)
+    at C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:13014
+🔗 API 클라이언트 초기화: http://localhost:8000
+ ⨯ TypeError: Cannot read properties of null (reading 'useContext')
+    at h (C:\project\kpopranker\.next\server\chunks\199.js:36:21366)
+    at c (C:\project\kpopranker\.next\server\chunks\199.js:36:12800)
+TypeError: Cannot read properties of null (reading 'useContext')
+    at t.useContext (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:106142)
+    at h (C:\project\kpopranker\.next\server\chunks\199.js:36:21366)
+    at c (C:\project\kpopranker\.next\server\chunks\199.js:36:12800)
+    at ai (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:6505)
+    at C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:11284
+    at ab (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:13038)
+    at e (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:46298)
+    at aS (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:48276)
+    at ag (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:7923)
+    at C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:13014
+
+Error occurred prerendering page "/chart/flo". Read more: https://nextjs.org/docs/messages/prerender-error
+TypeError: Cannot read properties of null (reading 'useContext')
+    at t.useContext (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:106142)
+    at h (C:\project\kpopranker\.next\server\chunks\199.js:36:21366)
+    at c (C:\project\kpopranker\.next\server\chunks\199.js:36:12800)
+    at ai (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:6505)
+    at C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:11284
+    at ab (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:13038)
+    at e (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:46298)
+    at aS (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:48276)
+    at ag (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:7923)
+    at C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:13014
+🔗 API 클라이언트 초기화: http://localhost:8000
+🔗 API 클라이언트 초기화: http://localhost:8000
+ ⨯ TypeError: Cannot read properties of null (reading 'useContext')
+    at h (C:\project\kpopranker\.next\server\chunks\199.js:36:21366)
+    at c (C:\project\kpopranker\.next\server\chunks\199.js:36:12800)
+TypeError: Cannot read properties of null (reading 'useContext')
+    at t.useContext (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:106142)
+    at h (C:\project\kpopranker\.next\server\chunks\199.js:36:21366)
+    at c (C:\project\kpopranker\.next\server\chunks\199.js:36:12800)
+    at ai (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:6505)
+    at C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:11284
+    at ab (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:13038)
+    at e (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:46298)
+    at aS (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:48276)
+    at ag (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:7923)
+    at C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:13014
+
+Error occurred prerendering page "/chart/genie". Read more: https://nextjs.org/docs/messages/prerender-error
+TypeError: Cannot read properties of null (reading 'useContext')
+    at t.useContext (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:106142)
+    at h (C:\project\kpopranker\.next\server\chunks\199.js:36:21366)
+    at c (C:\project\kpopranker\.next\server\chunks\199.js:36:12800)
+    at ai (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:6505)
+    at C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:11284
+    at ab (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:13038)
+    at e (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:46298)
+    at aS (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:48276)
+    at ag (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:7923)
+    at C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:13014
+   Generating static pages (4/18) 
+ ⨯ TypeError: Cannot read properties of null (reading 'useContext')
+    at h (C:\project\kpopranker\.next\server\chunks\199.js:36:21366)
+    at c (C:\project\kpopranker\.next\server\chunks\199.js:36:12800)
+TypeError: Cannot read properties of null (reading 'useContext')
+    at t.useContext (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:106142)
+    at h (C:\project\kpopranker\.next\server\chunks\199.js:36:21366)
+    at c (C:\project\kpopranker\.next\server\chunks\199.js:36:12800)
+    at ai (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:6505)
+    at C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:11284
+    at ab (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:13038)
+    at e (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:46298)
+    at aS (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:48276)
+    at ag (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:7923)
+    at C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:13014
+
+Error occurred prerendering page "/chart/spotify". Read more: https://nextjs.org/docs/messages/prerender-error
+TypeError: Cannot read properties of null (reading 'useContext')
+    at t.useContext (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:106142)
+    at h (C:\project\kpopranker\.next\server\chunks\199.js:36:21366)
+    at c (C:\project\kpopranker\.next\server\chunks\199.js:36:12800)
+    at ai (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:6505)
+    at C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:11284
+    at ab (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:13038)
+    at e (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:46298)
+    at aS (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:48276)
+    at ag (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:7923)
+    at C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:13014
+ ⨯ TypeError: Cannot read properties of null (reading 'useContext')
+    at h (C:\project\kpopranker\.next\server\chunks\199.js:36:21366)
+    at c (C:\project\kpopranker\.next\server\chunks\199.js:36:12800)
+TypeError: Cannot read properties of null (reading 'useContext')
+    at t.useContext (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:106142)
+    at h (C:\project\kpopranker\.next\server\chunks\199.js:36:21366)
+    at c (C:\project\kpopranker\.next\server\chunks\199.js:36:12800)
+    at ai (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:6505)
+    at C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:11284
+    at ab (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:13038)
+    at e (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:46298)
+    at aS (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:48276)
+    at ag (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:7923)
+    at C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:13014
+
+Error occurred prerendering page "/chart/circle". Read more: https://nextjs.org/docs/messages/prerender-error
+TypeError: Cannot read properties of null (reading 'useContext')
+    at t.useContext (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:106142)
+    at h (C:\project\kpopranker\.next\server\chunks\199.js:36:21366)
+    at c (C:\project\kpopranker\.next\server\chunks\199.js:36:12800)
+    at ai (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:6505)
+    at C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:11284
+    at ab (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:13038)
+    at e (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:46298)
+    at aS (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:48276)
+    at ag (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:7923)
+    at C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:13014
+ ⨯ TypeError: Cannot read properties of null (reading 'useContext')
+    at h (C:\project\kpopranker\.next\server\chunks\199.js:36:21366)
+    at c (C:\project\kpopranker\.next\server\chunks\199.js:36:12800)
+TypeError: Cannot read properties of null (reading 'useContext')
+    at t.useContext (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:106142)
+    at h (C:\project\kpopranker\.next\server\chunks\199.js:36:21366)
+    at c (C:\project\kpopranker\.next\server\chunks\199.js:36:12800)
+    at ai (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:6505)
+    at C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:11284
+    at ab (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:13038)
+    at e (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:46298)
+    at aS (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:48276)
+    at ag (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:7923)
+    at C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:13014
+
+Error occurred prerendering page "/chart/apple". Read more: https://nextjs.org/docs/messages/prerender-error
+TypeError: Cannot read properties of null (reading 'useContext')
+    at t.useContext (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:106142)
+    at h (C:\project\kpopranker\.next\server\chunks\199.js:36:21366)
+    at c (C:\project\kpopranker\.next\server\chunks\199.js:36:12800)
+    at ai (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:6505)
+    at C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:11284
+    at ab (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:13038)
+    at e (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:46298)
+    at aS (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:48276)
+    at ag (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:7923)
+    at C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:13014
+ ⨯ TypeError: Cannot read properties of null (reading 'useContext')
+    at h (C:\project\kpopranker\.next\server\chunks\199.js:36:21366)
+    at c (C:\project\kpopranker\.next\server\chunks\199.js:36:12800)
+TypeError: Cannot read properties of null (reading 'useContext')
+    at t.useContext (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:106142)
+    at h (C:\project\kpopranker\.next\server\chunks\199.js:36:21366)
+    at c (C:\project\kpopranker\.next\server\chunks\199.js:36:12800)
+    at ai (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:6505)
+    at C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:11284
+    at ab (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:13038)
+    at e (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:46298)
+    at aS (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:48276)
+    at ag (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:7923)
+    at C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:13014
+
+Error occurred prerendering page "/chart/youtube". Read more: https://nextjs.org/docs/messages/prerender-error
+TypeError: Cannot read properties of null (reading 'useContext')
+    at t.useContext (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:106142)
+    at h (C:\project\kpopranker\.next\server\chunks\199.js:36:21366)
+    at c (C:\project\kpopranker\.next\server\chunks\199.js:36:12800)
+    at ai (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:6505)
+    at C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:11284
+    at ab (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:13038)
+    at e (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:46298)
+    at aS (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:48276)
+    at ag (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:7923)
+    at C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:13014
+   Generating static pages (8/18) 
+ ⨯ TypeError: Cannot read properties of null (reading 'useContext')
+    at h (C:\project\kpopranker\.next\server\chunks\199.js:36:21366)
+    at c (C:\project\kpopranker\.next\server\chunks\199.js:36:12800)
+TypeError: Cannot read properties of null (reading 'useContext')
+    at t.useContext (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:106142)
+    at h (C:\project\kpopranker\.next\server\chunks\199.js:36:21366)
+    at c (C:\project\kpopranker\.next\server\chunks\199.js:36:12800)
+    at ai (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:6505)
+    at C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:11284
+    at ab (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:13038)
+    at e (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:46298)
+    at aS (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:48276)
+    at ag (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:7923)
+    at C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:13014
+
+Error occurred prerendering page "/track/example/example". Read more: https://nextjs.org/docs/messages/prerender-error
+TypeError: Cannot read properties of null (reading 'useContext')
+    at t.useContext (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:106142)
+    at h (C:\project\kpopranker\.next\server\chunks\199.js:36:21366)
+    at c (C:\project\kpopranker\.next\server\chunks\199.js:36:12800)
+    at ai (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:6505)
+    at C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:11284
+    at ab (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:13038)
+    at e (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:46298)
+    at aS (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:48276)
+    at ag (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:7923)
+    at C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:13014
+ ⨯ TypeError: Cannot read properties of null (reading 'useContext')
+    at h (C:\project\kpopranker\.next\server\chunks\199.js:36:21366)
+    at c (C:\project\kpopranker\.next\server\chunks\199.js:36:12800)
+TypeError: Cannot read properties of null (reading 'useContext')
+    at t.useContext (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:106142)
+    at h (C:\project\kpopranker\.next\server\chunks\199.js:36:21366)
+    at c (C:\project\kpopranker\.next\server\chunks\199.js:36:12800)
+    at ai (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:6505)
+    at C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:11284
+    at ab (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:13038)
+    at e (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:46298)
+    at aS (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:48276)
+    at ag (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:7923)
+    at C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:13014
+
+Error occurred prerendering page "/chart/vibe". Read more: https://nextjs.org/docs/messages/prerender-error
+TypeError: Cannot read properties of null (reading 'useContext')
+    at t.useContext (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:106142)
+    at h (C:\project\kpopranker\.next\server\chunks\199.js:36:21366)
+    at c (C:\project\kpopranker\.next\server\chunks\199.js:36:12800)
+    at ai (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:6505)
+    at C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:11284
+    at ab (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:13038)
+    at e (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:46298)
+    at aS (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:48276)
+    at ag (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:7923)
+    at C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:13014
+ ⨯ TypeError: Cannot read properties of null (reading 'useContext')
+    at h (C:\project\kpopranker\.next\server\chunks\199.js:36:21366)
+    at c (C:\project\kpopranker\.next\server\chunks\199.js:36:12800)
+TypeError: Cannot read properties of null (reading 'useContext')
+    at t.useContext (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:106142)
+    at h (C:\project\kpopranker\.next\server\chunks\199.js:36:21366)
+    at c (C:\project\kpopranker\.next\server\chunks\199.js:36:12800)
+    at ai (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:6505)
+    at C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:11284
+    at ab (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:13038)
+    at e (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:46298)
+    at aS (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:48276)
+    at ag (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:7923)
+    at C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:13014
+
+Error occurred prerendering page "/trending". Read more: https://nextjs.org/docs/messages/prerender-error
+TypeError: Cannot read properties of null (reading 'useContext')
+    at t.useContext (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:106142)
+    at h (C:\project\kpopranker\.next\server\chunks\199.js:36:21366)
+    at c (C:\project\kpopranker\.next\server\chunks\199.js:36:12800)
+    at ai (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:6505)
+    at C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:11284
+    at ab (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:13038)
+    at e (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:46298)
+    at aS (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:48276)
+    at ag (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:7923)
+    at C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:13014
+Error: <Html> should not be imported outside of pages/_document.
+Read more: https://nextjs.org/docs/messages/no-document-import-in-page
+    at ed (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\pages.runtime.prod.js:16:5484)
+    at y (C:\project\kpopranker\.next\server\chunks\329.js:6:1299)
+    at renderWithHooks (C:\project\kpopranker\node_modules\react-dom\cjs\react-dom-server.browser.development.js:5658:16)
+    at renderIndeterminateComponent (C:\project\kpopranker\node_modules\react-dom\cjs\react-dom-server.browser.development.js:5732:15)
+    at renderElement (C:\project\kpopranker\node_modules\react-dom\cjs\react-dom-server.browser.development.js:5957:7)
+    at renderNodeDestructiveImpl (C:\project\kpopranker\node_modules\react-dom\cjs\react-dom-server.browser.development.js:6115:11)
+    at renderNodeDestructive (C:\project\kpopranker\node_modules\react-dom\cjs\react-dom-server.browser.development.js:6087:14)
+    at finishClassComponent (C:\project\kpopranker\node_modules\react-dom\cjs\react-dom-server.browser.development.js:5688:3)
+    at renderClassComponent (C:\project\kpopranker\node_modules\react-dom\cjs\react-dom-server.browser.development.js:5696:3)
+    at renderElement (C:\project\kpopranker\node_modules\react-dom\cjs\react-dom-server.browser.development.js:5954:7)
+
+Error occurred prerendering page "/404". Read more: https://nextjs.org/docs/messages/prerender-error
+Error: <Html> should not be imported outside of pages/_document.
+Read more: https://nextjs.org/docs/messages/no-document-import-in-page
+    at ed (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\pages.runtime.prod.js:16:5484)
+    at y (C:\project\kpopranker\.next\server\chunks\329.js:6:1299)
+    at renderWithHooks (C:\project\kpopranker\node_modules\react-dom\cjs\react-dom-server.browser.development.js:5658:16)
+    at renderIndeterminateComponent (C:\project\kpopranker\node_modules\react-dom\cjs\react-dom-server.browser.development.js:5732:15)
+    at renderElement (C:\project\kpopranker\node_modules\react-dom\cjs\react-dom-server.browser.development.js:5957:7)
+    at renderNodeDestructiveImpl (C:\project\kpopranker\node_modules\react-dom\cjs\react-dom-server.browser.development.js:6115:11)
+    at renderNodeDestructive (C:\project\kpopranker\node_modules\react-dom\cjs\react-dom-server.browser.development.js:6087:14)
+    at finishClassComponent (C:\project\kpopranker\node_modules\react-dom\cjs\react-dom-server.browser.development.js:5688:3)
+    at renderClassComponent (C:\project\kpopranker\node_modules\react-dom\cjs\react-dom-server.browser.development.js:5696:3)
+    at renderElement (C:\project\kpopranker\node_modules\react-dom\cjs\react-dom-server.browser.development.js:5954:7)
+   Generating static pages (13/18) 
+Error: <Html> should not be imported outside of pages/_document.
+Read more: https://nextjs.org/docs/messages/no-document-import-in-page
+    at ed (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\pages.runtime.prod.js:16:5484)
+    at y (C:\project\kpopranker\.next\server\chunks\329.js:6:1299)
+    at renderWithHooks (C:\project\kpopranker\node_modules\react-dom\cjs\react-dom-server.browser.development.js:5658:16)
+    at renderIndeterminateComponent (C:\project\kpopranker\node_modules\react-dom\cjs\react-dom-server.browser.development.js:5732:15)
+    at renderElement (C:\project\kpopranker\node_modules\react-dom\cjs\react-dom-server.browser.development.js:5957:7)
+    at renderNodeDestructiveImpl (C:\project\kpopranker\node_modules\react-dom\cjs\react-dom-server.browser.development.js:6115:11)
+    at renderNodeDestructive (C:\project\kpopranker\node_modules\react-dom\cjs\react-dom-server.browser.development.js:6087:14)
+    at finishClassComponent (C:\project\kpopranker\node_modules\react-dom\cjs\react-dom-server.browser.development.js:5688:3)
+    at renderClassComponent (C:\project\kpopranker\node_modules\react-dom\cjs\react-dom-server.browser.development.js:5696:3)
+    at renderElement (C:\project\kpopranker\node_modules\react-dom\cjs\react-dom-server.browser.development.js:5954:7)
+
+Error occurred prerendering page "/500". Read more: https://nextjs.org/docs/messages/prerender-error
+Error: <Html> should not be imported outside of pages/_document.
+Read more: https://nextjs.org/docs/messages/no-document-import-in-page
+    at ed (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\pages.runtime.prod.js:16:5484)
+    at y (C:\project\kpopranker\.next\server\chunks\329.js:6:1299)
+    at renderWithHooks (C:\project\kpopranker\node_modules\react-dom\cjs\react-dom-server.browser.development.js:5658:16)
+    at renderIndeterminateComponent (C:\project\kpopranker\node_modules\react-dom\cjs\react-dom-server.browser.development.js:5732:15)
+    at renderElement (C:\project\kpopranker\node_modules\react-dom\cjs\react-dom-server.browser.development.js:5957:7)
+    at renderNodeDestructiveImpl (C:\project\kpopranker\node_modules\react-dom\cjs\react-dom-server.browser.development.js:6115:11)
+    at renderNodeDestructive (C:\project\kpopranker\node_modules\react-dom\cjs\react-dom-server.browser.development.js:6087:14)
+    at finishClassComponent (C:\project\kpopranker\node_modules\react-dom\cjs\react-dom-server.browser.development.js:5688:3)
+    at renderClassComponent (C:\project\kpopranker\node_modules\react-dom\cjs\react-dom-server.browser.development.js:5696:3)
+    at renderElement (C:\project\kpopranker\node_modules\react-dom\cjs\react-dom-server.browser.development.js:5954:7)
+ ⨯ TypeError: Cannot read properties of null (reading 'useContext')
+    at h (C:\project\kpopranker\.next\server\chunks\199.js:36:21366)
+    at c (C:\project\kpopranker\.next\server\chunks\199.js:36:12800)
+TypeError: Cannot read properties of null (reading 'useContext')
+    at t.useContext (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:106142)
+    at h (C:\project\kpopranker\.next\server\chunks\199.js:36:21366)
+    at c (C:\project\kpopranker\.next\server\chunks\199.js:36:12800)
+    at ai (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:6505)
+    at C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:11284
+    at ab (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:13038)
+    at e (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:46298)
+    at aS (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:48276)
+    at ag (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:7923)
+    at C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:13014
+
+Error occurred prerendering page "/_not-found". Read more: https://nextjs.org/docs/messages/prerender-error
+TypeError: Cannot read properties of null (reading 'useContext')
+    at t.useContext (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:106142)
+    at h (C:\project\kpopranker\.next\server\chunks\199.js:36:21366)
+    at c (C:\project\kpopranker\.next\server\chunks\199.js:36:12800)
+    at ai (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:6505)
+    at C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:11284
+    at ab (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:13038)
+    at e (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:46298)
+    at aS (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:48276)
+    at ag (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:7923)
+    at C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:13014
+ ⨯ TypeError: Cannot read properties of null (reading 'useContext')
+    at h (C:\project\kpopranker\.next\server\chunks\199.js:36:21366)
+    at c (C:\project\kpopranker\.next\server\chunks\199.js:36:12800)
+TypeError: Cannot read properties of null (reading 'useContext')
+    at t.useContext (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:106142)
+    at h (C:\project\kpopranker\.next\server\chunks\199.js:36:21366)
+    at c (C:\project\kpopranker\.next\server\chunks\199.js:36:12800)
+    at ai (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:6505)
+    at C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:11284
+    at ab (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:13038)
+    at e (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:46298)
+    at aS (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:48276)
+    at ag (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:7923)
+    at C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:13014
+
+Error occurred prerendering page "/". Read more: https://nextjs.org/docs/messages/prerender-error
+TypeError: Cannot read properties of null (reading 'useContext')
+    at t.useContext (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:106142)
+    at h (C:\project\kpopranker\.next\server\chunks\199.js:36:21366)
+    at c (C:\project\kpopranker\.next\server\chunks\199.js:36:12800)
+    at ai (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:6505)
+    at C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:11284
+    at ab (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:13038)
+    at e (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:46298)
+    at aS (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:48276)
+    at ag (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:7923)
+    at C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:13014
+ ⨯ TypeError: Cannot read properties of null (reading 'useContext')
+    at h (C:\project\kpopranker\.next\server\chunks\199.js:36:21366)
+    at c (C:\project\kpopranker\.next\server\chunks\199.js:36:12800)
+TypeError: Cannot read properties of null (reading 'useContext')
+    at t.useContext (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:106142)
+    at h (C:\project\kpopranker\.next\server\chunks\199.js:36:21366)
+    at c (C:\project\kpopranker\.next\server\chunks\199.js:36:12800)
+    at ai (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:6505)
+    at C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:11284
+    at ab (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:13038)
+    at e (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:46298)
+    at aS (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:48276)
+    at ag (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:7923)
+    at C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:13014
+
+Error occurred prerendering page "/portfolio". Read more: https://nextjs.org/docs/messages/prerender-error
+TypeError: Cannot read properties of null (reading 'useContext')
+    at t.useContext (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:106142)
+    at h (C:\project\kpopranker\.next\server\chunks\199.js:36:21366)
+    at c (C:\project\kpopranker\.next\server\chunks\199.js:36:12800)
+    at ai (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:6505)
+    at C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:11284
+    at ab (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:13038)
+    at e (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:46298)
+    at aS (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:48276)
+    at ag (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:7923)
+    at C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:13014
+ ⨯ TypeError: Cannot read properties of null (reading 'useContext')
+    at h (C:\project\kpopranker\.next\server\chunks\199.js:36:21366)
+    at c (C:\project\kpopranker\.next\server\chunks\199.js:36:12800)
+TypeError: Cannot read properties of null (reading 'useContext')
+    at t.useContext (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:106142)
+    at h (C:\project\kpopranker\.next\server\chunks\199.js:36:21366)
+    at c (C:\project\kpopranker\.next\server\chunks\199.js:36:12800)
+    at ai (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:6505)
+    at C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:11284
+    at ab (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:13038)
+    at e (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:46298)
+    at aS (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:48276)
+    at ag (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:7923)
+    at C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:13014
+
+Error occurred prerendering page "/search". Read more: https://nextjs.org/docs/messages/prerender-error
+TypeError: Cannot read properties of null (reading 'useContext')
+    at t.useContext (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:106142)
+    at h (C:\project\kpopranker\.next\server\chunks\199.js:36:21366)
+    at c (C:\project\kpopranker\.next\server\chunks\199.js:36:12800)
+    at ai (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:6505)
+    at C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:11284
+    at ab (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:13038)
+    at e (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:46298)
+    at aS (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:48276)
+    at ag (C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:7923)
+    at C:\project\kpopranker\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:13014
+ ✓ Generating static pages (18/18) 
+
+> Export encountered errors on following paths:
+	/_error: /404
+	/_error: /500
+	/_not-found
+	/chart/[id]/page: /chart/apple
+	/chart/[id]/page: /chart/bugs
+	/chart/[id]/page: /chart/circle
+	/chart/[id]/page: /chart/flo
+	/chart/[id]/page: /chart/genie
+	/chart/[id]/page: /chart/lastfm
+	/chart/[id]/page: /chart/melon
+	/chart/[id]/page: /chart/spotify
+	/chart/[id]/page: /chart/vibe
+	/chart/[id]/page: /chart/youtube
+	/page: /
+	/portfolio/page: /portfolio
+	/search/page: /search
+	/track/[artist]/[title]/page: /track/example/example
+	/trending/page: /trending

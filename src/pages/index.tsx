@@ -7,6 +7,7 @@ import ImageWithFallback from '@/components/ImageWithFallback';
 import UnifiedSearch from '@/components/UnifiedSearch';
 import ChartRankDisplay from '@/components/ChartRankDisplay';
 import PromoCarousel from '@/components/promo/PromoCarousel';
+import AdUnit from '@/components/AdSense/AdUnit';
 import { TrendingUp, Music, Award, Flame, Play, Crown, Zap, BarChart3, Globe, Clock } from 'lucide-react';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
@@ -309,6 +310,16 @@ export default function HybridHome() {
             <UnifiedSearch />
           </div>
 
+          {/* 광고 1: 검색 섹션 하단 */}
+          <div className="max-w-4xl mx-auto mb-12">
+            <AdUnit
+              adSlot="YOUR_AD_SLOT_1"
+              adFormat="auto"
+              fullWidthResponsive={true}
+              className="text-center"
+            />
+          </div>
+
           {/* TOP 3 섹션 - 더 크게 표시 */}
           <AnimatePresence mode="wait">
             {isLoading ? (
@@ -422,6 +433,16 @@ export default function HybridHome() {
             )}
           </AnimatePresence>
 
+          {/* 광고 2: TOP 3와 HOT TRACKS 사이 */}
+          <div className="max-w-4xl mx-auto mb-12">
+            <AdUnit
+              adSlot="YOUR_AD_SLOT_2"
+              adFormat="auto"
+              fullWidthResponsive={true}
+              className="text-center"
+            />
+          </div>
+
           {/* HOT TRACKS 섹션 - 이미지 크기 증가 */}
           <AnimatePresence mode="wait">
             {isLoading ? (
@@ -519,6 +540,16 @@ export default function HybridHome() {
               )
             )}
           </AnimatePresence>
+
+          {/* 광고 3: HOT TRACKS 하단 */}
+          <div className="max-w-4xl mx-auto my-12">
+            <AdUnit
+              adSlot="YOUR_AD_SLOT_3"
+              adFormat="auto"
+              fullWidthResponsive={true}
+              className="text-center"
+            />
+          </div>
 
           {/* 하이브리드 시스템 상태 표시 */}
           {loadingStage !== 'complete' && (

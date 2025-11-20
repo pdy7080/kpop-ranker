@@ -1,0 +1,113 @@
+
+> kpop-ranker-v2@2.0.0 build
+> next build
+
+ ⚠ You are using a non-standard "NODE_ENV" value in your environment. This creates inconsistencies in the project and is strongly advised against. Read more: https://nextjs.org/docs/messages/non-standard-node-env
+ ⚠ Specified "rewrites" will not automatically work with "output: export". See more info here: https://nextjs.org/docs/messages/export-no-custom-routes
+ ⚠ Specified "headers" will not automatically work with "output: export". See more info here: https://nextjs.org/docs/messages/export-no-custom-routes
+ ⚠ Specified "rewrites" will not automatically work with "output: export". See more info here: https://nextjs.org/docs/messages/export-no-custom-routes
+ ⚠ Specified "headers" will not automatically work with "output: export". See more info here: https://nextjs.org/docs/messages/export-no-custom-routes
+   ▲ Next.js 14.0.4
+   - Environments: .env.local
+
+   Creating an optimized production build ...
+ ✓ Compiled successfully
+   Linting and checking validity of types ...
+   Collecting page data ...
+
+> Build error occurred
+Error: Page "/chart/[id]" is missing "generateStaticParams()" so it cannot be used with "output: export" config.
+    at C:\project\kpopranker\node_modules\next\dist\build\index.js:1012:59
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async Span.traceAsyncFn (C:\project\kpopranker\node_modules\next\dist\trace\trace.js:147:20)
+    at async Promise.all (index 4)
+    at async C:\project\kpopranker\node_modules\next\dist\build\index.js:892:17
+    at async Span.traceAsyncFn (C:\project\kpopranker\node_modules\next\dist\trace\trace.js:147:20)
+    at async C:\project\kpopranker\node_modules\next\dist\build\index.js:829:124
+    at async Span.traceAsyncFn (C:\project\kpopranker\node_modules\next\dist\trace\trace.js:147:20)
+    at async build (C:\project\kpopranker\node_modules\next\dist\build\index.js:187:29)
+    at async main (C:\project\kpopranker\node_modules\next\dist\bin\next:157:5)
+
+> kpop-ranker-v2@2.0.0 build
+> next build
+
+ ⚠ You are using a non-standard "NODE_ENV" value in your environment. This creates inconsistencies in the project and is strongly advised against. Read more: https://nextjs.org/docs/messages/non-standard-node-env
+ ⚠ Specified "rewrites" will not automatically work with "output: export". See more info here: https://nextjs.org/docs/messages/export-no-custom-routes
+ ⚠ Specified "headers" will not automatically work with "output: export". See more info here: https://nextjs.org/docs/messages/export-no-custom-routes
+ ⚠ Specified "rewrites" will not automatically work with "output: export". See more info here: https://nextjs.org/docs/messages/export-no-custom-routes
+ ⚠ Specified "headers" will not automatically work with "output: export". See more info here: https://nextjs.org/docs/messages/export-no-custom-routes
+   ▲ Next.js 14.0.4
+   - Environments: .env.local
+
+   Creating an optimized production build ...
+
+> Build error occurred
+Error: Page "/chart/[id]/page" cannot use both "use client" and export function "generateStaticParams()".
+    at getPageStaticInfo (C:\project\kpopranker\node_modules\next\dist\build\analysis\get-page-static-info.js:460:19)
+    at async getStaticInfoIncludingLayouts (C:\project\kpopranker\node_modules\next\dist\build\entries.js:105:28)
+    at async C:\project\kpopranker\node_modules\next\dist\build\entries.js:397:32
+    at async Promise.all (index 1)
+    at async Promise.all (index 0)
+    at async createEntrypoints (C:\project\kpopranker\node_modules\next\dist\build\entries.js:528:5)
+    at async Span.traceAsyncFn (C:\project\kpopranker\node_modules\next\dist\trace\trace.js:147:20)
+    at async webpackBuildImpl (C:\project\kpopranker\node_modules\next\dist\build\webpack-build\impl.js:101:25)
+    at async webpackBuild (C:\project\kpopranker\node_modules\next\dist\build\webpack-build\index.js:165:16)
+    at async C:\project\kpopranker\node_modules\next\dist\build\index.js:695:115
+
+> kpop-ranker-v2@2.0.0 build
+> next build
+
+ ⚠ You are using a non-standard "NODE_ENV" value in your environment. This creates inconsistencies in the project and is strongly advised against. Read more: https://nextjs.org/docs/messages/non-standard-node-env
+ ⚠ Specified "rewrites" will not automatically work with "output: export". See more info here: https://nextjs.org/docs/messages/export-no-custom-routes
+ ⚠ Specified "headers" will not automatically work with "output: export". See more info here: https://nextjs.org/docs/messages/export-no-custom-routes
+ ⚠ Specified "rewrites" will not automatically work with "output: export". See more info here: https://nextjs.org/docs/messages/export-no-custom-routes
+ ⚠ Specified "headers" will not automatically work with "output: export". See more info here: https://nextjs.org/docs/messages/export-no-custom-routes
+   ▲ Next.js 14.0.4
+   - Environments: .env.local
+
+   Creating an optimized production build ...
+ ✓ Compiled successfully
+   Linting and checking validity of types ...
+   Collecting page data ...
+
+> Build error occurred
+Error: Page "/track/[artist]/[title]" is missing "generateStaticParams()" so it cannot be used with "output: export" config.
+    at C:\project\kpopranker\node_modules\next\dist\build\index.js:1012:59
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async Span.traceAsyncFn (C:\project\kpopranker\node_modules\next\dist\trace\trace.js:147:20)
+    at async Promise.all (index 8)
+    at async C:\project\kpopranker\node_modules\next\dist\build\index.js:892:17
+    at async Span.traceAsyncFn (C:\project\kpopranker\node_modules\next\dist\trace\trace.js:147:20)
+    at async C:\project\kpopranker\node_modules\next\dist\build\index.js:829:124
+    at async Span.traceAsyncFn (C:\project\kpopranker\node_modules\next\dist\trace\trace.js:147:20)
+    at async build (C:\project\kpopranker\node_modules\next\dist\build\index.js:187:29)
+    at async main (C:\project\kpopranker\node_modules\next\dist\bin\next:157:5)
+
+> kpop-ranker-v2@2.0.0 build
+> next build
+
+ ⚠ You are using a non-standard "NODE_ENV" value in your environment. This creates inconsistencies in the project and is strongly advised against. Read more: https://nextjs.org/docs/messages/non-standard-node-env
+ ⚠ Specified "rewrites" will not automatically work with "output: export". See more info here: https://nextjs.org/docs/messages/export-no-custom-routes
+ ⚠ Specified "headers" will not automatically work with "output: export". See more info here: https://nextjs.org/docs/messages/export-no-custom-routes
+ ⚠ Specified "rewrites" will not automatically work with "output: export". See more info here: https://nextjs.org/docs/messages/export-no-custom-routes
+ ⚠ Specified "headers" will not automatically work with "output: export". See more info here: https://nextjs.org/docs/messages/export-no-custom-routes
+   ▲ Next.js 14.0.4
+   - Environments: .env.local
+
+   Creating an optimized production build ...
+ ✓ Compiled successfully
+   Linting and checking validity of types ...
+   Collecting page data ...
+
+> Build error occurred
+Error: Page "/track/[artist]/[title]" is missing "generateStaticParams()" so it cannot be used with "output: export" config.
+    at C:\project\kpopranker\node_modules\next\dist\build\index.js:1012:59
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async Span.traceAsyncFn (C:\project\kpopranker\node_modules\next\dist\trace\trace.js:147:20)
+    at async Promise.all (index 8)
+    at async C:\project\kpopranker\node_modules\next\dist\build\index.js:892:17
+    at async Span.traceAsyncFn (C:\project\kpopranker\node_modules\next\dist\trace\trace.js:147:20)
+    at async C:\project\kpopranker\node_modules\next\dist\build\index.js:829:124
+    at async Span.traceAsyncFn (C:\project\kpopranker\node_modules\next\dist\trace\trace.js:147:20)
+    at async build (C:\project\kpopranker\node_modules\next\dist\build\index.js:187:29)
+    at async main (C:\project\kpopranker\node_modules\next\dist\bin\next:157:5)

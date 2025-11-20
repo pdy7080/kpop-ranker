@@ -1,0 +1,26 @@
+
+> kpop-ranker-v2@2.0.0 build
+> next build
+
+ ⚠ You are using a non-standard "NODE_ENV" value in your environment. This creates inconsistencies in the project and is strongly advised against. Read more: https://nextjs.org/docs/messages/non-standard-node-env
+ ⚠ Specified "rewrites" will not automatically work with "output: export". See more info here: https://nextjs.org/docs/messages/export-no-custom-routes
+ ⚠ Specified "headers" will not automatically work with "output: export". See more info here: https://nextjs.org/docs/messages/export-no-custom-routes
+ ⚠ Specified "rewrites" will not automatically work with "output: export". See more info here: https://nextjs.org/docs/messages/export-no-custom-routes
+ ⚠ Specified "headers" will not automatically work with "output: export". See more info here: https://nextjs.org/docs/messages/export-no-custom-routes
+   ▲ Next.js 14.0.4
+
+   Creating an optimized production build ...
+ ✓ Compiled successfully
+   Linting and checking validity of types ...
+Failed to compile.
+
+./src/app/portfolio/page.tsx:96:9
+Type error: Type 'null' is not assignable to type 'string'.
+
+[0m [90m 94 |[39m         user_id[33m:[39m [32m`user_${Date.now()}`[39m[33m,[39m[0m
+[0m [90m 95 |[39m         nickname[33m:[39m [32m'K-POP 팬'[39m[33m,[39m[0m
+[0m[31m[1m>[22m[39m[90m 96 |[39m         profile_image[33m:[39m [36mnull[39m[33m,[39m[0m
+[0m [90m    |[39m         [31m[1m^[22m[39m[0m
+[0m [90m 97 |[39m         favorite_artists[33m:[39m [][33m,[39m[0m
+[0m [90m 98 |[39m         notification_settings[33m:[39m {[0m
+[0m [90m 99 |[39m             rank_changes[33m:[39m [36mtrue[39m[33m,[39m[0m

@@ -1,0 +1,26 @@
+
+> kpop-ranker-v2@2.0.0 build
+> next build
+
+ ⚠ You are using a non-standard "NODE_ENV" value in your environment. This creates inconsistencies in the project and is strongly advised against. Read more: https://nextjs.org/docs/messages/non-standard-node-env
+ ⚠ Specified "rewrites" will not automatically work with "output: export". See more info here: https://nextjs.org/docs/messages/export-no-custom-routes
+ ⚠ Specified "headers" will not automatically work with "output: export". See more info here: https://nextjs.org/docs/messages/export-no-custom-routes
+ ⚠ Specified "rewrites" will not automatically work with "output: export". See more info here: https://nextjs.org/docs/messages/export-no-custom-routes
+ ⚠ Specified "headers" will not automatically work with "output: export". See more info here: https://nextjs.org/docs/messages/export-no-custom-routes
+   ▲ Next.js 14.0.4
+
+   Creating an optimized production build ...
+ ✓ Compiled successfully
+   Linting and checking validity of types ...
+Failed to compile.
+
+./src/app/chart/[id]/page.tsx:7:21
+Type error: Module '"@/lib/api"' has no exported member 'ChartEntry'. Did you mean to use 'import ChartEntry from "@/lib/api"' instead?
+
+[0m [90m  5 |[39m [36mimport[39m { [33mRefreshCw[39m[33m,[39m [33mTrendingUp[39m[33m,[39m [33mCalendar[39m[33m,[39m [33mClock[39m } [36mfrom[39m [32m'lucide-react'[39m[33m;[39m[0m
+[0m [90m  6 |[39m [36mimport[39m [33mChartCard[39m [36mfrom[39m [32m'@/components/ChartCard'[39m[33m;[39m[0m
+[0m[31m[1m>[22m[39m[90m  7 |[39m [36mimport[39m apiClient[33m,[39m { [33mChartEntry[39m } [36mfrom[39m [32m'@/lib/api'[39m[33m;[39m[0m
+[0m [90m    |[39m                     [31m[1m^[22m[39m[0m
+[0m [90m  8 |[39m[0m
+[0m [90m  9 |[39m [36mconst[39m [33mCHART_INFO[39m [33m=[39m {[0m
+[0m [90m 10 |[39m   melon[33m:[39m { [0m
