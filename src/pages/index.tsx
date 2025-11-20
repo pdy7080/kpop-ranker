@@ -22,102 +22,30 @@ interface TrendingTrack {
   image_url?: string;
 }
 
-interface StaticData {
-  meta: {
-    generated_at: string;
-    trending_count: number;
-    active_charts: number;
-  };
-  trending: TrendingTrack[];
-  stats: {
-    total_tracks: number;
-    active_charts: number;
-    last_updated: string;
-  };
-}
+// 간단한 API 데이터 로더
+async function loadTrendingData(): Promise<TrendingTrack[]> {
+  console.log('🚀 트렌딩 데이터 로딩 시작...');
 
-// 하이브리드 데이터 로더
-class HybridDataLoader {
-  private static instance: HybridDataLoader;
-  private cache: Map<string, { data: any; timestamp: number }> = new Map();
-  private readonly CACHE_DURATION = 5 * 60 * 1000; // 5분
+  try {
+    const response = await fetch(`${API_URL}/api/trending?limit=20`, {
+      cache: 'no-store' // 항상 최신 데이터
+    });
 
-  static getInstance(): HybridDataLoader {
-    if (!HybridDataLoader.instance) {
-      HybridDataLoader.instance = new HybridDataLoader();
-    }
-    return HybridDataLoader.instance;
-  }
-
-  async loadTrendingData(): Promise<TrendingTrack[]> {
-    console.log('🚀 하이브리드 로딩 시작...');
-    
-    try {
-      // 1단계: 정적 데이터 즉시 로딩 (0.1초)
-      const staticData = await this.loadStaticData();
-      if (staticData && staticData.trending) {
-        console.log('⚡ 정적 데이터 로딩 성공:', staticData.trending.length, '개');
-        
-        // 백그라운드에서 최신 데이터 확인
-        setTimeout(() => this.updateInBackground(), 500);
-        
-        return staticData.trending;
-      }
-    } catch (error) {
-      console.log('⚠️ 정적 데이터 실패, API 폴백...');
+    if (!response.ok) {
+      throw new Error(`API 응답 에러: ${response.status}`);
     }
 
-    // 2단계: API 폴백 (1초)
-    return await this.loadApiData();
-  }
+    const data = await response.json();
 
-  private async loadStaticData(): Promise<StaticData | null> {
-    try {
-      // 로컬 정적 파일 시도
-      const response = await fetch('/static_data/hybrid_data.json', {
-        cache: 'no-cache'
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        console.log('✅ 정적 데이터 로딩 성공');
-        return data;
-      }
-    } catch (error) {
-      console.log('정적 데이터 로딩 실패:', error);
+    if (data?.trending) {
+      console.log('✅ 트렌딩 데이터 로딩 성공:', data.trending.length, '개');
+      return data.trending;
     }
-    
-    return null;
-  }
 
-  private async loadApiData(): Promise<TrendingTrack[]> {
-    try {
-      const response = await fetch(`${API_URL}/api/trending?limit=20`);
-      const data = await response.json();
-      
-      if (data?.trending) {
-        console.log('✅ API 데이터 로딩 성공:', data.trending.length, '개');
-        return data.trending;
-      }
-    } catch (error) {
-      console.error('❌ API 데이터 로딩 실패:', error);
-    }
-    
     return [];
-  }
-
-  private async updateInBackground(): Promise<void> {
-    try {
-      const latestData = await this.loadApiData();
-      if (latestData.length > 0) {
-        // 기존 정적 데이터와 병합하여 image_url 보존
-        window.dispatchEvent(new CustomEvent('hybridUpdate', { 
-          detail: { trending: latestData, preserveImages: true } 
-        }));
-      }
-    } catch (error) {
-      console.log('백그라운드 업데이트 실패:', error);
-    }
+  } catch (error) {
+    console.error('❌ 트렌딩 데이터 로딩 실패:', error);
+    return [];
   }
 }
 
@@ -148,89 +76,47 @@ const SkeletonCard = ({ className = "" }: { className?: string }) => (
   </div>
 );
 
-export default function HybridHome() {
+export default function Home() {
   const router = useRouter();
   const [trendingTracks, setTrendingTracks] = useState<TrendingTrack[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [loadingStage, setLoadingStage] = useState<'static' | 'api' | 'complete'>('static');
-  const [isUpdating, setIsUpdating] = useState(false);
-  
-  // 최신 trendingTracks 값을 참조하기 위한 useRef (dependency 루프 방지)
-  const trendingTracksRef = useRef<TrendingTrack[]>([]);
-  
-  // trendingTracks가 변경될 때마다 ref 업데이트
+  const [loadError, setLoadError] = useState<string | null>(null);
+
+  // 데이터 로딩
   useEffect(() => {
-    trendingTracksRef.current = trendingTracks;
-  }, [trendingTracks]);
+    const fetchData = async () => {
+      console.log('🚀 메인 페이지 로딩 시작');
+      setIsLoading(true);
+      setLoadError(null);
 
-  // 하이브리드 데이터 로딩
-  const loadHybridData = useCallback(async () => {
-    console.log('🚀 하이브리드 메인 페이지 로딩 시작');
-    setLoadingStage('static');
-    
-    const loader = HybridDataLoader.getInstance();
-    const data = await loader.loadTrendingData();
-    
-    if (data.length > 0) {
-      setTrendingTracks(data);
-      setIsLoading(false);
-      setLoadingStage('complete');
-      console.log('✅ 하이브리드 로딩 완료:', data.length, '개');
-    } else {
-      setIsLoading(false);
-      setLoadingStage('complete');
-      console.log('⚠️ 데이터 없음');
-    }
-  }, []);
+      try {
+        const data = await loadTrendingData();
 
-  // 백그라운드 업데이트 리스너 (dependency 없음 - 무한루프 방지)
-  const handleBackgroundUpdate = useCallback((event: CustomEvent) => {
-    const newData = event.detail.trending;
-    const preserveImages = event.detail.preserveImages;
-    
-    if (newData && newData.length > 0) {
-      console.log('🔄 백그라운드 업데이트 감지');
-      setIsUpdating(true);
-      
-      setTimeout(() => {
-        // ref를 사용하여 최신 데이터 참조 (dependency 루프 방지)
-        const currentTracks = trendingTracksRef.current;
-        
-        // 이미지 데이터 보존 처리
-        if (preserveImages && currentTracks.length > 0) {
-          const mergedData = newData.map((newTrack: TrendingTrack) => {
-            // 기존 데이터에서 이미지 URL 찾기
-            const existingTrack = currentTracks.find(
-              track => track.artist === newTrack.artist && track.track === newTrack.track
-            );
-            
-            return {
-              ...newTrack,
-              // 기존 image_url이 있으면 보존, 없으면 새 데이터 사용
-              image_url: existingTrack?.image_url || newTrack.image_url
-            };
-          });
-          setTrendingTracks(mergedData);
+        if (data.length > 0) {
+          // 이미지 URL을 절대 경로로 변환
+          const dataWithAbsoluteUrls = data.map(track => ({
+            ...track,
+            image_url: track.image_url?.startsWith('/')
+              ? `${API_URL}${track.image_url}`
+              : track.image_url
+          }));
+
+          setTrendingTracks(dataWithAbsoluteUrls);
+          console.log('✅ 로딩 완료:', dataWithAbsoluteUrls.length, '개');
         } else {
-          setTrendingTracks(newData);
+          setLoadError('데이터를 불러올 수 없습니다.');
+          console.log('⚠️ 데이터 없음');
         }
-        
-        setIsUpdating(false);
-        console.log('✅ 백그라운드 업데이트 완료');
-      }, 300);
-    }
-  }, []); // 빈 dependency 배열 - 무한루프 방지
-
-  useEffect(() => {
-    loadHybridData();
-    
-    // 백그라운드 업데이트 이벤트 리스너
-    window.addEventListener('hybridUpdate', handleBackgroundUpdate as EventListener);
-    
-    return () => {
-      window.removeEventListener('hybridUpdate', handleBackgroundUpdate as EventListener);
+      } catch (error) {
+        setLoadError('데이터 로딩 중 오류가 발생했습니다.');
+        console.error('❌ 로딩 실패:', error);
+      } finally {
+        setIsLoading(false);
+      }
     };
-  }, [loadHybridData, handleBackgroundUpdate]);
+
+    fetchData();
+  }, []);
 
   return (
     <Layout>
@@ -249,15 +135,6 @@ export default function HybridHome() {
           >
             <h1 className="text-5xl font-black text-white mb-3">
               <span className="gradient-text">KPOP</span> RANKER
-              {isUpdating && (
-                <motion.span
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  className="inline-block ml-3"
-                >
-                  <Zap className="w-8 h-8 text-yellow-500 animate-pulse" />
-                </motion.span>
-              )}
             </h1>
             <p className="text-lg text-gray-400 mb-4">전 세계 K-POP 차트를 한눈에</p>
             
@@ -298,7 +175,7 @@ export default function HybridHome() {
               >
                 <Clock className="w-6 h-6 text-orange-400 mx-auto mb-2" />
                 <p className="text-2xl font-bold text-white">
-                  {loadingStage === 'complete' ? '0.3' : '...'}
+                  {isLoading ? '...' : '<1'}
                 </p>
                 <p className="text-sm text-gray-400">초 로딩</p>
               </motion.div>
@@ -352,14 +229,6 @@ export default function HybridHome() {
                   <h2 className="text-3xl font-bold text-white mb-8 flex items-center justify-center gap-2">
                     <Crown className="w-10 h-10 text-yellow-500" />
                     TOP 3
-                    {isUpdating && (
-                      <motion.div
-                        animate={{ rotate: 360 }}
-                        transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                      >
-                        <Zap className="w-5 h-5 text-yellow-400" />
-                      </motion.div>
-                    )}
                   </h2>
                   
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
@@ -459,7 +328,7 @@ export default function HybridHome() {
                 <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-4 gap-6">
                   {Array.from({ length: 16 }, (_, idx) => (
                     <div key={idx} className="glass-card overflow-hidden animate-pulse">
-                      <div className="w-full h-48 bg-gray-700"></div>
+                      <div className="w-full aspect-square bg-gray-700"></div>
                       <div className="p-4">
                         <div className="h-4 bg-gray-700 rounded mb-2"></div>
                         <div className="h-3 bg-gray-700 rounded w-3/4 mb-2"></div>
@@ -480,14 +349,6 @@ export default function HybridHome() {
                   <h2 className="text-2xl font-bold text-white mb-8 flex items-center justify-center gap-2">
                     <Flame className="w-8 h-8 text-orange-500" />
                     HOT TRACKS
-                    {isUpdating && (
-                      <motion.div
-                        animate={{ rotate: 360 }}
-                        transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                      >
-                        <Zap className="w-5 h-5 text-orange-400" />
-                      </motion.div>
-                    )}
                   </h2>
                   
                   <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-4 gap-6">
@@ -502,10 +363,10 @@ export default function HybridHome() {
                         onClick={() => router.push(`/track/${encodeURIComponent(track.artist)}/${encodeURIComponent(track.track)}`)}
                       >
                         <div className="relative">
-                          <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all flex items-center justify-center">
+                          <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all flex items-center justify-center z-10">
                             <Play className="w-10 h-10 text-white opacity-0 group-hover:opacity-100 transition-all transform group-hover:scale-110" />
                           </div>
-                          <div className="w-full h-48 overflow-hidden">
+                          <div className="w-full aspect-square overflow-hidden">
                             <ImageWithFallback
                               artist={track.artist}
                               track={track.track}
@@ -551,27 +412,20 @@ export default function HybridHome() {
             />
           </div>
 
-          {/* 하이브리드 시스템 상태 표시 */}
-          {loadingStage !== 'complete' && (
+          {/* 에러 메시지 표시 */}
+          {loadError && (
             <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="fixed bottom-4 right-4 glass-card p-3 shadow-lg"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="max-w-2xl mx-auto my-8 glass-card p-6 text-center"
             >
-              <div className="flex items-center gap-2 text-sm">
-                <div className={`w-2 h-2 rounded-full ${
-                  loadingStage === 'complete' ? 'bg-green-500' : 
-                  loadingStage === 'static' ? 'bg-yellow-500' : 'bg-blue-500'
-                } animate-pulse`}></div>
-                <span className="text-gray-300">
-                  {loadingStage === 'complete' ? '하이브리드 로딩 완료' :
-                   loadingStage === 'static' ? '정적 데이터 로딩 중' :
-                   'API 데이터 로딩 중'}
-                </span>
-                {isUpdating && (
-                  <Zap className="w-4 h-4 text-yellow-400 animate-pulse" />
-                )}
-              </div>
+              <p className="text-red-400 mb-2">⚠️ {loadError}</p>
+              <button
+                onClick={() => window.location.reload()}
+                className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors"
+              >
+                다시 시도
+              </button>
             </motion.div>
           )}
 
