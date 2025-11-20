@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 
 interface AdUnitProps {
   adSlot: string;
@@ -24,12 +24,20 @@ export default function AdUnit({
   style,
   className = '',
 }: AdUnitProps) {
+  const adInitialized = useRef(false);
+
   useEffect(() => {
+    // 이미 초기화된 광고는 다시 로드하지 않음
+    if (adInitialized.current) {
+      return;
+    }
+
     try {
       // AdSense 광고 초기화
       if (typeof window !== 'undefined') {
         // @ts-ignore
         (window.adsbygoogle = window.adsbygoogle || []).push({});
+        adInitialized.current = true;
       }
     } catch (err) {
       console.error('AdSense error:', err);
