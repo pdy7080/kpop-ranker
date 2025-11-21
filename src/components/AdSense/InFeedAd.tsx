@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 
 interface InFeedAdProps {
   adSlot: string;
@@ -22,11 +22,19 @@ export default function InFeedAd({
   adLayoutKey,
   className = '',
 }: InFeedAdProps) {
+  const adInitialized = useRef(false);
+
   useEffect(() => {
+    // 이미 초기화된 광고는 다시 로드하지 않음
+    if (adInitialized.current) {
+      return;
+    }
+
     try {
       if (typeof window !== 'undefined') {
         // @ts-ignore
         (window.adsbygoogle = window.adsbygoogle || []).push({});
+        adInitialized.current = true;
       }
     } catch (err) {
       console.error('AdSense InFeed error:', err);

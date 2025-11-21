@@ -8,6 +8,8 @@ import UnifiedSearch from '@/components/UnifiedSearch';
 import ChartRankDisplay from '@/components/ChartRankDisplay';
 import PromoCarousel from '@/components/promo/PromoCarousel';
 import AdUnit from '@/components/AdSense/AdUnit';
+import InFeedAd from '@/components/AdSense/InFeedAd';
+import { AdCard } from '@/components/AdSense/AdSenseScript';
 import { TrendingUp, Music, Award, Flame, Play, Crown, Zap, BarChart3, Globe, Clock } from 'lucide-react';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
@@ -188,14 +190,14 @@ export default function Home() {
           </div>
 
           {/* 광고 1: 검색 섹션 하단 */}
-          <div className="max-w-4xl mx-auto mb-12">
+          <AdCard className="max-w-4xl mx-auto mb-12" showLabel={false}>
             <AdUnit
               adSlot="2277062593"
               adFormat="auto"
               fullWidthResponsive={true}
               className="text-center"
             />
-          </div>
+          </AdCard>
 
           {/* TOP 3 섹션 - 더 크게 표시 */}
           <AnimatePresence mode="wait">
@@ -302,15 +304,14 @@ export default function Home() {
             )}
           </AnimatePresence>
 
-          {/* 광고 2: TOP 3와 HOT TRACKS 사이 */}
-          <div className="max-w-4xl mx-auto mb-12">
-            <AdUnit
+          {/* 광고 2: TOP 3와 HOT TRACKS 사이 - 인피드 광고 */}
+          <AdCard className="max-w-4xl mx-auto mb-12">
+            <InFeedAd
               adSlot="9510778686"
-              adFormat="auto"
-              fullWidthResponsive={true}
-              className="text-center"
+              adLayoutKey="-fb+5w+4e-db+86"
+              className="w-full min-h-[100px]"
             />
-          </div>
+          </AdCard>
 
           {/* HOT TRACKS 섹션 - 이미지 크기 증가 */}
           <AnimatePresence mode="wait">
@@ -403,14 +404,14 @@ export default function Home() {
           </AnimatePresence>
 
           {/* 광고 3: HOT TRACKS 하단 */}
-          <div className="max-w-4xl mx-auto my-12">
+          <AdCard className="max-w-4xl mx-auto my-12" showLabel={false}>
             <AdUnit
               adSlot="6884615340"
               adFormat="auto"
               fullWidthResponsive={true}
               className="text-center"
             />
-          </div>
+          </AdCard>
 
           {/* 에러 메시지 표시 */}
           {loadError && (
